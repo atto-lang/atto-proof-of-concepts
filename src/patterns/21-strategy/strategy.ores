@@ -1,0 +1,18 @@
+// Prototype only. Strategy represented by a first-class callable.
+fnc apply(Fnc<int(int)> strategy, int input): int {
+  return strategy(input);
+}
+
+pub routine main(): void {
+  val int offset = 3;
+  val Fnc<int(int)> plus_offset = |int value| -> {
+    return value + offset;
+  };
+  val Fnc<int(int)> double_value = |int value| -> {
+    return value * 2;
+  };
+  stdio.stdout.write(apply(plus_offset, 4));
+  stdio.stdout.write(":");
+  stdio.stdout.println(apply(double_value, 4));
+  return;
+}

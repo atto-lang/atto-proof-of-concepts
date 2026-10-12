@@ -1,0 +1,8 @@
+// EXPECTED COMPILE ERROR: actor-private-state access outside handle_state.
+// Must be rejected for the intended semantic reason rather than a parse error.
+define actor ForbiddenStateRead as
+  state { v: int }
+  receive(Message m) {
+    var x = self.state.v;
+  }
+end
