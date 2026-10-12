@@ -65,7 +65,12 @@ def main():
     except (ValueError, OSError) as exc:
         print(f"STRUCTURAL FAILURE: {exc}", file=sys.stderr)
         return 2
-    selected = [it for it in fixtures if not args.filter or re.search(args.filter, it[1].name)]
+    try:
+        pattern_filter = re.compile(args.filter) if args.filter is not None else None
+    except re.error as exc:
+        print(f"Invalid --filter regular expression: {exc}", file=sys.stderr)
+        return 2
+    selected = [it for it in fixtures if pattern_filter is None or pattern_filter.search(it[1].name)]
     if args.filter and not selected:
         print("No examples match --filter", file=sys.stderr)
         return 2
