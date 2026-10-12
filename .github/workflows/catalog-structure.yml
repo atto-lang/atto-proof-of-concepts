@@ -1,0 +1,17 @@
+name: Catalog structure only (not Oreslang compiler CI)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  structural-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify 60 libraries and 70 pattern briefs
+        run: python3 src/validation/check_catalog.py
+      - name: Verify 70 pattern sources and golden-output fixtures exist
+        run: python3 src/patterns/run_examples.py --list
+      - name: Explain coverage boundary
+        run: echo "Compiler/runtime verification requires an explicit --runner-command; this workflow makes no such claim."

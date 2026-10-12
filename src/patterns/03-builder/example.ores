@@ -1,0 +1,26 @@
+// Pattern 3: builder.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// A mutable builder; add typestate-required fields and ownership-consuming build in the follow-up.
+
+define class RequestBuilder as
+  let int port = 80;
+  let int timeout = 10;
+  pub with_port(int port): void { self.port = port; return; }
+  pub with_timeout(int t): void { self.timeout = t; return; }
+  pub build(): int { return self.port * 100 + self.timeout; }
+end
+fnc make_request(): int {
+  let RequestBuilder b = new RequestBuilder();
+  b.with_port(42);
+  b.with_timeout(9);
+  return b.build();
+}
+
+pub routine main(): void {
+  if !(make_request() == 4209) then
+    stdio.stdout.println("FAIL:3:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:3");
+  return;
+}

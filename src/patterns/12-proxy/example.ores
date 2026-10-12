@@ -1,0 +1,31 @@
+// Pattern 12: proxy.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Lazy cached proxy: one upstream read, subsequent access uses cache.
+
+define class CacheProxy as
+  let int value = -1;
+  let int loads = 0;
+  pub fetch(int upstream): int {
+    if self.value == -1 then
+      self.value = upstream;
+      self.loads = self.loads + 1;
+    fi
+    return self.value;
+  }
+  pub load_count(): int { return self.loads; }
+end
+fnc proxy_result(): int {
+  let CacheProxy p = new CacheProxy();
+  val int first = p.fetch(8);
+  val int second = p.fetch(99);
+  return first + second + p.load_count();
+}
+
+pub routine main(): void {
+  if !(proxy_result() == 17) then
+    stdio.stdout.println("FAIL:12:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:12");
+  return;
+}

@@ -1,0 +1,15 @@
+// Pattern 34: cqrs.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Separate write command path from read projection.
+
+fnc execute_command(int balance, int deposit): int { return balance + deposit; }
+fnc query_projection(int ledger_balance): int { return ledger_balance; }
+
+pub routine main(): void {
+  if !(query_projection(execute_command(10, 5)) == 15) then
+    stdio.stdout.println("FAIL:34:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:34");
+  return;
+}

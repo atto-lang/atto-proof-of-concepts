@@ -1,0 +1,30 @@
+// Pattern 20: state.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Two-state lifecycle with explicit invalid transitions.
+
+fnc transition(int state, int event): int {
+  if state == 0 && event == 1 then
+    return 1;
+  fi
+  if state == 1 && event == 2 then
+    return 0;
+  fi
+  return -1;
+}
+
+pub routine main(): void {
+  if !(transition(0, 1) == 1) then
+    stdio.stdout.println("FAIL:20:1");
+    return;
+  fi
+  if !(transition(1, 2) == 0) then
+    stdio.stdout.println("FAIL:20:2");
+    return;
+  fi
+  if !(transition(0, 2) == -1) then
+    stdio.stdout.println("FAIL:20:3");
+    return;
+  fi
+  stdio.stdout.println("PASS:20");
+  return;
+}

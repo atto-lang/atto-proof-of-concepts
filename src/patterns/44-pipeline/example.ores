@@ -1,0 +1,21 @@
+// Pattern 44: pipeline.
+// Status: source prototype; not verified on Java or LLVM.
+// Two composable transformation stages; backpressure and async stages remain.
+
+fnc apply_pipeline(int value, Fnc<int(int)> first, Fnc<int(int)> next): int {
+  return next(first(value));
+}
+fnc pipeline_model(): int {
+  val Fnc<int(int)> plus_one = |int x| -> { return x + 1; };
+  val Fnc<int(int)> multiply = |int x| -> { return x * 3; };
+  return apply_pipeline(4, plus_one, multiply);
+}
+
+pub routine main(): void {
+  if !(pipeline_model() == 15) then
+    stdio.stdout.println("FAIL:44:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:44");
+  return;
+}

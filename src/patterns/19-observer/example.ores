@@ -1,0 +1,21 @@
+// Pattern 19: observer.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Fan-out to independent callbacks; dynamic unsubscribe still needs separate mutation-safe collection test.
+
+fnc notify(int event, Fnc<int(int)> a, Fnc<int(int)> b): int {
+  return a(event) + b(event);
+}
+fnc observer_demo(): int {
+  val Fnc<int(int)> first = |int e| -> { return e + 1; };
+  val Fnc<int(int)> second = |int e| -> { return e * 2; };
+  return notify(5, first, second);
+}
+
+pub routine main(): void {
+  if !(observer_demo() == 16) then
+    stdio.stdout.println("FAIL:19:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:19");
+  return;
+}

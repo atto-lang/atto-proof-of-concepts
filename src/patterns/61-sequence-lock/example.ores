@@ -1,0 +1,24 @@
+// Pattern 61: sequence-lock.
+// Status: source prototype; not verified on Java or LLVM.
+// Seqlock version check oracle; does not atomically read a real payload.
+
+fnc read_is_valid(int before, int after): bool {
+  return before == after && before % 2 == 0;
+}
+
+pub routine main(): void {
+  if !(read_is_valid(4,4)) then
+    stdio.stdout.println("FAIL:61:1");
+    return;
+  fi
+  if !(!read_is_valid(5,5)) then
+    stdio.stdout.println("FAIL:61:2");
+    return;
+  fi
+  if !(!read_is_valid(4,6)) then
+    stdio.stdout.println("FAIL:61:3");
+    return;
+  fi
+  stdio.stdout.println("PASS:61");
+  return;
+}

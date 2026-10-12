@@ -1,0 +1,19 @@
+// Pattern 25: null-object.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Null implementation obeys same callable contract as live one.
+
+fnc render(int id, Fnc<int(int)> shape): int { return shape(id); }
+fnc empty(int id): int { return 0; }
+fnc null_object(): int {
+  val Fnc<int(int)> visible = |int id| -> { return id + 5; };
+  return render(3, visible) + render(3, empty);
+}
+
+pub routine main(): void {
+  if !(null_object() == 8) then
+    stdio.stdout.println("FAIL:25:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:25");
+  return;
+}

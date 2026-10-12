@@ -1,0 +1,20 @@
+// Pattern 29: data-mapper.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Reversible row mapping for constrained IDs and amounts.
+
+fnc encode(int id, int balance): int { return id * 1000 + balance; }
+fnc decode_id(int row): int { return row / 1000; }
+fnc decode_balance(int row): int { return row % 1000; }
+
+pub routine main(): void {
+  if !(decode_id(encode(5, 42)) == 5) then
+    stdio.stdout.println("FAIL:29:1");
+    return;
+  fi
+  if !(decode_balance(encode(5, 42)) == 42) then
+    stdio.stdout.println("FAIL:29:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:29");
+  return;
+}

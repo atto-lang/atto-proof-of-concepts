@@ -1,0 +1,27 @@
+// Pattern 22: template-method.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Fixed precondition and postprocessing around a customizable hook.
+
+fnc template(int raw, Fnc<int(int)> transform): int {
+  if raw < 0 then
+    return -1;
+  fi
+  return transform(raw) + 1;
+}
+fnc template_demo(): int {
+  val Fnc<int(int)> step = |int x| -> { return x * 2; };
+  return template(6, step);
+}
+
+pub routine main(): void {
+  if !(template_demo() == 13) then
+    stdio.stdout.println("FAIL:22:1");
+    return;
+  fi
+  if !(template(-1, |int x| -> { return x; }) == -1) then
+    stdio.stdout.println("FAIL:22:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:22");
+  return;
+}

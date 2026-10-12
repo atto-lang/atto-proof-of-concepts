@@ -1,0 +1,40 @@
+// Zipper: focus plus path-to-root context, followed by bottom-up rebuild.
+// Path nodes are treated as immutable context, never rewritten during replace.
+define class IntZipper as
+  let Array<int> parents = new Array<int>();
+  let int focus = 0;
+  let int depth = 0;
+
+  pub enter(int parent): void {
+    self.parents.add(parent);
+    self.depth = self.depth + 1;
+    return;
+  }
+  pub replace_focus(int new_focus): void {
+    self.focus = new_focus;
+    return;
+  }
+  pub rebuild(): int {
+    let int result = self.focus;
+    for let i = self.depth; i > 0; i-- do
+      result = self.parents.get(i - 1) * 10 + result;
+    done
+    return result;
+  }
+end
+fnc zipper_demo(): int {
+  let IntZipper zipper = new IntZipper();
+  zipper.enter(2);
+  zipper.enter(3);
+  zipper.replace_focus(4);
+  return zipper.rebuild();
+}
+
+pub routine main(): void {
+  if zipper_demo() != 54 then
+    stdio.stdout.println("FAIL:66:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:66");
+  return;
+}

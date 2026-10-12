@@ -1,0 +1,25 @@
+// Pattern 10: facade.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Facade coordinates validation and pricing behind one surface.
+
+fnc validate_amount(int amount): bool { return amount > 0; }
+fnc calculate_fee(int amount): int { return amount / 10; }
+fnc payment_facade(int amount): int {
+  if !validate_amount(amount) then
+    return -1;
+  fi
+  return amount + calculate_fee(amount);
+}
+
+pub routine main(): void {
+  if !(payment_facade(100) == 110) then
+    stdio.stdout.println("FAIL:10:1");
+    return;
+  fi
+  if !(payment_facade(0) == -1) then
+    stdio.stdout.println("FAIL:10:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:10");
+  return;
+}

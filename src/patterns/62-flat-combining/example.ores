@@ -1,0 +1,25 @@
+// Pattern 62: flat-combining.
+// Status: source prototype; not verified on Java or LLVM.
+// One batch's combiner work, not concurrent election of a combiner.
+
+fnc combined_sum(Array<int> requests): int {
+  let int total = 0;
+  for let i = 0; i < 4; i++ do
+    total = total + requests.get(i);
+  done
+  return total;
+}
+fnc flat_combining_model(): int {
+  let Array<int> queue = new Array<int>();
+  queue.add(2); queue.add(3); queue.add(5); queue.add(7);
+  return combined_sum(queue);
+}
+
+pub routine main(): void {
+  if !(flat_combining_model() == 17) then
+    stdio.stdout.println("FAIL:62:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:62");
+  return;
+}

@@ -1,0 +1,21 @@
+// Pattern 15: interpreter.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Expression evaluator reference for (2 + 3) * 4; migrate to a typed recursive AST.
+
+fnc eval_postfix(): int {
+  let Array<int> stack = new Array<int>();
+  let int left = 2;
+  let int right = 3;
+  let int sum = left + right;
+  stack.add(sum);
+  return stack.get(0) * 4;
+}
+
+pub routine main(): void {
+  if !(eval_postfix() == 20) then
+    stdio.stdout.println("FAIL:15:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:15");
+  return;
+}

@@ -1,0 +1,22 @@
+// Pattern 2: abstract-factory.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// A minimal family-pairing model. Next step: type-level family interfaces prevent mixed implementations.
+
+fnc make_button(int theme): int { return theme == 1 ? 20 : 5; }
+fnc make_label(int theme): int { return theme == 1 ? 7 : 2; }
+fnc assemble_ui(int theme): int {
+  return make_button(theme) + make_label(theme);
+}
+
+pub routine main(): void {
+  if !(assemble_ui(1) == 27) then
+    stdio.stdout.println("FAIL:2:1");
+    return;
+  fi
+  if !(assemble_ui(0) == 7) then
+    stdio.stdout.println("FAIL:2:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:2");
+  return;
+}

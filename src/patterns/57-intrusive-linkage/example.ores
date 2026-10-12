@@ -1,0 +1,24 @@
+// Pattern 57: intrusive-linkage.
+// Status: source prototype; not verified on Java or LLVM.
+// Index-based intrusive unlink model; raw-pointer pinning/address safety not proved.
+
+fnc intrusive_unlink(): int {
+  let Array<int> prev = new Array<int>();
+  let Array<int> next = new Array<int>();
+  prev.add(-1); prev.add(0); prev.add(1);
+  next.add(1); next.add(2); next.add(-1);
+  val int left = prev.get(1);
+  val int right = next.get(1);
+  next.set(left, right);
+  prev.set(right, left);
+  return next.get(0) * 10 + prev.get(2);
+}
+
+pub routine main(): void {
+  if !(intrusive_unlink() == 20) then
+    stdio.stdout.println("FAIL:57:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:57");
+  return;
+}

@@ -1,0 +1,18 @@
+// Pattern 7: bridge.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Separate formatting implementation from caller abstraction with first-class callable.
+
+fnc render(int value, Fnc<int(int)> renderer): int { return renderer(value); }
+fnc bridge_demo(): int {
+  val Fnc<int(int)> hex_like = |int n| -> { return 16 * n; };
+  return render(5, hex_like);
+}
+
+pub routine main(): void {
+  if !(bridge_demo() == 80) then
+    stdio.stdout.println("FAIL:7:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:7");
+  return;
+}

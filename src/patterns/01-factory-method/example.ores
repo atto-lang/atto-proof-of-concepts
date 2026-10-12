@@ -1,0 +1,27 @@
+// Factory Method: creation returns an executable pricing implementation.
+// Prototype only: no Java/LLVM execution evidence in this repository.
+fnc make_pricer(bool premium): Fnc<int(int)> {
+  if premium then
+    return |int count| -> { return count * 15; };
+  fi
+  return |int count| -> { return count * 10; };
+}
+
+fnc quote(int count, Fnc<int(int)> rate): int {
+  return rate(count);
+}
+
+pub routine main(): void {
+  val Fnc<int(int)> premium = make_pricer(true);
+  val Fnc<int(int)> standard = make_pricer(false);
+  if quote(3, premium) != 45 then
+    stdio.stdout.println("FAIL:1:1");
+    return;
+  fi
+  if quote(3, standard) != 30 then
+    stdio.stdout.println("FAIL:1:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:1");
+  return;
+}

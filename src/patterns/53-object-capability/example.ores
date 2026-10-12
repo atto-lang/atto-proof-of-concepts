@@ -1,0 +1,27 @@
+// Pattern 53: object-capability.
+// Status: source prototype; not verified on Java or LLVM.
+// Capability interface shape; constructors are forgeable here, so this is NOT an authorization proof.
+
+define class ReadCapability as
+  pub val int resource_id;
+end
+fnc read_secured(int value, ReadCapability token): int {
+  if token.resource_id != 7 then
+    return -1;
+  fi
+  return value;
+}
+fnc capability_model(): int {
+  val ReadCapability allowed = new ReadCapability(7);
+  val ReadCapability denied = new ReadCapability(8);
+  return read_secured(42, allowed) + read_secured(42, denied);
+}
+
+pub routine main(): void {
+  if !(capability_model() == 41) then
+    stdio.stdout.println("FAIL:53:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:53");
+  return;
+}

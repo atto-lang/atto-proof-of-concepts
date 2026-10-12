@@ -1,0 +1,21 @@
+// Pattern 36: publish-subscribe.
+// Status: source prototype; not verified on Java or LLVM.
+// Two subscribers independently process an event. Dynamic subscriber lifetime is a separate test.
+
+fnc publish(int event, Fnc<int(int)> subscriber_a, Fnc<int(int)> subscriber_b): int {
+  return subscriber_a(event) + subscriber_b(event);
+}
+fnc fanout(): int {
+  val Fnc<int(int)> a = |int e| -> { return e + 2; };
+  val Fnc<int(int)> b = |int e| -> { return e * 2; };
+  return publish(4, a, b);
+}
+
+pub routine main(): void {
+  if !(fanout() == 14) then
+    stdio.stdout.println("FAIL:36:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:36");
+  return;
+}

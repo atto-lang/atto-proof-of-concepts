@@ -1,14 +1,13 @@
-# Oreslang proof-of-concepts: src workspace
+# Oreslang proof-of-concepts: source workspace
 
-- [60 proposed libraries](libraries/README.md), each with scoped correctness tests.
-- [70 design patterns](patterns/README.md), each with a native implementation target.
-- [Six integrated projects](projects/README.md), combining the hard language features.
-- [Roadmap and top twelve proof targets](roadmap.md).
-- [15 language capabilities](validation/language-capabilities.md) and [verification contracts](validation/README.md).
-- [Native Oreslang source prototypes](pocs/README.md), including linked queue and selected patterns.
+- [60 proposed libraries](libraries/README.md).
+- [70 design pattern briefs](patterns/README.md), now each with independent `example.ores` and `expected.stdout`.
+- [Pattern runner](patterns/EXECUTING.md) and [source harness](patterns/run_examples.py).
+- [Six integrated project plans](projects/README.md).
+- [Fifteen language capabilities](validation/language-capabilities.md), [verification contracts](validation/README.md), and [roadmap](roadmap.md).
 
-## Status
+## Evidence maturity
 
-**planned** = a specification, **prototype** = source without verified run, **compiles** = exact compiler evidence, **runtime-verified** = reproducible passing tests, **formally-verified** = machine-checkable proof and declared assumptions.
+**planned** = specification; **prototype** = source but no recorded passing toolchain run; **compiles** = exact compiler result; **runtime-verified** = actual executed checks; **formally-verified** = machine-checked proof with assumptions.
 
-The completed catalog does *not* prove the compiler, borrow checker or garbage collector. Run python3 src/validation/check_catalog.py for a structural-only check.
+These 70 pattern examples are **prototypes**, not yet verified across Java and LLVM. Advanced concurrency and lifetime examples may only demonstrate sequential models; read their comments/README for missing proof obligations.

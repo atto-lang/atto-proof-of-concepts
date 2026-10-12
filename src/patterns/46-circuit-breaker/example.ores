@@ -1,0 +1,37 @@
+// Pattern 46: circuit-breaker.
+// Status: source prototype; not verified on Java or LLVM.
+// Three-state breaker oracle with opening threshold of two failures.
+
+fnc breaker_next(int state, bool failure): int {
+  if state == 0 && failure then
+    return 1;
+  fi
+  if state == 1 && failure then
+    return 2;
+  fi
+  if state == 2 then
+    return 2;
+  fi
+  return 0;
+}
+
+pub routine main(): void {
+  if !(breaker_next(0,true) == 1) then
+    stdio.stdout.println("FAIL:46:1");
+    return;
+  fi
+  if !(breaker_next(1,true) == 2) then
+    stdio.stdout.println("FAIL:46:2");
+    return;
+  fi
+  if !(breaker_next(2,false) == 2) then
+    stdio.stdout.println("FAIL:46:3");
+    return;
+  fi
+  if !(breaker_next(1,false) == 0) then
+    stdio.stdout.println("FAIL:46:4");
+    return;
+  fi
+  stdio.stdout.println("PASS:46");
+  return;
+}

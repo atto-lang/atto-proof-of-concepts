@@ -1,0 +1,42 @@
+// Pattern 42: object-pool.
+// Status: source prototype; not verified on Java or LLVM.
+// Exclusive lease state machine; multi-threaded acquisition is not yet exercised.
+
+define class PoolSlot as
+  let bool leased = false;
+  let int payload = 10;
+  pub acquire(): bool {
+    if self.leased then
+      return false;
+    fi
+    self.leased = true;
+    return true;
+  }
+  pub release(): bool {
+    if !self.leased then
+      return false;
+    fi
+    self.leased = false;
+    return true;
+  }
+end
+fnc pool_model(): int {
+  let PoolSlot p = new PoolSlot();
+  val bool first = p.acquire();
+  val bool denied = p.acquire();
+  val bool released = p.release();
+  val bool again = p.acquire();
+  if first && !denied && released && again then
+    return 1;
+  fi
+  return 0;
+}
+
+pub routine main(): void {
+  if !(pool_model() == 1) then
+    stdio.stdout.println("FAIL:42:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:42");
+  return;
+}

@@ -1,0 +1,24 @@
+// Pattern 32: model-view-controller.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// MVC event handling and model-driven view projection.
+
+fnc controller(int model, int click): int {
+  if click == 1 then
+    return model + 1;
+  fi
+  return model;
+}
+fnc view(int model): int { return model * 10; }
+
+pub routine main(): void {
+  if !(view(controller(3, 1)) == 40) then
+    stdio.stdout.println("FAIL:32:1");
+    return;
+  fi
+  if !(view(controller(3, 0)) == 30) then
+    stdio.stdout.println("FAIL:32:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:32");
+  return;
+}

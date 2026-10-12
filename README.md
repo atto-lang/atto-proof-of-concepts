@@ -1,5 +1,5 @@
 # Oreslang proof of concepts
 
-Language validation workspace. See [src/README.md](src/README.md) for the catalog of 60 libraries, 70 design patterns, source prototypes, and validation contracts.
+[Source catalog](src/README.md): 60 library briefs and **70 pattern source prototypes** with individual output oracles. [Runner and evidence policy](src/patterns/EXECUTING.md).
 
-The catalog is a roadmap, not an assertion that all the code already compiles or passes tests.
+The GitHub Actions structural workflow checks file/catalog integrity only, **not** whether the Oreslang compiler or runtime can execute these programs.

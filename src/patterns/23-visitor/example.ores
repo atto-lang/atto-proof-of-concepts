@@ -1,0 +1,27 @@
+// Pattern 23: visitor.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Tagged-node visitor oracle, not yet full class hierarchy double dispatch.
+
+fnc visit_tagged(int tag, int value): int {
+  if tag == 1 then
+    return value * value;
+  fi
+  if tag == 2 then
+    return value + 100;
+  fi
+  return -1;
+}
+fnc visit_all(): int { return visit_tagged(1, 4) + visit_tagged(2, 7); }
+
+pub routine main(): void {
+  if !(visit_all() == 123) then
+    stdio.stdout.println("FAIL:23:1");
+    return;
+  fi
+  if !(visit_tagged(0, 2) == -1) then
+    stdio.stdout.println("FAIL:23:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:23");
+  return;
+}

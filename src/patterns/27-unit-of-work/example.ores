@@ -1,0 +1,23 @@
+// Pattern 27: unit-of-work.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Transaction commit vs rollback reference model.
+
+fnc commit(bool ok, int existing, int delta): int {
+  if !ok then
+    return existing;
+  fi
+  return existing + delta;
+}
+
+pub routine main(): void {
+  if !(commit(true, 10, 5) == 15) then
+    stdio.stdout.println("FAIL:27:1");
+    return;
+  fi
+  if !(commit(false, 10, 5) == 10) then
+    stdio.stdout.println("FAIL:27:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:27");
+  return;
+}

@@ -1,0 +1,23 @@
+// Pattern 48: bulkhead.
+// Status: source prototype; not verified on Java or LLVM.
+// Isolated capacity cohorts can independently call admit; fairness/concurrency tests outstanding.
+
+fnc admit(int used, int capacity): int {
+  if used >= capacity then
+    return -1;
+  fi
+  return used + 1;
+}
+
+pub routine main(): void {
+  if !(admit(2,2) == -1) then
+    stdio.stdout.println("FAIL:48:1");
+    return;
+  fi
+  if !(admit(1,2) == 2) then
+    stdio.stdout.println("FAIL:48:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:48");
+  return;
+}

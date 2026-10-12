@@ -1,0 +1,27 @@
+// Pattern 52: session-types.
+// Status: source prototype; not verified on Java or LLVM.
+// Message-stage types; no transport or fully static protocol duality checking yet.
+
+define class ReadyToSend as
+  pub let int session_id = 42;
+end
+define class WaitingForReply as
+  pub val int ticket;
+end
+fnc send_request(ReadyToSend session): WaitingForReply {
+  return new WaitingForReply(session.session_id);
+}
+fnc session_model(): int {
+  val ReadyToSend session = new ReadyToSend();
+  val WaitingForReply waiting = send_request(session);
+  return waiting.ticket;
+}
+
+pub routine main(): void {
+  if !(session_model() == 42) then
+    stdio.stdout.println("FAIL:52:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:52");
+  return;
+}

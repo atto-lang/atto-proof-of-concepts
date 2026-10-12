@@ -1,0 +1,21 @@
+// Pattern 69: half-sync-half-async.
+// Status: source prototype; not verified on Java or LLVM.
+// The wrapper uses an async operation; it is not proof that a real _blocking API releases its OresVM carrier.
+
+pub async fnc read_underlying_async(int resource): int {
+  return resource * 2;
+}
+pub async fnc read_blocking(int resource): int {
+  // A synchronous-looking API is specified to use nonparking runtime IO.
+  return await read_underlying_async(resource);
+}
+
+pub async routine main(): void {
+  val int result = await read_blocking(21);
+  if result != 42 then
+    stdio.stdout.println("FAIL:69:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:69");
+  return;
+}

@@ -1,0 +1,24 @@
+// Pattern 59: hazard-pointers.
+// Status: source prototype; not verified on Java or LLVM.
+// Hazard publication model; no atomic publication or scanner implemented.
+
+fnc can_free(int slot, int hazard_a, int hazard_b): bool {
+  return slot != hazard_a && slot != hazard_b;
+}
+
+pub routine main(): void {
+  if !(!can_free(2,2,3)) then
+    stdio.stdout.println("FAIL:59:1");
+    return;
+  fi
+  if !(!can_free(3,2,3)) then
+    stdio.stdout.println("FAIL:59:2");
+    return;
+  fi
+  if !(can_free(4,2,3)) then
+    stdio.stdout.println("FAIL:59:3");
+    return;
+  fi
+  stdio.stdout.println("PASS:59");
+  return;
+}
