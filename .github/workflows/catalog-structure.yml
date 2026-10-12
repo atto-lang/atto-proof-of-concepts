@@ -20,6 +20,10 @@ jobs:
         run: python3 src/patterns/tip_syntax_hygiene.py
       - name: Pattern runner contract self-tests
         run: python3 -m unittest discover -s src/patterns -p 'test_run_examples.py' -v
+      - name: Verify 140 pinned Git blobs
+        run: python3 src/patterns/verify_blob_manifest.py
+      - name: Blob verifier tamper regressions
+        run: python3 -m unittest discover -s src/patterns -p 'test_verify_blob_manifest.py' -v
       - name: Syntax hygiene self-tests
         run: python3 -m unittest discover -s src/patterns -p 'test_tip_syntax_hygiene.py' -v
       - name: Scope boundary
