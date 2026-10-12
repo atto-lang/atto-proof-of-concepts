@@ -1,11 +1,17 @@
-# Compile-fail regressions (not runnable pattern examples)
+# Compile-fail regression fixtures
 
-These sources are copied from the source.llvm compiler-tip fixtures at `40b4430c0bba01d4a1980270cb90457d910e4835`. They test intended semantic restrictions on ownership and actor sends:
+**Java exact-tip negative suite:** seven sources under [java-tip/](java-tip/) passed against Java compiler source `43edad9e31333e1e20c8646a8a22728b586696ea` in [funded CI #38318787965](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38318787965). Each test requires failure in the intended phase with its targeted diagnostic.
 
-| Fixture | Expected failure |
+| Java fixture | Required failure |
 |---|---|
-| `native-reject-take-then-reuse.ores` | Using a moved scalar after `rt take` |
-| `class-double-borrow-reject.ores` | Simultaneous conflicting exclusive/shared owner borrows |
-| `source-actor-send-borrow-reject.ores` | Passing a live borrowed value over an actor send boundary |
+| `java-tip/mutability-readonly-collection.ores` | Mutation through read-only collection binding |
+| `java-tip/mutability-readonly-receiver.ores` | Field mutation through read-only implicit `self` |
+| `java-tip/use-after-move.ores` | Access after transfer of owned value |
+| `java-tip/conflicting-borrows.ores` | Mutable and shared loans overlap inside a call |
+| `java-tip/borrow-then-move-same-call.ores` | Shared call-argument loan conflicts with later move of same owner |
+| `java-tip/mutborrow-then-move-same-call.ores` | Exclusive call-argument loan conflicts with later move |
+| `java-tip/public-constructor-private-class.ores` | Public constructor declared in private class (parser rejection) |
 
-A fixture passes only when the **corresponding compiler** fails with the intended semantic diagnostic and emits no partial LLVM IR. A parse error or unsupported-feature diagnostic is not adequate proof. Source presence alone is not verification, and Java/LLVM parity is not yet established.
+**LLVM-origin fixtures**, currently not verified with LLVM in this workspace: `native-reject-take-then-reuse.ores`, `class-double-borrow-reject.ores`, `source-actor-send-borrow-reject.ores` (originally from LLVM commit `40b4430c0bba01d4a1980270cb90457d910e4835`).
+
+Important: syntax rejection does not count as evidence of type/borrow safety, and semantic rejection must match the expected diagnostic, not an unrelated unsupported-feature error.

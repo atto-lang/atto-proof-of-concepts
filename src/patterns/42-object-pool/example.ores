@@ -5,14 +5,14 @@
 define class PoolSlot as
   let bool leased = false;
   let int payload = 10;
-  pub acquire(): bool {
+  pub acquire(mut self)(): bool {
     if self.leased then
       return false;
     fi
     self.leased = true;
     return true;
   }
-  pub release(): bool {
+  pub release(mut self)(): bool {
     if !self.leased then
       return false;
     fi
@@ -21,7 +21,7 @@ define class PoolSlot as
   }
 end
 fnc pool_model(): int {
-  let PoolSlot p = new PoolSlot();
+  val PoolSlot p = new PoolSlot();
   val bool first = p.acquire();
   val bool denied = p.acquire();
   val bool released = p.release();

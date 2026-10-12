@@ -11,8 +11,8 @@ fnc find(Array<int> keys, Array<int> values, int key): int {
   return -1;
 }
 fnc repository(): int {
-  let Array<int> k = new Array<int>();
-  let Array<int> v = new Array<int>();
+  val Array<int> k = new Array<int>();
+  val Array<int> v = new Array<int>();
   k.add(1); k.add(2); k.add(3);
   v.add(10); v.add(20); v.add(30);
   return find(k, v, 2);

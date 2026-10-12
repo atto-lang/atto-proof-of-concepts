@@ -4,7 +4,7 @@
 
 define class ReadCapability as
   pub let int resource_id = 0;
-  pub constructor(int value) {
+  constructor(int value) {
     self.resource_id = value;
     return;
   }

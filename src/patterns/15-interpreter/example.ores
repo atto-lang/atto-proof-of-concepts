@@ -1,12 +1,12 @@
 // Interpreter: evaluation of an encoded recursive expression tree.
 // Node kind 0=literal, 1=add, 2=multiply. (2+3)*4=20.
 define class ExpressionTree as
-  let Array<int> opcode = new Array<int>();
-  let Array<int> value = new Array<int>();
-  let Array<int> left = new Array<int>();
-  let Array<int> right = new Array<int>();
+  val Array<int> opcode = new Array<int>();
+  val Array<int> value = new Array<int>();
+  val Array<int> left = new Array<int>();
+  val Array<int> right = new Array<int>();
 
-  pub append(int kind, int payload, int left_id, int right_id): void {
+  pub append(mut self)(int kind, int payload, int left_id, int right_id): void {
     self.opcode.add(kind);
     self.value.add(payload);
     self.left.add(left_id);
@@ -31,7 +31,7 @@ define class ExpressionTree as
 end
 
 fnc expression_demo(): int {
-  let ExpressionTree ast = new ExpressionTree();
+  val ExpressionTree ast = new ExpressionTree();
   ast.append(0, 2, -1, -1);
   ast.append(0, 3, -1, -1);
   ast.append(0, 4, -1, -1);

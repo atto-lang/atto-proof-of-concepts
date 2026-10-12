@@ -1,16 +1,16 @@
 // Zipper: focus plus path-to-root context, followed by bottom-up rebuild.
 // Path nodes are treated as immutable context, never rewritten during replace.
 define class IntZipper as
-  let Array<int> parents = new Array<int>();
+  val Array<int> parents = new Array<int>();
   let int focus = 0;
   let int depth = 0;
 
-  pub enter(int parent): void {
+  pub enter(mut self)(int parent): void {
     self.parents.add(parent);
     self.depth = self.depth + 1;
     return;
   }
-  pub replace_focus(int new_focus): void {
+  pub replace_focus(mut self)(int new_focus): void {
     self.focus = new_focus;
     return;
   }
@@ -23,7 +23,7 @@ define class IntZipper as
   }
 end
 fnc zipper_demo(): int {
-  let IntZipper zipper = new IntZipper();
+  val IntZipper zipper = new IntZipper();
   zipper.enter(2);
   zipper.enter(3);
   zipper.replace_focus(4);

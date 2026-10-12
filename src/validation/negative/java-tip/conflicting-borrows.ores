@@ -1,0 +1,10 @@
+// Expected Java-tip semantic rejection: same owner cannot have overlapping mut and shared loans.
+fnc inspect(borrow mut Array<int> exclusive, borrow Array<int> shared): int {
+  return exclusive.get(0);
+}
+pub routine main(): void {
+  val Array<int> values = new Array<int>();
+  values.add(4);
+  val int result = inspect(rt borrow mut values, rt borrow values);
+  return;
+}

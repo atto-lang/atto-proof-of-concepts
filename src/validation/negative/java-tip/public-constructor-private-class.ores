@@ -1,0 +1,11 @@
+// Expected Java-tip PARSER rejection: a private root class cannot export a public constructor.
+define class PrivateValue as
+  pub let int value = 1;
+  pub constructor(int v) {
+    self.value = v;
+    return;
+  }
+end
+pub routine main(): void {
+  return;
+}

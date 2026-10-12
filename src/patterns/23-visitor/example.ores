@@ -15,7 +15,7 @@ end
 define class VisitableNode as
   let int kind = 0;
   let int payload = 0;
-  pub constructor(int node_kind, int node_value) {
+  constructor(int node_kind, int node_value) {
     self.kind = node_kind;
     self.payload = node_value;
     return;

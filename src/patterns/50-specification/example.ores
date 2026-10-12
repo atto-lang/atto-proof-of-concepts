@@ -2,13 +2,13 @@
 // Status: source prototype; not verified on Java or LLVM.
 // Boolean predicate composition with lexical closures.
 
-fnc matches(int value, Fnc<bool(int)> first, Fnc<bool(int)> second): bool {
+fnc satisfies(int value, Fnc<bool(int)> first, Fnc<bool(int)> second): bool {
   return And(first(value), second(value));
 }
 fnc specification_model(int value): bool {
   val Fnc<bool(int)> positive = |int n| -> { return n > 0; };
   val Fnc<bool(int)> even = |int n| -> { return n % 2 == 0; };
-  return matches(value, positive, even);
+  return satisfies(value, positive, even);
 }
 
 pub routine main(): void {

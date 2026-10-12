@@ -10,7 +10,7 @@ fnc replay(Array<int> events): int {
   return balance;
 }
 fnc event_sourcing(): int {
-  let Array<int> events = new Array<int>();
+  val Array<int> events = new Array<int>();
   events.add(10); events.add(5); events.add(-3); events.add(2);
   return replay(events);
 }

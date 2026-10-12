@@ -1,0 +1,10 @@
+// Negative: a mutable loan must remain active across subsequent invocation arguments.
+fnc mutate_then_consume(borrow mut Array<int> view, Array<int> owner): int {
+  return view.get(0);
+}
+pub routine main(): void {
+  val Array<int> values = new Array<int>();
+  values.add(7);
+  val int result = mutate_then_consume(rt borrow mut values, values);
+  return;
+}

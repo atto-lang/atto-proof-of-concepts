@@ -11,7 +11,7 @@ fnc find_or_reuse(Array<int> ids, int wanted): int {
   return -1;
 }
 fnc identity_map(): int {
-  let Array<int> ids = new Array<int>();
+  val Array<int> ids = new Array<int>();
   ids.add(2); ids.add(5); ids.add(8);
   return find_or_reuse(ids, 5);
 }

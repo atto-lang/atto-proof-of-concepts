@@ -5,7 +5,7 @@
 define class OnceCell as
   let bool ready = false;
   let int value = 0;
-  pub init(int v): bool {
+  pub init(mut self)(int v): bool {
     if self.ready then
       return false;
     fi
@@ -16,7 +16,7 @@ define class OnceCell as
   pub get(): int { return self.value; }
 end
 fnc once_model(): int {
-  let OnceCell singleton = new OnceCell();
+  val OnceCell singleton = new OnceCell();
   val bool first = singleton.init(42);
   val bool second = singleton.init(99);
   if first, !second then
