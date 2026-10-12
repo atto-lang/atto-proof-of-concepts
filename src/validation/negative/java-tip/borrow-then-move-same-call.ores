@@ -1,0 +1,10 @@
+// Negative: a read borrow cannot overlap moving the same owner to a later argument.
+fnc inspect_then_consume(borrow Array<int> view, Array<int> owner): int {
+  return view.get(0);
+}
+pub routine main(): void {
+  val Array<int> values = new Array<int>();
+  values.add(7);
+  val int result = inspect_then_consume(rt borrow values, values);
+  return;
+}
