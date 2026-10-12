@@ -3,7 +3,7 @@
 // Seqlock version check oracle; does not atomically read a real payload.
 
 fnc read_is_valid(int before, int after): bool {
-  return before == after && before % 2 == 0;
+  return And(before == after, before % 2 == 0);
 }
 
 pub routine main(): void {

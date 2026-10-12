@@ -1,29 +1,31 @@
-// Pattern 39: actor-model.
-// Status: source prototype; not verified on Java or LLVM.
-// Defines a native isolated actor; main tests only a serialized mailbox oracle, not scheduler execution exclusivity.
-
-isoactor CounterActor {
+// Private actor declaration using current Java source grammar.
+// Executed main tests serialized mailbox arithmetic; actor scheduler
+// execution exclusivity remains a separate runtime/model-check obligation.
+actor CounterActor {
   let int count = 0;
-  pub fnc increment(int amount): int {
+  pub increment(int amount): int {
     self.count = self.count + amount;
     return self.count;
   }
-  pub fnc snapshot(): int { return self.count; }
+  pub snapshot(): int {
+    return self.count;
+  }
 }
+
 fnc serial_mailbox_model(): int {
-  let int state = 0;
-  let Array<int> messages = new Array<int>();
-  messages.add(2);
-  messages.add(3);
-  messages.add(-1);
+  let int count = 0;
+  let Array<int> mailbox = new Array<int>();
+  mailbox.add(2);
+  mailbox.add(3);
+  mailbox.add(-1);
   for let i = 0; i < 3; i++ do
-    state = state + messages.get(i);
+    count = count + mailbox.get(i);
   done
-  return state;
+  return count;
 }
 
 pub routine main(): void {
-  if !(serial_mailbox_model() == 4) then
+  if serial_mailbox_model() != 4 then
     stdio.stdout.println("FAIL:39:1");
     return;
   fi

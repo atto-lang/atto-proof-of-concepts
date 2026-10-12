@@ -16,7 +16,7 @@ fnc lease_model(): bool {
   let Lease lease = new Lease();
   val bool first = lease.close();
   val bool second = lease.close();
-  return first && !second;
+  return And(first, !second);
 }
 
 pub routine main(): void {

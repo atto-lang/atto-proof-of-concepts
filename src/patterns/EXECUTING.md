@@ -27,3 +27,24 @@ The command is an **example placeholder**. Replace it with a working Java or LLV
 - 23 GoF + 27 enterprise/concurrency + 20 advanced examples.
 - Examples for typestate, session types, capabilities, RAII, hazard pointers, epoch reclamation, RCU, sequence locks, work stealing, actor model and nonparking I/O **do not establish their named safety properties**. They are small reference models explicitly identifying missing runtime/compiler proof obligations in comments and README files.
 - Prioritize replacing models with complete algorithms and compiler-negative fixtures and testing on both Java/GraalVM and LLVM.
+
+## Tip-aligned compile-only validation
+
+The Java tip exposes a CLI `--check` mode. Execute the `mvn exec:java` entrypoint from a checked-out `oreslang-source.java` project, not from an unrelated project without that Maven configuration:
+
+```sh
+python3 src/patterns/run_examples.py \
+  --mode compile --backend graalvm \
+  --compiler-revision 62e591e5639eac9cbbb36415eb0bf3fc9b68831b \
+  --runner-command 'mvn -q -ntp -f /path/to/oreslang-source.java/pom.xml -DskipTests exec:java "-Dexec.args=--check {source}"' \
+  --report java-tip-compile.json
+```
+
+**Compile mode** only verifies exit status and must never be counted as a passing runtime behavior assertion. For a runtime run, omit `--mode compile` and supply a working CLI that returns exact stdout. The [tip audit](COMPILER_TIP_AUDIT.md) records compiler SHAs and unsupported LLVM features.
+
+Run the Python-only grammar hygiene check with:
+
+```sh
+python3 src/patterns/tip_syntax_hygiene.py
+python3 -m unittest discover -s src/patterns -p 'test_tip_syntax_hygiene.py'
+```

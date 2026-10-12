@@ -3,7 +3,11 @@
 // Capability interface shape; constructors are forgeable here, so this is NOT an authorization proof.
 
 define class ReadCapability as
-  pub val int resource_id;
+  pub let int resource_id = 0;
+  pub constructor(int value) {
+    self.resource_id = value;
+    return;
+  }
 end
 fnc read_secured(int value, ReadCapability token): int {
   if token.resource_id != 7 then

@@ -2,7 +2,7 @@
 // Prototype: compiler and runtime results have not been verified in this repo.
 // Domain service coordinates validation and account update.
 
-fnc validate(int amount): bool { return amount > 0 && amount <= 100; }
+fnc validate(int amount): bool { return And(amount > 0, amount <= 100); }
 fnc service(int current, int amount): int {
   if !validate(amount) then
     return -1;

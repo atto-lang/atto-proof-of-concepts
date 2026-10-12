@@ -6,7 +6,11 @@ define class ReadyToSend as
   pub let int session_id = 42;
 end
 define class WaitingForReply as
-  pub val int ticket;
+  pub let int ticket = 0;
+  pub constructor(int value) {
+    self.ticket = value;
+    return;
+  }
 end
 fnc send_request(ReadyToSend session): WaitingForReply {
   return new WaitingForReply(session.session_id);

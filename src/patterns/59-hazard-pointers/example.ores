@@ -3,7 +3,7 @@
 // Hazard publication model; no atomic publication or scanner implemented.
 
 fnc can_free(int slot, int hazard_a, int hazard_b): bool {
-  return slot != hazard_a && slot != hazard_b;
+  return And(slot != hazard_a, slot != hazard_b);
 }
 
 pub routine main(): void {

@@ -51,6 +51,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--runner-command", help="argv template for compiler+runner; must contain {source}")
     ap.add_argument("--backend", default="unspecified", help="backend name for report")
+    ap.add_argument("--mode", choices=("run", "compile"), default="run",
+                    help="run compares stdout; compile only checks compiler exit 0")
+    ap.add_argument("--compiler-revision", default="unknown",
+                    help="exact Java/LLVM commit SHA of the tested compiler")
     ap.add_argument("--timeout", type=float, default=40.0)
     ap.add_argument("--filter", help="regex against pattern folder name")
     ap.add_argument("--report", help="JSON report output path")
@@ -91,9 +95,9 @@ def main():
             proc = subprocess.run(argv, cwd=ROOT, capture_output=True,
                                   text=True, encoding="utf-8", errors="replace",
                                   timeout=args.timeout, check=False)
-            ok = proc.returncode == 0 and proc.stdout == expected
+            ok = proc.returncode == 0 and (args.mode == "compile" or proc.stdout == expected)
             result = {
-                "pattern": directory.name, "backend": args.backend,
+                "pattern": directory.name, "backend": args.backend, "mode": args.mode,
                 "success": ok, "exit_code": proc.returncode,
                 "stdout": proc.stdout, "stderr": proc.stderr,
                 "expected_stdout": expected,
@@ -101,7 +105,7 @@ def main():
             }
         except (subprocess.TimeoutExpired, OSError) as exc:
             result = {
-                "pattern": directory.name, "backend": args.backend,
+                "pattern": directory.name, "backend": args.backend, "mode": args.mode,
                 "success": False, "error": str(exc),
                 "seconds": round(time.monotonic() - started, 3),
             }
@@ -109,7 +113,10 @@ def main():
         results.append(result)
     passes = sum(int(item["success"]) for item in results)
     report = {
-        "backend": args.backend, "selected": len(selected),
+        "backend": args.backend, "mode": args.mode,
+        "compiler_revision": args.compiler_revision,
+        "command": args.runner_command,
+        "selected": len(selected),
         "passed": passes, "failed": len(selected) - passes,
         "results": results,
     }

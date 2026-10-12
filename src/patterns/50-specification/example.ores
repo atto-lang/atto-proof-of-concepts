@@ -3,7 +3,7 @@
 // Boolean predicate composition with lexical closures.
 
 fnc matches(int value, Fnc<bool(int)> first, Fnc<bool(int)> second): bool {
-  return first(value) && second(value);
+  return And(first(value), second(value));
 }
 fnc specification_model(int value): bool {
   val Fnc<bool(int)> positive = |int n| -> { return n > 0; };

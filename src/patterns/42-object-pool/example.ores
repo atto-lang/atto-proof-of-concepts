@@ -26,7 +26,7 @@ fnc pool_model(): int {
   val bool denied = p.acquire();
   val bool released = p.release();
   val bool again = p.acquire();
-  if first && !denied && released && again then
+  if first, !denied, released, again then
     return 1;
   fi
   return 0;

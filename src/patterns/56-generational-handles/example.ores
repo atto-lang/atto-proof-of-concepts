@@ -51,7 +51,7 @@ fnc stale_handle_rejected(): bool {
   if new_handle == old_handle then
     return false;
   fi
-  return slot.lookup(old_handle) == -1 && slot.lookup(new_handle) == 99;
+  return And(slot.lookup(old_handle) == -1, slot.lookup(new_handle) == 99);
 }
 
 pub routine main(): void {

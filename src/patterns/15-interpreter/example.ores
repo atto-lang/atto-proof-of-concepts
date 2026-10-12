@@ -1,18 +1,47 @@
-// Pattern 15: interpreter.
-// Prototype: compiler and runtime results have not been verified in this repo.
-// Expression evaluator reference for (2 + 3) * 4; migrate to a typed recursive AST.
+// Interpreter: evaluation of an encoded recursive expression tree.
+// Node kind 0=literal, 1=add, 2=multiply. (2+3)*4=20.
+define class ExpressionTree as
+  let Array<int> opcode = new Array<int>();
+  let Array<int> value = new Array<int>();
+  let Array<int> left = new Array<int>();
+  let Array<int> right = new Array<int>();
 
-fnc eval_postfix(): int {
-  let Array<int> stack = new Array<int>();
-  let int left = 2;
-  let int right = 3;
-  let int sum = left + right;
-  stack.add(sum);
-  return stack.get(0) * 4;
+  pub append(int kind, int payload, int left_id, int right_id): void {
+    self.opcode.add(kind);
+    self.value.add(payload);
+    self.left.add(left_id);
+    self.right.add(right_id);
+    return;
+  }
+  pub evaluate(int node): int {
+    val int kind = self.opcode.get(node);
+    if kind == 0 then
+      return self.value.get(node);
+    fi
+    val int lhs = self.evaluate(self.left.get(node));
+    val int rhs = self.evaluate(self.right.get(node));
+    if kind == 1 then
+      return lhs + rhs;
+    fi
+    if kind == 2 then
+      return lhs * rhs;
+    fi
+    return -1;
+  }
+end
+
+fnc expression_demo(): int {
+  let ExpressionTree ast = new ExpressionTree();
+  ast.append(0, 2, -1, -1);
+  ast.append(0, 3, -1, -1);
+  ast.append(0, 4, -1, -1);
+  ast.append(1, 0, 0, 1);
+  ast.append(2, 0, 3, 2);
+  return ast.evaluate(4);
 }
 
 pub routine main(): void {
-  if !(eval_postfix() == 20) then
+  if expression_demo() != 20 then
     stdio.stdout.println("FAIL:15:1");
     return;
   fi

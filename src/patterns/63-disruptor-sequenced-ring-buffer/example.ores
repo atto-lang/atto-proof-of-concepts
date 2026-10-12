@@ -59,7 +59,7 @@ fnc ring_demo(): bool {
   if !ring.offer(40) then
     return false;
   fi
-  return ring.take() == 20 && ring.take() == 30 && ring.take() == 40 && ring.take() == -1;
+  return And(ring.take() == 20, ring.take() == 30, ring.take() == 40, ring.take() == -1);
 }
 
 pub routine main(): void {

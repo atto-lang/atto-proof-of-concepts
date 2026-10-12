@@ -3,10 +3,10 @@
 // Two-state lifecycle with explicit invalid transitions.
 
 fnc transition(int state, int event): int {
-  if state == 0 && event == 1 then
+  if state == 0, event == 1 then
     return 1;
   fi
-  if state == 1 && event == 2 then
+  if state == 1, event == 2 then
     return 0;
   fi
   return -1;

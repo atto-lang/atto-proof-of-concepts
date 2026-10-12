@@ -76,3 +76,7 @@
 | 70 | [Supervisor Tree](./70-supervisor-tree/) | advanced | Supervise dependent actors under restart policy |
 
 Native source prototypes have been started for Strategy, Future Promise, Pipeline and Specification; all require actual compiler/runtime verification.
+
+## Status of individual exercises
+
+[Conformance matrix](CONFORMANCE_MATRIX.md) distinguishes concrete native prototypes from sequential reference models. No full Java/LLVM compiler pass is claimed.

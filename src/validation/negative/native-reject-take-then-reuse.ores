@@ -1,0 +1,3 @@
+// Original fail-closed compiler fixture from oreslang-source.llvm main 40b4430c.
+// Negative: run as compile-fail with targeted diagnostics; never as a normal program.
+pub fnc main(int value): int { return rt take value + value; }

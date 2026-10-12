@@ -19,7 +19,7 @@ fnc once_model(): int {
   let OnceCell singleton = new OnceCell();
   val bool first = singleton.init(42);
   val bool second = singleton.init(99);
-  if first && !second then
+  if first, !second then
     return singleton.get();
   fi
   return -1;

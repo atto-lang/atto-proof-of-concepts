@@ -3,10 +3,10 @@
 // Three-state breaker oracle with opening threshold of two failures.
 
 fnc breaker_next(int state, bool failure): int {
-  if state == 0 && failure then
+  if state == 0, failure then
     return 1;
   fi
-  if state == 1 && failure then
+  if state == 1, failure then
     return 2;
   fi
   if state == 2 then

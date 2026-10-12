@@ -1,17 +1,24 @@
-name: Catalog structure only (not Oreslang compiler CI)
+name: Catalog and Java-tip grammar hygiene (not compiler CI)
 
 on:
   push:
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   structural-integrity:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Verify 60 libraries and 70 pattern briefs
+      - name: Structural catalog counts
         run: python3 src/validation/check_catalog.py
-      - name: Verify 70 pattern sources and golden-output fixtures exist
+      - name: Source/oracle inventory
         run: python3 src/patterns/run_examples.py --list
-      - name: Explain coverage boundary
-        run: echo "Compiler/runtime verification requires an explicit --runner-command; this workflow makes no such claim."
+      - name: Pinned Java grammar source hygiene
+        run: python3 src/patterns/tip_syntax_hygiene.py
+      - name: Syntax hygiene self-tests
+        run: python3 -m unittest discover -s src/patterns -p 'test_tip_syntax_hygiene.py' -v
+      - name: Scope boundary
+        run: echo "Hygiene and structure only; this job neither builds Oreslang nor proves runtime correctness."
