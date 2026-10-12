@@ -41,6 +41,11 @@ class RunnerContractTests(unittest.TestCase):
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "compile"], compile_ok)[0], 0)
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "run"], compile_ok)[0], 1)
 
+    def test_malformed_filter_fails_closed(self):
+        code, output, calls = check_run(["--filter", "[", "--runner-command", COMMAND], None)
+        self.assertEqual(code, 2)
+        self.assertEqual(calls, 0)
+
     def test_list_does_not_run_compiler(self):
         code, output, calls = check_run(["--list"], None)
         self.assertEqual(code, 0)
