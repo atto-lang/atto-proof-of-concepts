@@ -1,12 +1,12 @@
 // Single-thread sequence-guarded ring buffer with backpressure and slot reuse.
 // This verifies the sequential state machine, NOT lock-free MPMC correctness.
 define class SequencedRing as
-  let Array<int> sequences = new Array<int>();
-  let Array<int> values = new Array<int>();
+  val Array<int> sequences = new Array<int>();
+  val Array<int> values = new Array<int>();
   let int producer = 0;
   let int consumer = 0;
 
-  pub initialize(): void {
+  pub initialize(mut self)(): void {
     for let i = 0; i < 3; i++ do
       self.sequences.add(i);
       self.values.add(0);
@@ -14,7 +14,7 @@ define class SequencedRing as
     return;
   }
 
-  pub offer(int value): bool {
+  pub offer(mut self)(int value): bool {
     val int index = self.producer % 3;
     if self.sequences.get(index) != self.producer then
       return false;
@@ -25,7 +25,7 @@ define class SequencedRing as
     return true;
   }
 
-  pub take(): int {
+  pub take(mut self)(): int {
     val int index = self.consumer % 3;
     if self.sequences.get(index) != self.consumer + 1 then
       return -1;
@@ -39,7 +39,7 @@ define class SequencedRing as
 end
 
 fnc ring_demo(): bool {
-  let SequencedRing ring = new SequencedRing();
+  val SequencedRing ring = new SequencedRing();
   ring.initialize();
   if !ring.offer(10) then
     return false;

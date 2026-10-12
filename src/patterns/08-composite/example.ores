@@ -1,8 +1,8 @@
 // Composite: recursive traversal of indexed child nodes in a binary tree.
 // Class-managed arrays avoid moving a borrowed array through recursive calls.
 define class BinaryTree as
-  let Array<int> values = new Array<int>();
-  pub add(int value): void {
+  val Array<int> values = new Array<int>();
+  pub add(mut self)(int value): void {
     self.values.add(value);
     return;
   }
@@ -15,7 +15,7 @@ define class BinaryTree as
 end
 
 fnc composite_sum(): int {
-  let BinaryTree tree = new BinaryTree();
+  val BinaryTree tree = new BinaryTree();
   for let i = 1; i <= 7; i++ do
     tree.add(i);
   done

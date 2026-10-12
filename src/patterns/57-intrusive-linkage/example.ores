@@ -3,8 +3,8 @@
 // Index-based intrusive unlink model; raw-pointer pinning/address safety not proved.
 
 fnc intrusive_unlink(): int {
-  let Array<int> prev = new Array<int>();
-  let Array<int> next = new Array<int>();
+  val Array<int> prev = new Array<int>();
+  val Array<int> next = new Array<int>();
   prev.add(-1); prev.add(0); prev.add(1);
   next.add(1); next.add(2); next.add(-1);
   val int left = prev.get(1);

@@ -3,10 +3,10 @@
 // Copy-before-mutation reference behavior; automatic COW refcounts not implemented.
 
 fnc copy_on_write_model(): int {
-  let Array<int> shared = new Array<int>();
+  val Array<int> shared = new Array<int>();
   shared.add(5);
   shared.add(6);
-  let Array<int> detached = new Array<int>();
+  val Array<int> detached = new Array<int>();
   detached.add(shared.get(0));
   detached.add(shared.get(1));
   detached.set(0, 99);

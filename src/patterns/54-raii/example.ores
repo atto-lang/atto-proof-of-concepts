@@ -4,7 +4,7 @@
 
 define class Lease as
   let bool closed = false;
-  pub close(): bool {
+  pub close(mut self)(): bool {
     if self.closed then
       return false;
     fi
@@ -13,7 +13,7 @@ define class Lease as
   }
 end
 fnc lease_model(): bool {
-  let Lease lease = new Lease();
+  val Lease lease = new Lease();
   val bool first = lease.close();
   val bool second = lease.close();
   return And(first, !second);

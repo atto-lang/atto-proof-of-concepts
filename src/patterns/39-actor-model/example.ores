@@ -3,7 +3,7 @@
 // execution exclusivity remains a separate runtime/model-check obligation.
 actor CounterActor {
   let int count = 0;
-  pub increment(int amount): int {
+  pub increment(mut self)(int amount): int {
     self.count = self.count + amount;
     return self.count;
   }
@@ -14,7 +14,7 @@ actor CounterActor {
 
 fnc serial_mailbox_model(): int {
   let int count = 0;
-  let Array<int> mailbox = new Array<int>();
+  val Array<int> mailbox = new Array<int>();
   mailbox.add(2);
   mailbox.add(3);
   mailbox.add(-1);

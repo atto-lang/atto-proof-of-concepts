@@ -5,12 +5,12 @@
 define class Record as
   let int amount = 0;
   let int persisted = 0;
-  pub change(int value): void { self.amount = value; return; }
-  pub save(): void { self.persisted = self.amount; return; }
+  pub change(mut self)(int value): void { self.amount = value; return; }
+  pub save(mut self)(): void { self.persisted = self.amount; return; }
   pub stored(): int { return self.persisted; }
 end
 fnc active_record(): int {
-  let Record r = new Record();
+  val Record r = new Record();
   r.change(9);
   r.save();
   r.change(12);

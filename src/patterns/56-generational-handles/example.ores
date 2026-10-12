@@ -5,7 +5,7 @@ define class GenerationSlot as
   let int payload = 0;
   let bool occupied = false;
 
-  pub insert(int value): int {
+  pub insert(mut self)(int value): int {
     if self.occupied then
       return -1;
     fi
@@ -24,7 +24,7 @@ define class GenerationSlot as
     return self.payload;
   }
 
-  pub remove(int handle_generation): bool {
+  pub remove(mut self)(int handle_generation): bool {
     if !self.occupied then
       return false;
     fi
@@ -39,7 +39,7 @@ define class GenerationSlot as
 end
 
 fnc stale_handle_rejected(): bool {
-  let GenerationSlot slot = new GenerationSlot();
+  val GenerationSlot slot = new GenerationSlot();
   val int old_handle = slot.insert(42);
   if slot.lookup(old_handle) != 42 then
     return false;

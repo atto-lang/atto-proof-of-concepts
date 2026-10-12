@@ -5,7 +5,7 @@
 define class CacheProxy as
   let int value = -1;
   let int loads = 0;
-  pub fetch(int upstream): int {
+  pub fetch(mut self)(int upstream): int {
     if self.value == -1 then
       self.value = upstream;
       self.loads = self.loads + 1;
@@ -15,7 +15,7 @@ define class CacheProxy as
   pub load_count(): int { return self.loads; }
 end
 fnc proxy_result(): int {
-  let CacheProxy p = new CacheProxy();
+  val CacheProxy p = new CacheProxy();
   val int first = p.fetch(8);
   val int second = p.fetch(99);
   return first + second + p.load_count();

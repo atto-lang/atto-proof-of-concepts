@@ -2,7 +2,7 @@
 // Status: source prototype; not verified on Java or LLVM.
 // A readiness dispatch oracle, not a real OS reactor/epoll implementation.
 
-fnc on_ready(int readiness, Fnc<int(int)> reader, Fnc<int(int)> writer): int {
+fnc on_ready(int readiness, borrow Fnc<int(int)> reader, borrow Fnc<int(int)> writer): int {
   if readiness == 1 then
     return reader(3);
   fi
@@ -14,7 +14,7 @@ fnc on_ready(int readiness, Fnc<int(int)> reader, Fnc<int(int)> writer): int {
 fnc reactor_model(): int {
   val Fnc<int(int)> read = |int fd| -> { return 10 + fd; };
   val Fnc<int(int)> write = |int fd| -> { return 20 + fd; };
-  return on_ready(1, read, write) + on_ready(2, read, write);
+  return on_ready(1, rt borrow read, rt borrow write) + on_ready(2, rt borrow read, rt borrow write);
 }
 
 pub routine main(): void {

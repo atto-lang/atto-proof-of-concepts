@@ -5,12 +5,12 @@
 define class RequestBuilder as
   let int port = 80;
   let int timeout = 10;
-  pub with_port(int port): void { self.port = port; return; }
-  pub with_timeout(int t): void { self.timeout = t; return; }
+  pub with_port(mut self)(int port): void { self.port = port; return; }
+  pub with_timeout(mut self)(int t): void { self.timeout = t; return; }
   pub build(): int { return self.port * 100 + self.timeout; }
 end
 fnc make_request(): int {
-  let RequestBuilder b = new RequestBuilder();
+  val RequestBuilder b = new RequestBuilder();
   b.with_port(42);
   b.with_timeout(9);
   return b.build();

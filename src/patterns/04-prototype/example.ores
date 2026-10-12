@@ -3,14 +3,14 @@
 // Deep copy of scalar elements with mutation isolation; test nested graphs separately.
 
 fnc clone_values(Array<int> src): Array<int> {
-  let Array<int> dest = new Array<int>();
+  val Array<int> dest = new Array<int>();
   for let i = 0; i < 3; i++ do
     dest.add(src.get(i));
   done
   return dest;
 }
 fnc cloned_first(): int {
-  let Array<int> original = new Array<int>();
+  val Array<int> original = new Array<int>();
   original.add(1);
   original.add(2);
   original.add(3);
