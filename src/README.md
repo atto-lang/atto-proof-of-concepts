@@ -1,14 +1,14 @@
 # Oreslang proof-of-concepts: src workspace
 
-- [60 proposed libraries](libraries/README.md) with per-library acceptance briefs.
-- [70 design patterns](patterns/README.md) with per-pattern acceptance briefs.
-- [Verification contracts](validation/README.md) for borrow checks, GC, actor isolation, locks and backend parity.
-- [Native source prototypes](pocs/README.md), including a linked-queue and selected patterns.
+- [60 proposed libraries](libraries/README.md), each with scoped correctness tests.
+- [70 design patterns](patterns/README.md), each with a native implementation target.
+- [Six integrated projects](projects/README.md), combining the hard language features.
+- [Roadmap and top twelve proof targets](roadmap.md).
+- [15 language capabilities](validation/language-capabilities.md) and [verification contracts](validation/README.md).
+- [Native Oreslang source prototypes](pocs/README.md), including linked queue and selected patterns.
 
-## Evidence levels
+## Status
 
-**planned** = brief only; **prototype** = source exists, not verified; **compiles** = actual compiler result recorded; **runtime-verified** = reproducible assertions/tests pass; **formally-verified** = checked proofs and explicit assumptions.
+**planned** = a specification, **prototype** = source without verified run, **compiles** = exact compiler evidence, **runtime-verified** = reproducible passing tests, **formally-verified** = machine-checkable proof and declared assumptions.
 
-Do not confuse a completed catalog with proven compiler/runtime correctness.
-
-Run python3 src/validation/check_catalog.py to check *only* structural catalog completeness.
+The completed catalog does *not* prove the compiler, borrow checker or garbage collector. Run python3 src/validation/check_catalog.py for a structural-only check.
