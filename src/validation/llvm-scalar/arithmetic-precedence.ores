@@ -1,0 +1,4 @@
+// Precedence, grouped multiplication, and subtraction; status 42.
+pub fnc main(): int {
+  return 6 * (8 - 1);
+}
