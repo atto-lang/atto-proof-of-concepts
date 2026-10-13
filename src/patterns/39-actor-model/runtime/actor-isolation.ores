@@ -1,0 +1,34 @@
+// Actual spawned-actor test: independently initialized actor-owned counters.
+// This verifies observed results, not physical memory isolation or linearizability.
+define actor Counter as
+  let int count;
+
+  on_start(): void {
+    self.count = 0;
+    return;
+  }
+
+  receive(ActorMail<String> mail): void {
+    self.count = self.count + 1;
+    self.send(self.count);
+    self.end();
+    return;
+  }
+end
+
+pub async routine main(): void {
+  val left = spawn Counter();
+  val right = spawn Counter();
+  await left.get_ready();
+  await right.get_ready();
+  left.send("first");
+  right.send("second");
+  val a = (await left.outputs.next()).value.unwrap();
+  val b = (await right.outputs.next()).value.unwrap();
+  stdio.stdout.write(a.value);
+  stdio.stdout.write("|");
+  stdio.stdout.write(b.value);
+  await left.get_done();
+  await right.get_done();
+  return;
+}

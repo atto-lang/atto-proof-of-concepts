@@ -2,7 +2,20 @@
 // Prototype: compiler and runtime results have not been verified in this repo.
 // Adapts Fahrenheit input to Celsius-consuming API.
 
-fnc fahrenheit_to_celsius(int f): int { return (f - 32) * 5 / 9; }
+// Preconditions: numerator >= 0 and divisor > 0. Uses integer-only arithmetic
+// because Java-tip currently evaluates '/' as float even for int operands.
+fnc quotient_nonnegative(int numerator, int divisor): int {
+  if divisor <= 0 then return -1; fi
+  if numerator < 0 then return -1; fi
+  if numerator < divisor then return 0; fi
+  return 1 + quotient_nonnegative(numerator - divisor, divisor);
+}
+// Bounded input range in this PoC: handle negative Celsius by sign symmetry.
+fnc quotient_signed(int numerator, int divisor): int {
+  if numerator < 0 then return -quotient_nonnegative(-numerator, divisor); fi
+  return quotient_nonnegative(numerator, divisor);
+}
+fnc fahrenheit_to_celsius(int f): int { return quotient_signed((f - 32) * 5, 9); }
 fnc adapter(int temperature_f): int { return fahrenheit_to_celsius(temperature_f); }
 
 pub routine main(): void {
@@ -12,6 +25,14 @@ pub routine main(): void {
   fi
   if !(adapter(32) == 0) then
     stdio.stdout.println("FAIL:6:2");
+    return;
+  fi
+  if !(adapter(50) == 10) then
+    stdio.stdout.println("FAIL:6:3");
+    return;
+  fi
+  if !(adapter(14) == -10) then
+    stdio.stdout.println("FAIL:6:4");
     return;
   fi
   stdio.stdout.println("PASS:6");

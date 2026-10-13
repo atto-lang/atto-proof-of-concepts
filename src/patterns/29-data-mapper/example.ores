@@ -3,7 +3,15 @@
 // Reversible row mapping for constrained IDs and amounts.
 
 fnc encode(int id, int balance): int { return id * 1000 + balance; }
-fnc decode_id(int row): int { return row / 1000; }
+// Reconstruct a non-negative packed ID with integer-only arithmetic. Until
+// the Java '/' type/runtime contract is fixed, '/' would return Double.
+fnc quotient_nonnegative(int numerator, int divisor): int {
+  if divisor <= 0 then return -1; fi
+  if numerator < 0 then return -1; fi
+  if numerator < divisor then return 0; fi
+  return 1 + quotient_nonnegative(numerator - divisor, divisor);
+}
+fnc decode_id(int row): int { return quotient_nonnegative(row, 1000); }
 fnc decode_balance(int row): int { return row % 1000; }
 
 pub routine main(): void {
@@ -13,6 +21,14 @@ pub routine main(): void {
   fi
   if !(decode_balance(encode(5, 42)) == 42) then
     stdio.stdout.println("FAIL:29:2");
+    return;
+  fi
+  if !(decode_id(encode(7, 999)) == 7) then
+    stdio.stdout.println("FAIL:29:3");
+    return;
+  fi
+  if !(decode_balance(encode(7, 999)) == 999) then
+    stdio.stdout.println("FAIL:29:4");
     return;
   fi
   stdio.stdout.println("PASS:29");

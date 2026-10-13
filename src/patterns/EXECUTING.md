@@ -8,7 +8,7 @@ All 70 numbered folders now contain an independently executable-intent native Or
 python3 src/patterns/run_examples.py --list
 ```
 
-This verifies source/oracle presence, numbering and simple structural assumptions. It marks examples **UNVERIFIED**; it is not compiler CI.
+This verifies source/oracle presence, numbering and simple structural assumptions. It marks examples **UNVERIFIED**; it is not compiler CI. Omitting `--runner-command` is now a failure unless `--list` was explicitly requested. Combining `--list` with a runner is an error, not a silent skip.
 
 ## Actual execution
 
@@ -19,11 +19,13 @@ python3 src/patterns/run_examples.py \
   --report pattern-graalvm.json
 ```
 
+JSON reports now bind each pattern and oracle to SHA-256 and fail if input files change during a run. `--backend` and `--compiler-revision` are user assertions, **not trusted attestation**; verify the actual checkout SHA in CI. Partial `--filter` runs are not marked as complete catalog coverage. Non-finite timeouts fail closed.
+
 The command is an **example placeholder**. Replace it with a working Java or LLVM compile-and-execute entrypoint. Arguments are split without a shell. The runner fails when compilation/execution exits nonzero, times out, or produces output different from the oracle. A green structural workflow never proves an Oreslang program compiled.
 
 ## Current status and limitations
 
-- 70 source prototypes and 70 oracles, no verified Java/LLVM executions recorded.
+- Java revision 43edad9 has a funded exact-source 70/70 Java check-and-run result [run #38341093687](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) on the pinned historical PoC revision. LLVM execution is not yet verified.
 - 23 GoF + 27 enterprise/concurrency + 20 advanced examples.
 - Examples for typestate, session types, capabilities, RAII, hazard pointers, epoch reclamation, RCU, sequence locks, work stealing, actor model and nonparking I/O **do not establish their named safety properties**. They are small reference models explicitly identifying missing runtime/compiler proof obligations in comments and README files.
 - Prioritize replacing models with complete algorithms and compiler-negative fixtures and testing on both Java/GraalVM and LLVM.
@@ -48,3 +50,7 @@ Run the Python-only grammar hygiene check with:
 python3 src/patterns/tip_syntax_hygiene.py
 python3 -m unittest discover -s src/patterns -p 'test_tip_syntax_hygiene.py'
 ```
+
+## Optional strict compiler revision syntax
+
+`--require-revision` rejects unknown or abbreviated `--compiler-revision` values, but SHA format is **not proof** the supplied binary was built from that commit. Always verify the checkout and binary independently. This flag does not replace the previously implemented per-source/per-oracle hashing and change detection.

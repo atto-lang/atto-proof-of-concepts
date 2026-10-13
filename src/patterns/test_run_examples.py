@@ -1,7 +1,6 @@
 """Pattern-runner contract tests. No Oreslang backend is executed."""
 import contextlib
 import io
-import tempfile
 from pathlib import Path
 import subprocess
 import sys
@@ -9,20 +8,17 @@ import unittest
 from unittest import mock
 import run_examples
 
-FAKE = [(1, Path("01-factory-method"), Path("example.ores"), "PASS:1\n")]
+CASE = run_examples.PATTERNS / "01-factory-method"
+FAKE = [(1, CASE, CASE / "example.ores", "PASS:1\n")]
 COMMAND = "python3 fake.py {source}"
 
 def check_run(args, result):
     stdout = io.StringIO()
-    with tempfile.TemporaryDirectory() as tmp:
-        source = Path(tmp) / "example.ores"
-        source.write_text('pub routine main(): void {}', encoding="utf-8")
-        fixture = [(1, Path("01-factory-method"), source, "PASS:1\\n")]
-        with mock.patch.object(run_examples, "discover", return_value=fixture):
-            with mock.patch.object(sys, "argv", ["run_examples.py", *args]):
-                with mock.patch.object(run_examples.subprocess, "run", return_value=result) as runner:
-                    with contextlib.redirect_stdout(stdout):
-                        exit_code = run_examples.main()
+    with mock.patch.object(run_examples, "discover", return_value=FAKE):
+        with mock.patch.object(sys, "argv", ["run_examples.py", *args]):
+            with mock.patch.object(run_examples.subprocess, "run", return_value=result) as runner:
+                with contextlib.redirect_stdout(stdout):
+                    exit_code = run_examples.main()
     return exit_code, stdout.getvalue(), runner.call_count
 
 class RunnerContractTests(unittest.TestCase):
@@ -46,21 +42,52 @@ class RunnerContractTests(unittest.TestCase):
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "compile"], compile_ok)[0], 0)
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "run"], compile_ok)[0], 1)
 
-    def test_missing_compiler_revision_is_rejected_for_evidence(self):
+    def test_require_revision_rejects_unpinned_metadata(self):
         fake = subprocess.CompletedProcess([], 0, "PASS:1\\n", "")
-        code, _, calls = check_run([
-            "--runner-command", COMMAND, "--require-revision",
-            "--compiler-revision", "unknown"], fake)
-        self.assertEqual((code, calls), (2, 0))
-        code, _, calls = check_run([
-            "--runner-command", COMMAND, "--require-revision",
-            "--compiler-revision", "f" * 40], fake)
+        for revision in ("unknown", "a" * 39, "g" * 40):
+            code, _, calls = check_run(
+                ["--runner-command", COMMAND, "--require-revision",
+                 "--compiler-revision", revision], fake)
+            self.assertEqual((code, calls), (2, 0))
+        code, _, calls = check_run(
+            ["--runner-command", COMMAND, "--require-revision",
+             "--compiler-revision", "a" * 40], fake)
         self.assertEqual((code, calls), (0, 1))
 
     def test_malformed_filter_fails_closed(self):
         code, output, calls = check_run(["--filter", "[", "--runner-command", COMMAND], None)
         self.assertEqual(code, 2)
         self.assertEqual(calls, 0)
+
+    def test_default_without_runner_fails_closed(self):
+        code, _, calls = check_run([], None)
+        self.assertEqual((code, calls), (2, 0))
+
+    def test_list_with_runner_is_rejected(self):
+        code, _, calls = check_run(["--list", "--runner-command", COMMAND], None)
+        self.assertEqual((code, calls), (2, 0))
+
+    def test_nonfinite_timeout_is_rejected(self):
+        for value in ("0", "-1", "nan", "inf", "-inf"):
+            code, _, calls = check_run(
+                ["--runner-command", COMMAND, "--timeout=" + value], None)
+            self.assertEqual((code, calls), (2, 0), value)
+
+    def test_report_records_fixture_hashes(self):
+        import json
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            report_path = Path(folder) / "evidence.json"
+            good = subprocess.CompletedProcess([], 0, "PASS:1\n", "")
+            code, _, calls = check_run(
+                ["--runner-command", COMMAND, "--report", str(report_path)], good)
+            self.assertEqual((code, calls), (0, 1))
+            report = json.loads(report_path.read_text())
+            self.assertEqual(report["inventory_total"], 1)
+            self.assertFalse(report["complete_catalog"])
+            self.assertIn("caller-supplied", report["provenance"])
+            self.assertEqual(len(report["results"][0]["source_sha256"]), 64)
+            self.assertTrue(report["results"][0]["inputs_unchanged"])
 
     def test_list_does_not_run_compiler(self):
         code, output, calls = check_run(["--list"], None)
