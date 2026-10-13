@@ -43,7 +43,7 @@ class RunnerContractTests(unittest.TestCase):
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "run"], compile_ok)[0], 1)
 
     def test_require_revision_rejects_unpinned_metadata(self):
-        fake = subprocess.CompletedProcess([], 0, "PASS:1\\n", "")
+        fake = subprocess.CompletedProcess([], 0, "PASS:1\n", "")
         for revision in ("unknown", "a" * 39, "g" * 40):
             code, _, calls = check_run(
                 ["--runner-command", COMMAND, "--require-revision",
