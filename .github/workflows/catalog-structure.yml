@@ -22,5 +22,7 @@ jobs:
         run: python3 -m unittest discover -s src/patterns -p 'test_run_examples.py' -v
       - name: Syntax hygiene self-tests
         run: python3 -m unittest discover -s src/patterns -p 'test_tip_syntax_hygiene.py' -v
+      - name: LLVM smoke-harness contract tests (mocked compiler plus synthetic Clang)
+        run: python3 -m unittest discover -s src/validation/llvm-scalar -p 'test_run_native.py' -v
       - name: Scope boundary
-        run: echo "Hygiene and structure only; this job neither builds Oreslang nor proves runtime correctness."
+        run: echo "Hygiene and structure only; this job runs Python harness tests and synthetic Clang only; no real Oreslang compiler is built or verified."

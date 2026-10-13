@@ -55,6 +55,8 @@ def main():
     ap.add_argument("--backend", default="unspecified", help="backend name for report")
     ap.add_argument("--mode", choices=("run", "compile"), default="run",
                     help="run compares stdout; compile only checks compiler exit 0")
+    ap.add_argument("--require-revision", action="store_true",
+                    help="Require a full 40-hex compiler commit SHA for provenance")
     ap.add_argument("--compiler-revision", default="unknown",
                     help="exact Java/LLVM commit SHA of the tested compiler")
     ap.add_argument("--timeout", type=float, default=40.0)
@@ -94,6 +96,9 @@ def main():
         return 2
     if sum(token.count("{source}") for token in argv_template) != 1:
         print("Runner command must contain {source} exactly once.", file=sys.stderr)
+        return 2
+    if args.require_revision and not re.fullmatch(r"[0-9a-fA-F]{40}", args.compiler_revision):
+        print("A full 40-character compiler revision is required", file=sys.stderr)
         return 2
     if not math.isfinite(args.timeout) or args.timeout <= 0:
         print("--timeout must be a finite positive number", file=sys.stderr)
@@ -139,6 +144,7 @@ def main():
         "compiler_revision": args.compiler_revision,
         "provenance": "caller-supplied labels; verify compiler revision independently",
         "command": args.runner_command,
+        "revision_format_verified": args.require_revision,
         "selected": len(selected), "inventory_total": len(fixtures),
         "complete_catalog": len(selected) == 70,
         "passed": passes, "failed": len(selected) - passes,

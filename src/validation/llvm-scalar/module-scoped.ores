@@ -1,0 +1,9 @@
+// Single named module and module-local function.
+define module Example as
+  fnc offset(int amount): int {
+    return amount + 2;
+  }
+  pub fnc main(): int {
+    return offset(40);
+  }
+end

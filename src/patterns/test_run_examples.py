@@ -42,6 +42,18 @@ class RunnerContractTests(unittest.TestCase):
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "compile"], compile_ok)[0], 0)
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "run"], compile_ok)[0], 1)
 
+    def test_require_revision_rejects_unpinned_metadata(self):
+        fake = subprocess.CompletedProcess([], 0, "PASS:1\n", "")
+        for revision in ("unknown", "a" * 39, "g" * 40):
+            code, _, calls = check_run(
+                ["--runner-command", COMMAND, "--require-revision",
+                 "--compiler-revision", revision], fake)
+            self.assertEqual((code, calls), (2, 0))
+        code, _, calls = check_run(
+            ["--runner-command", COMMAND, "--require-revision",
+             "--compiler-revision", "a" * 40], fake)
+        self.assertEqual((code, calls), (0, 1))
+
     def test_malformed_filter_fails_closed(self):
         code, output, calls = check_run(["--filter", "[", "--runner-command", COMMAND], None)
         self.assertEqual(code, 2)

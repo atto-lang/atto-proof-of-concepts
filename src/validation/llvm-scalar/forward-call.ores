@@ -1,0 +1,7 @@
+// Forward call to later declaration; expect exit status 42.
+pub fnc main(): int {
+  return combine(40, 2);
+}
+fnc combine(int a, int b): int {
+  return a + b;
+}
