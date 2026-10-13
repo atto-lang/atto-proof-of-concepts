@@ -1,0 +1,52 @@
+// Actual actor message ordering with an explicit cooperative suspension.
+// The first receive turn must finish before queued second mail begins.
+define actor Worker as
+  let int phase;
+
+  on_start(): void {
+    self.phase = 0;
+    return;
+  }
+
+  receive(ActorMail<String> mail): void {
+    if mail.value == "first" then
+      self.phase = 1;
+      self.send("before");
+      rt cooperate;
+      if self.phase != 1 then
+        self.send("interleaved");
+        return;
+      fi
+      self.phase = 2;
+      self.send("after");
+      return;
+    fi
+
+    if mail.value == "second" then
+      if self.phase == 2 then
+        self.send("second");
+      else
+        self.send("interleaved");
+      fi
+      self.end();
+    fi
+    return;
+  }
+end
+
+pub async routine main(): void {
+  val worker = spawn Worker();
+  await worker.get_ready();
+  worker.send("first");
+  worker.send("second");
+  val a = (await worker.outputs.next()).value.unwrap();
+  val b = (await worker.outputs.next()).value.unwrap();
+  val c = (await worker.outputs.next()).value.unwrap();
+  stdio.stdout.write(a.value);
+  stdio.stdout.write("|");
+  stdio.stdout.write(b.value);
+  stdio.stdout.write("|");
+  stdio.stdout.write(c.value);
+  await worker.get_done();
+  return;
+}
