@@ -58,7 +58,7 @@ class RunnerContractTests(unittest.TestCase):
     def test_nonfinite_timeout_is_rejected(self):
         for value in ("0", "-1", "nan", "inf", "-inf"):
             code, _, calls = check_run(
-                ["--runner-command", COMMAND, "--timeout", value], None)
+                ["--runner-command", COMMAND, "--timeout=" + value], None)
             self.assertEqual((code, calls), (2, 0), value)
 
     def test_report_records_fixture_hashes(self):
