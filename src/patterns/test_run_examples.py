@@ -9,7 +9,7 @@ from unittest import mock
 import run_examples
 
 CASE = run_examples.PATTERNS / "01-factory-method"
-FAKE = [(1, CASE, CASE / "example.ores", "PASS:1\\n")]
+FAKE = [(1, CASE, CASE / "example.ores", "PASS:1\n")]
 COMMAND = "python3 fake.py {source}"
 
 def check_run(args, result):
@@ -66,7 +66,7 @@ class RunnerContractTests(unittest.TestCase):
         import tempfile
         with tempfile.TemporaryDirectory() as folder:
             report_path = Path(folder) / "evidence.json"
-            good = subprocess.CompletedProcess([], 0, "PASS:1\\n", "")
+            good = subprocess.CompletedProcess([], 0, "PASS:1\n", "")
             code, _, calls = check_run(
                 ["--runner-command", COMMAND, "--report", str(report_path)], good)
             self.assertEqual((code, calls), (0, 1))
