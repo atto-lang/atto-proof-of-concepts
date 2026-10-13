@@ -10,7 +10,12 @@ fnc quotient_nonnegative(int numerator, int divisor): int {
   if numerator < divisor then return 0; fi
   return 1 + quotient_nonnegative(numerator - divisor, divisor);
 }
-fnc fahrenheit_to_celsius(int f): int { return quotient_nonnegative((f - 32) * 5, 9); }
+// Bounded input range in this PoC: handle negative Celsius by sign symmetry.
+fnc quotient_signed(int numerator, int divisor): int {
+  if numerator < 0 then return -quotient_nonnegative(-numerator, divisor); fi
+  return quotient_nonnegative(numerator, divisor);
+}
+fnc fahrenheit_to_celsius(int f): int { return quotient_signed((f - 32) * 5, 9); }
 fnc adapter(int temperature_f): int { return fahrenheit_to_celsius(temperature_f); }
 
 pub routine main(): void {
@@ -24,6 +29,10 @@ pub routine main(): void {
   fi
   if !(adapter(50) == 10) then
     stdio.stdout.println("FAIL:6:3");
+    return;
+  fi
+  if !(adapter(14) == -10) then
+    stdio.stdout.println("FAIL:6:4");
     return;
   fi
   stdio.stdout.println("PASS:6");
