@@ -8,7 +8,7 @@ All 70 numbered folders now contain an independently executable-intent native Or
 python3 src/patterns/run_examples.py --list
 ```
 
-This verifies source/oracle presence, numbering and simple structural assumptions. It marks examples **UNVERIFIED**; it is not compiler CI.
+This verifies source/oracle presence, numbering and simple structural assumptions. It marks examples **UNVERIFIED**; it is not compiler CI. Omitting `--runner-command` is now a failure unless `--list` was explicitly requested. Combining `--list` with a runner is an error, not a silent skip.
 
 ## Actual execution
 
@@ -18,6 +18,8 @@ python3 src/patterns/run_examples.py \
   --backend graalvm \
   --report pattern-graalvm.json
 ```
+
+JSON reports now bind each pattern and oracle to SHA-256 and fail if input files change during a run. `--backend` and `--compiler-revision` are user assertions, **not trusted attestation**; verify the actual checkout SHA in CI. Partial `--filter` runs are not marked as complete catalog coverage. Non-finite timeouts fail closed.
 
 The command is an **example placeholder**. Replace it with a working Java or LLVM compile-and-execute entrypoint. Arguments are split without a shell. The runner fails when compilation/execution exits nonzero, times out, or produces output different from the oracle. A green structural workflow never proves an Oreslang program compiled.
 
