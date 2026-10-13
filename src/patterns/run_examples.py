@@ -8,6 +8,7 @@ No shell is invoked; each file is run in its own process. Stdout and exit code
 must match the fixture exactly. Empty/missing expectations are errors.
 """
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -53,6 +54,7 @@ def main():
     ap.add_argument("--backend", default="unspecified", help="backend name for report")
     ap.add_argument("--mode", choices=("run", "compile"), default="run",
                     help="run compares stdout; compile only checks compiler exit 0")
+    ap.add_argument("--require-revision", action="store_true", help="Require exact 40-hex compiler SHA")
     ap.add_argument("--compiler-revision", default="unknown",
                     help="exact Java/LLVM commit SHA of the tested compiler")
     ap.add_argument("--timeout", type=float, default=40.0)
@@ -89,11 +91,15 @@ def main():
     if sum(token.count("{source}") for token in argv_template) != 1:
         print("Runner command must contain {source} exactly once.", file=sys.stderr)
         return 2
+    if args.require_revision and not re.fullmatch(r"[0-9a-fA-F]{40}", args.compiler_revision):
+        print("A full 40-character compiler commit SHA is required", file=sys.stderr)
+        return 2
     if args.timeout <= 0:
         print("--timeout must be positive", file=sys.stderr)
         return 2
     results = []
     for number, directory, source, expected in selected:
+        source_sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
         argv = [token.replace("{source}", str(source.resolve())) for token in argv_template]
         started = time.monotonic()
         try:
@@ -103,6 +109,7 @@ def main():
             ok = proc.returncode == 0 and (args.mode == "compile" or proc.stdout == expected)
             result = {
                 "pattern": directory.name, "backend": args.backend, "mode": args.mode,
+                "source_sha256": source_sha256,
                 "success": ok, "exit_code": proc.returncode,
                 "stdout": proc.stdout, "stderr": proc.stderr,
                 "expected_stdout": expected,
@@ -111,6 +118,7 @@ def main():
         except (subprocess.TimeoutExpired, OSError) as exc:
             result = {
                 "pattern": directory.name, "backend": args.backend, "mode": args.mode,
+                "source_sha256": source_sha256,
                 "success": False, "error": str(exc),
                 "seconds": round(time.monotonic() - started, 3),
             }
@@ -121,6 +129,7 @@ def main():
         "backend": args.backend, "mode": args.mode,
         "compiler_revision": args.compiler_revision,
         "command": args.runner_command,
+        "evidence_level": "compile" if args.mode == "compile" else "runtime",
         "selected": len(selected),
         "passed": passes, "failed": len(selected) - passes,
         "results": results,

@@ -1,6 +1,7 @@
 """Pattern-runner contract tests. No Oreslang backend is executed."""
 import contextlib
 import io
+import tempfile
 from pathlib import Path
 import subprocess
 import sys
@@ -13,11 +14,15 @@ COMMAND = "python3 fake.py {source}"
 
 def check_run(args, result):
     stdout = io.StringIO()
-    with mock.patch.object(run_examples, "discover", return_value=FAKE):
-        with mock.patch.object(sys, "argv", ["run_examples.py", *args]):
-            with mock.patch.object(run_examples.subprocess, "run", return_value=result) as runner:
-                with contextlib.redirect_stdout(stdout):
-                    exit_code = run_examples.main()
+    with tempfile.TemporaryDirectory() as tmp:
+        source = Path(tmp) / "example.ores"
+        source.write_text('pub routine main(): void {}', encoding="utf-8")
+        fixture = [(1, Path("01-factory-method"), source, "PASS:1\\n")]
+        with mock.patch.object(run_examples, "discover", return_value=fixture):
+            with mock.patch.object(sys, "argv", ["run_examples.py", *args]):
+                with mock.patch.object(run_examples.subprocess, "run", return_value=result) as runner:
+                    with contextlib.redirect_stdout(stdout):
+                        exit_code = run_examples.main()
     return exit_code, stdout.getvalue(), runner.call_count
 
 class RunnerContractTests(unittest.TestCase):
@@ -40,6 +45,17 @@ class RunnerContractTests(unittest.TestCase):
         compile_ok = subprocess.CompletedProcess([], 0, "", "")
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "compile"], compile_ok)[0], 0)
         self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "run"], compile_ok)[0], 1)
+
+    def test_missing_compiler_revision_is_rejected_for_evidence(self):
+        fake = subprocess.CompletedProcess([], 0, "PASS:1\\n", "")
+        code, _, calls = check_run([
+            "--runner-command", COMMAND, "--require-revision",
+            "--compiler-revision", "unknown"], fake)
+        self.assertEqual((code, calls), (2, 0))
+        code, _, calls = check_run([
+            "--runner-command", COMMAND, "--require-revision",
+            "--compiler-revision", "f" * 40], fake)
+        self.assertEqual((code, calls), (0, 1))
 
     def test_malformed_filter_fails_closed(self):
         code, output, calls = check_run(["--filter", "[", "--runner-command", COMMAND], None)
