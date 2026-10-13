@@ -8,6 +8,8 @@ No shell is invoked; each file is run in its own process. Stdout and exit code
 must match the fixture exactly. Empty/missing expectations are errors.
 """
 import argparse
+import hashlib
+import math
 import json
 from pathlib import Path
 import re
@@ -74,13 +76,17 @@ def main():
     if args.filter and not selected:
         print("No examples match --filter", file=sys.stderr)
         return 2
-    if args.list or not args.runner_command:
+    if args.list and args.runner_command:
+        print("--list cannot be combined with --runner-command", file=sys.stderr)
+        return 2
+    if args.list:
         for number, directory, _, _ in selected:
             print(f"UNVERIFIED {number:02d} {directory.name}")
         print(f"Inventory: {len(selected)} examples. No compiler/runtime execution performed.")
-        if not args.list and not args.runner_command:
-            print("Use --runner-command to run the examples.", file=sys.stderr)
         return 0
+    if not args.runner_command:
+        print("Missing --runner-command: use --list for inventory only", file=sys.stderr)
+        return 2
     try:
         argv_template = shlex.split(args.runner_command)
     except ValueError as exc:
@@ -89,20 +95,30 @@ def main():
     if sum(token.count("{source}") for token in argv_template) != 1:
         print("Runner command must contain {source} exactly once.", file=sys.stderr)
         return 2
-    if args.timeout <= 0:
-        print("--timeout must be positive", file=sys.stderr)
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
+        print("--timeout must be a finite positive number", file=sys.stderr)
         return 2
     results = []
     for number, directory, source, expected in selected:
+        # Evidence binds the tested fixture bytes; compiler labels are untrusted.
+        source_sha = hashlib.sha256(source.read_bytes()).hexdigest()
+        oracle_sha = hashlib.sha256((directory / "expected.stdout").read_bytes()).hexdigest()
         argv = [token.replace("{source}", str(source.resolve())) for token in argv_template]
         started = time.monotonic()
         try:
             proc = subprocess.run(argv, cwd=ROOT, capture_output=True,
                                   text=True, encoding="utf-8", errors="replace",
                                   timeout=args.timeout, check=False)
-            ok = proc.returncode == 0 and (args.mode == "compile" or proc.stdout == expected)
+            inputs_unchanged = (
+                source.is_file() and (directory / "expected.stdout").is_file()
+                and hashlib.sha256(source.read_bytes()).hexdigest() == source_sha
+                and hashlib.sha256((directory / "expected.stdout").read_bytes()).hexdigest() == oracle_sha
+            )
+            ok = proc.returncode == 0 and inputs_unchanged and (args.mode == "compile" or proc.stdout == expected)
             result = {
                 "pattern": directory.name, "backend": args.backend, "mode": args.mode,
+                "source_sha256": source_sha, "oracle_sha256": oracle_sha,
+                "inputs_unchanged": inputs_unchanged,
                 "success": ok, "exit_code": proc.returncode,
                 "stdout": proc.stdout, "stderr": proc.stderr,
                 "expected_stdout": expected,
@@ -111,6 +127,7 @@ def main():
         except (subprocess.TimeoutExpired, OSError) as exc:
             result = {
                 "pattern": directory.name, "backend": args.backend, "mode": args.mode,
+                "source_sha256": source_sha, "oracle_sha256": oracle_sha,
                 "success": False, "error": str(exc),
                 "seconds": round(time.monotonic() - started, 3),
             }
@@ -120,13 +137,19 @@ def main():
     report = {
         "backend": args.backend, "mode": args.mode,
         "compiler_revision": args.compiler_revision,
+        "provenance": "caller-supplied labels; verify compiler revision independently",
         "command": args.runner_command,
-        "selected": len(selected),
+        "selected": len(selected), "inventory_total": len(fixtures),
+        "complete_catalog": len(selected) == 70,
         "passed": passes, "failed": len(selected) - passes,
         "results": results,
     }
     if args.report:
-        Path(args.report).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        try:
+            Path(args.report).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        except OSError as exc:
+            print(f"Failed to write evidence report: {exc}", file=sys.stderr)
+            return 2
     print(f'Executed {len(selected)}; passed {passes}; failed {len(selected) - passes}')
     return 0 if passes == len(selected) else 1
 

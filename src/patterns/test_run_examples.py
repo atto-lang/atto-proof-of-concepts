@@ -8,7 +8,8 @@ import unittest
 from unittest import mock
 import run_examples
 
-FAKE = [(1, Path("01-factory-method"), Path("example.ores"), "PASS:1\n")]
+CASE = run_examples.PATTERNS / "01-factory-method"
+FAKE = [(1, CASE, CASE / "example.ores", "PASS:1\n")]
 COMMAND = "python3 fake.py {source}"
 
 def check_run(args, result):
@@ -45,6 +46,36 @@ class RunnerContractTests(unittest.TestCase):
         code, output, calls = check_run(["--filter", "[", "--runner-command", COMMAND], None)
         self.assertEqual(code, 2)
         self.assertEqual(calls, 0)
+
+    def test_default_without_runner_fails_closed(self):
+        code, _, calls = check_run([], None)
+        self.assertEqual((code, calls), (2, 0))
+
+    def test_list_with_runner_is_rejected(self):
+        code, _, calls = check_run(["--list", "--runner-command", COMMAND], None)
+        self.assertEqual((code, calls), (2, 0))
+
+    def test_nonfinite_timeout_is_rejected(self):
+        for value in ("0", "-1", "nan", "inf", "-inf"):
+            code, _, calls = check_run(
+                ["--runner-command", COMMAND, "--timeout=" + value], None)
+            self.assertEqual((code, calls), (2, 0), value)
+
+    def test_report_records_fixture_hashes(self):
+        import json
+        import tempfile
+        with tempfile.TemporaryDirectory() as folder:
+            report_path = Path(folder) / "evidence.json"
+            good = subprocess.CompletedProcess([], 0, "PASS:1\n", "")
+            code, _, calls = check_run(
+                ["--runner-command", COMMAND, "--report", str(report_path)], good)
+            self.assertEqual((code, calls), (0, 1))
+            report = json.loads(report_path.read_text())
+            self.assertEqual(report["inventory_total"], 1)
+            self.assertFalse(report["complete_catalog"])
+            self.assertIn("caller-supplied", report["provenance"])
+            self.assertEqual(len(report["results"][0]["source_sha256"]), 64)
+            self.assertTrue(report["results"][0]["inputs_unchanged"])
 
     def test_list_does_not_run_compiler(self):
         code, output, calls = check_run(["--list"], None)
