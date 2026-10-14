@@ -99,9 +99,9 @@ class PrototypeInventoryTests(unittest.TestCase):
     def test_reject_comment_only_pass_marker(self):
         with tempfile.TemporaryDirectory() as path:
             name = "oreslang-testkit"
-            body = ('pub routine main(): void {\\n'
-                    '  // stdio.stdout.println("PASS:' + name + '");\\n'
-                    '  stdio.stdout.println("FAIL:' + name + ':1");\\n'
+            body = ('pub routine main(): void {\n'
+                    '  // stdio.stdout.println("PASS:' + name + '");\n'
+                    '  stdio.stdout.println("FAIL:' + name + ':1");\n'
                     '}')
             fixture(Path(path), source=body)
             with self.assertRaisesRegex(ValueError, "active PASS"):
@@ -110,9 +110,9 @@ class PrototypeInventoryTests(unittest.TestCase):
     def test_reject_comment_only_fail_marker(self):
         with tempfile.TemporaryDirectory() as path:
             name = "oreslang-testkit"
-            body = ('pub routine main(): void {\\n'
-                    '  // stdio.stdout.println("FAIL:' + name + ':1");\\n'
-                    '  stdio.stdout.println("PASS:' + name + '");\\n'
+            body = ('pub routine main(): void {\n'
+                    '  // stdio.stdout.println("FAIL:' + name + ':1");\n'
+                    '  stdio.stdout.println("PASS:' + name + '");\n'
                     '}')
             fixture(Path(path), source=body)
             with self.assertRaisesRegex(ValueError, "active FAIL"):
@@ -177,7 +177,7 @@ class PrototypeInventoryTests(unittest.TestCase):
             script.write_text('import sys\nfrom pathlib import Path\n'
                               'p=Path(sys.argv[1])\n'
                               'if p.parent.name == "oreslang-alpha":\n'
-                              '  dst=p.parent.parent/"oreslang-beta"/"example.ores"\\n'
+                              '  dst=p.parent.parent/"oreslang-beta"/"example.ores"\n'
                               '  dst.write_text(dst.read_text()+"\\n// tampered")\n'
                               'print("PASS:"+p.parent.name)\n')
             cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
