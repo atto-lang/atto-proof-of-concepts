@@ -132,12 +132,13 @@ class PrototypeInventoryTests(unittest.TestCase):
             root = Path(path)
             folder = fixture(root)
             script = root / "mutator.py"
-            script.write_text('import sys\nfrom pathlib import Path\np=Path(sys.argv[1])\np.write_text(p.read_text()+"\\\n// changed")\nprint("PASS:"+p.parent.name)\n')
+            script.write_text('import sys\nfrom pathlib import Path\np=Path(sys.argv[1])\np.write_text(p.read_text()+"\\n// changed")\nprint("PASS:"+p.parent.name)\n')
             command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
             argv = ["runner", "--runner-command", command]
             with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
                 with contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(subject.main(), 1)
+            self.assertIn("// changed", (folder / "example.ores").read_text())
 
 if __name__ == "__main__":
     unittest.main()
