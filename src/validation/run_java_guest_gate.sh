@@ -24,15 +24,31 @@ fi
 command -v realpath >/dev/null || { echo 'realpath is required' >&2; exit 2; }
 # Reject protected paths before mkdir can create files within source.
 evidence=$(realpath -m -- "$evidence")
-if [[ "$evidence" == "$poc_source" || "$evidence" == "$poc_source"/* ||
-      "$evidence" == "$java_source" || "$evidence" == "$java_source"/* ]]; then
-  echo 'evidence must be outside protected source trees' >&2; exit 2
-fi
+check_evidence_path() {
+  local meta source
+  if [[ "$evidence" == "$poc_source" || "$evidence" == "$poc_source"/* ||
+        "$evidence" == "$java_source" || "$evidence" == "$java_source"/* ]]; then
+    echo 'evidence must be outside protected source trees' >&2; exit 2
+  fi
+  # A funded CI mirror may store a source subtree inside a larger worktree.
+  # Protect that *outer* worktree's Git database as well as both source roots.
+  for source in "$poc_source" "$java_source"; do
+    meta=$(git -C "$source" rev-parse --absolute-git-dir) || {
+      echo 'cannot identify Git metadata for source checkout' >&2; exit 2;
+    }
+    meta=$(realpath -m -- "$meta")
+    if [[ "$evidence" == "$meta" || "$evidence" == "$meta"/* ]]; then
+      echo 'evidence must be outside Git metadata' >&2; exit 2
+    fi
+  done
+}
+check_evidence_path
 mkdir -p -- "$evidence"
 evidence=$(cd -- "$evidence" && pwd -P)
-if [[ "$evidence" == "$poc_source" || "$evidence" == "$poc_source"/* ||
-      "$evidence" == "$java_source" || "$evidence" == "$java_source"/* ]]; then
-  echo 'evidence resolves inside protected source trees' >&2; exit 2
+check_evidence_path
+# Fail closed on stale or mixed evidence from an earlier build.
+if [[ -n "$(find "$evidence" -mindepth 1 -print -quit)" ]]; then
+  echo 'evidence directory must be empty before a new qualification' >&2; exit 2
 fi
 command -v mvn >/dev/null || { echo 'mvn is required' >&2; exit 2; }
 command -v java >/dev/null || { echo 'java is required' >&2; exit 2; }

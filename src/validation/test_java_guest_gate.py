@@ -72,6 +72,30 @@ class JavaGuestGatePreflightTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertFalse(dest.exists())
 
+    def test_nonempty_evidence_directory_rejected_before_build(self):
+        dest = self.poc.parent / "external-evidence"
+        dest.mkdir()
+        (dest / "java-runtime.json").write_text('{"faked":true}\n')
+        result = self.run_gate(dest)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("evidence directory must be empty", result.stderr)
+        self.assertEqual((dest / "java-runtime.json").read_text(), '{"faked":true}\n')
+
+    def test_linked_worktree_git_metadata_is_not_an_evidence_destination(self):
+        # The actual Git database lives outside this linked worktree's source
+        # root, as in a mirror hosted inside a larger CI repository.
+        linked = self.poc.parent / "linked-poc"
+        git(self.poc, "worktree", "add", "-q", "-b", "linked-validation", str(linked))
+        git_dir = Path(git(linked, "rev-parse", "--absolute-git-dir"))
+        dest = git_dir / "evidence"
+        result = subprocess.run(
+            ["bash", str(linked / "src" / "validation" / "run_java_guest_gate.sh"),
+             str(self.java), self.jtree, self.ptree, "a" * 40, str(dest)],
+            capture_output=True, text=True, check=False)
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("outside Git metadata", result.stderr)
+        self.assertFalse(dest.exists())
+
     def test_wrong_tree_rejected_before_creating_evidence(self):
         dest = self.poc.parent / "external-evidence"
         result = subprocess.run(
