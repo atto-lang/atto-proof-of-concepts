@@ -6,6 +6,8 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parent
+if sys.flags.optimize:
+    raise RuntimeError("optimized Python disables reference-oracle assertions")
 EXPECTED = {"actor-banking", "graph-editor", "async-http-server",
             "embedded-kv-database", "actor-scheduler", "self-hosted-interpreter"}
 

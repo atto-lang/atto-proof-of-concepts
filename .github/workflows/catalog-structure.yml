@@ -18,6 +18,10 @@ jobs:
         run: python3 src/libraries/check_prototypes.py --list
       - name: Six project reference-oracle scenarios (Python only)
         run: python3 src/projects/check_scenarios.py
+      - name: Library catalog harness regression tests (Python only)
+        run: python3 -m unittest discover -s src/libraries -p 'test_check_prototypes.py' -v
+      - name: Project reference-oracle regression tests (Python only)
+        run: python3 -m unittest discover -s src/projects -p 'test_check_scenarios.py' -v
       - name: Source/oracle inventory
         run: python3 src/patterns/run_examples.py --list
       - name: Pinned Java grammar source hygiene

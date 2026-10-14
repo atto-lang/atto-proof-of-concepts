@@ -10,6 +10,7 @@ import subprocess
 import sys
 
 HERE = Path(__file__).resolve().parent
+EXPECTED_NAMES = frozenset(["oreslang-vec","oreslang-linked-list","oreslang-deque","oreslang-hashmap","oreslang-trees","oreslang-graphs","oreslang-arena","oreslang-btree","oreslang-trie","oreslang-persistent","oreslang-interval-tree","oreslang-iter","oreslang-closures","oreslang-parser-combinators","oreslang-ast","oreslang-interpreter","oreslang-di","oreslang-cache","oreslang-serialize","oreslang-regex","oreslang-event-log","oreslang-compiler","oreslang-bytecode-vm","oreslang-dop","oreslang-property","oreslang-fuzz","oreslang-modelcheck","oreslang-bench","oreslang-scheduler","oreslang-work-stealing","oreslang-channels","oreslang-testkit"])
 
 def inventory(root=HERE):
     cases = []
@@ -29,6 +30,9 @@ def inventory(root=HERE):
         if f"PASS:{d.name}" not in body or f"FAIL:{d.name}:" not in body:
             raise ValueError(f"{d.name}: missing visible self-test markers")
         cases.append((d.name, s, e, expected))
+    actual = {name for name, _, _, _ in cases}
+    if root == HERE and actual != EXPECTED_NAMES:
+        raise ValueError(f"prototype inventory drift: missing={sorted(EXPECTED_NAMES - actual)}, unexpected={sorted(actual - EXPECTED_NAMES)}")
     if not cases:
         raise ValueError("empty library prototype inventory")
     return cases
