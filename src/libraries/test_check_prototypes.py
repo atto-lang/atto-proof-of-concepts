@@ -92,7 +92,7 @@ class PrototypeInventoryTests(unittest.TestCase):
 
     def test_reject_comment_only_entrypoint(self):
         with tempfile.TemporaryDirectory() as path:
-            fixture(Path(path), source="// pub routine main(): void {}\\nfnc probe(): int { return 1; }")
+            fixture(Path(path), source="// pub routine main(): void {}\nfnc probe(): int { return 1; }")
             with self.assertRaisesRegex(ValueError, "active public main"):
                 subject.inventory(Path(path))
 
@@ -160,7 +160,7 @@ class PrototypeInventoryTests(unittest.TestCase):
             root = Path(path)
             fixture(root)
             script = root / "noisy.py"
-            script.write_text('print("x" * 100)\\n')
+            script.write_text('print("x" * 100)\n')
             cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
             argv = ["runner", "--runner-command", cmd,
                     "--mode", "compile", "--max-output-bytes", "32"]
@@ -174,12 +174,12 @@ class PrototypeInventoryTests(unittest.TestCase):
             fixture(root, "oreslang-alpha")
             other = fixture(root, "oreslang-beta")
             script = root / "contaminate.py"
-            script.write_text('import sys\\nfrom pathlib import Path\\n'
-                              'p=Path(sys.argv[1])\\n'
-                              'if p.parent.name == "oreslang-alpha":\\n'
+            script.write_text('import sys\nfrom pathlib import Path\n'
+                              'p=Path(sys.argv[1])\n'
+                              'if p.parent.name == "oreslang-alpha":\n'
                               '  dst=p.parent.parent/"oreslang-beta"/"example.ores"\\n'
-                              '  dst.write_text(dst.read_text()+"\\\\n// tampered")\\n'
-                              'print("PASS:"+p.parent.name)\\n')
+                              '  dst.write_text(dst.read_text()+"\\n// tampered")\n'
+                              'print("PASS:"+p.parent.name)\n')
             cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
             argv = ["runner", "--runner-command", cmd]
             with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
@@ -192,7 +192,7 @@ class PrototypeInventoryTests(unittest.TestCase):
             root = Path(path)
             folder = fixture(root)
             script = root / "mutator.py"
-            script.write_text('import sys\nfrom pathlib import Path\np=Path(sys.argv[1])\np.write_text(p.read_text()+"\\n// changed")\nprint("PASS:"+p.parent.name)\n')
+            script.write_text('import sys\nfrom pathlib import Path\np=Path(sys.argv[1])\np.write_text(p.read_text()+"\n// changed")\nprint("PASS:"+p.parent.name)\n')
             command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
             argv = ["runner", "--runner-command", command]
             with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):

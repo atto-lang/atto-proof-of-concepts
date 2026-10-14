@@ -55,11 +55,11 @@ def inventory(root=HERE):
         if depth != 0:
             raise ValueError(f"{d.name}: unmatched opening brace")
         print_calls = (body[m.end():] for m in re.finditer(
-            r"\bstdio\s*\.\s*stdout\s*\.\s*println\s*\(\s*", masked))
+            r"\bstdio\s*\.\s*stdout\s*\.\s*println\s*\(", masked))
         calls = list(print_calls)
-        if not any(re.match(r'"PASS:' + re.escape(d.name) + r'"\s*\)', c) for c in calls):
+        if not any(re.match(r'\s*"PASS:' + re.escape(d.name) + r'"\s*\)', c) for c in calls):
             raise ValueError(f"{d.name}: missing active PASS print")
-        if not any(re.match(r'"FAIL:' + re.escape(d.name) + r':[^"]+"\s*\)', c) for c in calls):
+        if not any(re.match(r'\s*"FAIL:' + re.escape(d.name) + r':[^"]+"\s*\)', c) for c in calls):
             raise ValueError(f"{d.name}: missing active FAIL print")
         cases.append((d.name, s, e, expected))
     actual = {name for name, _, _, _ in cases}
