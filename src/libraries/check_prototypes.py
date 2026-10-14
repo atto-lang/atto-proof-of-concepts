@@ -17,11 +17,15 @@ EXPECTED_NAMES = frozenset(["oreslang-vec","oreslang-linked-list","oreslang-dequ
 def inventory(root=HERE):
     cases = []
     for d in sorted(root.glob("oreslang-*")):
+        if d.is_symlink():
+            raise ValueError(f"{d.name}: symlink directories are not allowed")
         if not d.is_dir():
             continue
         s, e = d / "example.ores", d / "expected.stdout"
         if not s.exists() and not e.exists():
             continue
+        if s.is_symlink() or e.is_symlink():
+            raise ValueError(f"{d.name}: symlink fixtures are not allowed")
         if not s.is_file() or not e.is_file():
             raise ValueError(f"{d.name}: missing source or oracle")
         body, expected = s.read_text(), e.read_text()
@@ -56,6 +60,8 @@ def main():
     p.add_argument("--runner-command", help="argv, one {source} placeholder, no shell")
     p.add_argument("--backend", default="unspecified")
     p.add_argument("--compiler-revision", default="unknown")
+    p.add_argument("--require-revision", action="store_true",
+                   help="require full 40-hex caller-supplied compiler checkout revision")
     p.add_argument("--timeout", type=float, default=40)
     p.add_argument("--report")
     a = p.parse_args()
@@ -72,6 +78,9 @@ def main():
             raise ValueError("use --list, or pass a real --runner-command")
         if not math.isfinite(a.timeout) or a.timeout <= 0:
             raise ValueError("timeout must be finite positive")
+        if a.require_revision and (len(a.compiler_revision) != 40 or
+                                  any(ch not in "0123456789abcdefABCDEF" for ch in a.compiler_revision)):
+            raise ValueError("require full 40-hex compiler revision")
         argv = shlex.split(a.runner_command)
         if sum(x.count("{source}") for x in argv) != 1:
             raise ValueError("runner must contain {source} exactly once")
@@ -95,6 +104,7 @@ def main():
             Path(a.report).write_text(json.dumps(dict(backend=a.backend,
                 compiler_revision=a.compiler_revision,
                 provenance="caller-supplied labels; verify separately",
+                revision_format_verified=a.require_revision,
                 results=results), indent=2)+"\n")
         return 0 if all(item["success"] for item in results) else 1
     except (ValueError, OSError) as exc:

@@ -44,3 +44,5 @@ Complete library work still needs API/implementation, negative compiler cases, r
 ### Lexical hygiene gate
 
 Library inventory now applies the existing Java-tip conservative lexical checker to every library source. This rejects C-style `&&` / `||` operators and unterminated source strings/comments but is still **not compiler parsing**. `--list` remains explicitly structural-only.
+
+The inventory rejects symlink library directories and symlink source/oracle fixtures. Execution mode optionally requires a full 40-character hexadecimal compiler revision via `--require-revision`; **format validation does not attest the compiler binary**.

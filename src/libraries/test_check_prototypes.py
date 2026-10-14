@@ -53,6 +53,24 @@ class PrototypeInventoryTests(unittest.TestCase):
             p.write_text(p.read_text() + "\nfnc broken(): bool { return true && false; }")
             with self.assertRaisesRegex(ValueError, "lexical hygiene"):
                 subject.inventory(Path(path))
+    def test_reject_symlink_oracle(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            d = fixture(root)
+            target = root / "external.txt"
+            target.write_text("PASS:oreslang-testkit\\n")
+            (d / "expected.stdout").unlink()
+            (d / "expected.stdout").symlink_to(target)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                subject.inventory(root)
+    def test_reject_symlink_library_directory(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            outside = root / "other"
+            outside.mkdir()
+            (root / "oreslang-evil").symlink_to(outside, target_is_directory=True)
+            with self.assertRaisesRegex(ValueError, "symlink"):
+                subject.inventory(root)
     def test_reject_missing_actual_pass_print(self):
         with tempfile.TemporaryDirectory() as path:
             d = fixture(Path(path))
