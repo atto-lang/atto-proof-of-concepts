@@ -58,15 +58,15 @@ fi
 # path is never acceptable just because Git's normal status is quiet.
 declare -A head_entries=()
 while IFS= read -r -d '' record; do
-  metadata=\${record%%$'\t'*}
-  relative=\${record#*$'\t'}
+  metadata=${record%%$'\t'*}
+  relative=${record#*$'\t'}
   read -r mode object_type object <<< "$metadata"
   if [[ "$object_type" != 'blob' ]]; then
     echo "HEAD contains unsupported non-blob: $relative" >&2; exit 1
   fi
   head_entries["$relative"]="$mode $object"
 done < <(git -C "$repo" ls-tree -r -z HEAD -- "$scope")
-if (( \${#head_entries[@]} == 0 )); then
+if (( ${#head_entries[@]} == 0 )); then
   echo "HEAD contains no source blobs at $scope" >&2; exit 1
 fi
 # Git diff/status honor assume-unchanged and skip-worktree. Independently
