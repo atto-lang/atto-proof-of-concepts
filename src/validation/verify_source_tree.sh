@@ -73,7 +73,6 @@ while IFS= read -r -d '' record; do
   if [[ "${head_entries[$relative]-}" != "$mode $object" ]]; then
     echo "Git index differs from HEAD tree: $relative" >&2; exit 1
   fi
-  unset 'head_entries[$relative]'
   physical="$repo/$relative"
   if [[ ! -f "$physical" || -L "$physical" ]]; then
     echo "source file missing, nonregular, or symlink: $relative" >&2; exit 1
@@ -93,8 +92,8 @@ done < <(git -C "$repo" ls-files --stage -z -- "$scope")
 if (( tracked == 0 )); then
   echo "empty tracked source subtree: $scope" >&2; exit 1
 fi
-if (( ${#head_entries[@]} != 0 )); then
-  echo "Git index omits a committed HEAD source path" >&2; exit 1
+if (( tracked != ${#head_entries[@]} )); then
+  echo "Git index path count differs from committed HEAD source tree" >&2; exit 1
 fi
 # Ordinary untracked and ignored contents require separate queries.
 while IFS= read -r -d '' unexpected; do
