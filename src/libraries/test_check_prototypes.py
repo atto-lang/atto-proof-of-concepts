@@ -80,7 +80,7 @@ class PrototypeInventoryTests(unittest.TestCase):
             d = fixture(Path(path))
             p = d / "example.ores"
             p.write_text(p.read_text().replace("stdio.stdout.println", "stdout.fake_print"))
-            with self.assertRaisesRegex(ValueError, "missing PASS print"):
+            with self.assertRaisesRegex(ValueError, "missing active PASS print"):
                 subject.inventory(Path(path))
     def test_reject_unterminated_comment(self):
         with tempfile.TemporaryDirectory() as path:
