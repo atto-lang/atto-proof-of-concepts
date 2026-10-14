@@ -68,3 +68,7 @@ A `--report` destination that resolves to a source/oracle fixture (including a h
 ### Identity-based fail-closed admission
 
 The execution harness now pins the source/oracle content hash *and* regular-file identity (device, inode and mode), not just bytes. A replaced, symlinked or chmod-modified fixture is rejected even if its text is identical. If an input drifts before a given invocation, the runner does not execute that case. This is protection against persistent changes between checks, **not a sandbox or cryptographic attestation against a cooperating malicious runner**.
+
+### Bounded subprocess execution
+
+The runner uses POSIX process groups and nonblocking pipes to enforce stdout/stderr limits **while a process is running**, rather than after accumulating unbounded temporary files. Output exceeding the limit causes process-group termination. Timeouts also terminate the process group, including non-detached children. This is **not** a sandbox against intentionally detached processes, privilege changes, or hostile toolchains. In `--mode run`, stderr must be empty unless `--allow-stderr` is explicitly specified; compile-only mode still accepts compiler diagnostic stderr, subject to byte limits.

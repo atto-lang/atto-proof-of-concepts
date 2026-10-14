@@ -275,6 +275,46 @@ class PrototypeInventoryTests(unittest.TestCase):
                     self.assertEqual(subject.main(), 1)
             self.assertFalse(marker.exists(), "changed input unexpectedly executed")
 
+    def test_stderr_fails_runtime_unless_explicitly_allowed(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            fixture(root)
+            script = root / "warn.py"
+            script.write_text('import sys\n'
+                              'print("PASS:oreslang-testkit")\n'
+                              'print("unexpected stderr", file=sys.stderr)\n')
+            cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            selection = subject.inventory(root)
+            with patch.object(subject, "inventory", return_value=selection):
+                with patch.object(sys, "argv", ["runner", "--runner-command", cmd]):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(subject.main(), 1)
+                with patch.object(sys, "argv", ["runner", "--runner-command", cmd, "--allow-stderr"]):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(subject.main(), 0)
+
+    def test_live_output_cap_kills_noisy_runner(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            fixture(root)
+            script = root / "noisy.py"
+            script.write_text('import sys,time\n'
+                              'sys.stdout.write("X"*16384)\n'
+                              'sys.stdout.flush()\n'
+                              'time.sleep(5)\n')
+            report = root / "report.json"
+            cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", cmd,
+                    "--mode", "compile", "--max-output-bytes", "32",
+                    "--timeout", "2", "--report", str(report)]
+            with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(subject.main(), 1)
+            import json
+            item = json.loads(report.read_text())["results"][0]
+            self.assertTrue(item["output_truncated"], item)
+            self.assertLessEqual(item["stdout_bytes"], 33)
+
     def test_execution_rejects_mutated_source(self):
         with tempfile.TemporaryDirectory() as path:
             root = Path(path)

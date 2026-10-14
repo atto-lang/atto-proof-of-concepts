@@ -4,14 +4,17 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
+import selectors
+import signal
 import runpy
 import stat
 from pathlib import Path
 import shlex
 import subprocess
 import sys
-import tempfile
+import time
 
 HERE = Path(__file__).resolve().parent
 GRAMMAR = runpy.run_path(str(HERE.parent / "patterns" / "tip_syntax_hygiene.py"))
@@ -89,6 +92,74 @@ def unchanged(path, original):
     except (OSError, ValueError):
         return False
 
+def bounded_run(argv, cwd, timeout, max_bytes):
+    """POSIX subprocess with live stdout/stderr caps and group-wide termination.
+
+    Caller-provided runner remains untrusted. This is NOT an OS sandbox or a
+    guarantee against subprocesses that deliberately detach from their group.
+    """
+    if os.name != "posix":
+        raise OSError("bounded runner requires a POSIX process-group capable host")
+    proc = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            start_new_session=True)
+    sel = selectors.DefaultSelector()
+    output = [bytearray(), bytearray()]
+    deadline = time.monotonic() + timeout
+    reason = None
+    try:
+        for i, stream in enumerate((proc.stdout, proc.stderr)):
+            os.set_blocking(stream.fileno(), False)
+            sel.register(stream, selectors.EVENT_READ, data=i)
+        while sel.get_map():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                reason = "timeout"
+                break
+            events = sel.select(remaining)
+            if not events:
+                reason = "timeout"
+                break
+            for key, _ in events:
+                i = key.data
+                data = os.read(key.fileobj.fileno(),
+                               min(65536, max_bytes + 1 - len(output[i])))
+                if not data:
+                    sel.unregister(key.fileobj)
+                    continue
+                output[i].extend(data)
+                if len(output[i]) > max_bytes:
+                    reason = "output limit"
+                    break
+            if reason:
+                break
+        if reason is None:
+            remaining = max(deadline - time.monotonic(), 0)
+            try:
+                proc.wait(timeout=remaining)
+            except subprocess.TimeoutExpired:
+                reason = "timeout"
+        if reason:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+            if reason == "timeout":
+                raise subprocess.TimeoutExpired(argv, timeout)
+        return (proc.returncode, bytes(output[0]), bytes(output[1]),
+                reason == "output limit")
+    finally:
+        sel.close()
+        for pipe in (proc.stdout, proc.stderr):
+            pipe.close()
+        if proc.poll() is None:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            proc.wait()
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--list", action="store_true")
@@ -103,6 +174,8 @@ def main():
     p.add_argument("--timeout", type=float, default=40)
     p.add_argument("--max-output-bytes", type=int, default=65536,
                    help="per-stream byte limit for captured stdout/stderr")
+    p.add_argument("--allow-stderr", action="store_true",
+                   help="explicitly permit stderr in run mode; default fails closed")
     p.add_argument("--report")
     a = p.parse_args()
     try:
@@ -158,23 +231,17 @@ def main():
                 continue
             cmd = [x.replace("{source}", str(source.resolve())) for x in argv]
             try:
-                with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
-                    proc = subprocess.run(cmd, cwd=HERE.parent.parent, stdout=out,
-                                          stderr=err, timeout=a.timeout, check=False)
-                    stdout_bytes, stderr_bytes = out.tell(), err.tell()
-                    out.seek(0)
-                    err.seek(0)
-                    raw_stdout = out.read(a.max_output_bytes + 1)
-                    raw_stderr = err.read(a.max_output_bytes + 1)
-                oversized = stdout_bytes > a.max_output_bytes or stderr_bytes > a.max_output_bytes
-                actual = raw_stdout.decode("utf-8", errors="replace")
+                returncode, raw_stdout, raw_stderr, oversized = bounded_run(
+                    cmd, HERE.parent.parent, a.timeout, a.max_output_bytes)
                 stable = unchanged(source, sh) and unchanged(oracle, eh)
-                ok = (not oversized and stable and proc.returncode == 0
+                stderr_ok = a.mode == "compile" or a.allow_stderr or not raw_stderr
+                ok = (not oversized and stable and returncode == 0 and stderr_ok
                       and (a.mode == "compile" or raw_stdout == expected.encode("utf-8")))
-                item = dict(name=name, success=ok, mode=a.mode, returncode=proc.returncode,
+                item = dict(name=name, success=ok, mode=a.mode, returncode=returncode,
                             inputs_unchanged=stable, output_truncated=oversized,
-                            stdout_bytes=stdout_bytes, stderr_bytes=stderr_bytes,
-                            stdout=actual, stderr=raw_stderr.decode("utf-8", errors="replace"))
+                            stdout_bytes=len(raw_stdout), stderr_bytes=len(raw_stderr),
+                            stdout=raw_stdout.decode("utf-8", errors="replace"),
+                            stderr=raw_stderr.decode("utf-8", errors="replace"))
             except (OSError, subprocess.TimeoutExpired) as exc:
                 item = dict(name=name, success=False, mode=a.mode, error=str(exc))
             item.update(source_sha256=sh[0], oracle_sha256=eh[0])
@@ -199,6 +266,7 @@ def main():
                 compiler_revision=a.compiler_revision,
                 provenance="caller-supplied labels; verify separately",
                 revision_format_verified=a.require_revision,
+                allow_stderr=a.allow_stderr,
                 mode=a.mode, selected=len(cases), inventory_total=len(all_cases),
                 complete_catalog=len(cases)==len(all_cases),
                 catalog_inputs_unchanged=catalog_unchanged,
