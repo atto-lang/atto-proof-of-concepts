@@ -20,6 +20,8 @@ jobs:
         run: python3 src/projects/check_scenarios.py
       - name: Library catalog harness regression tests (Python only)
         run: python3 -m unittest discover -s src/libraries -p 'test_check_prototypes.py' -v
+      - name: Independent JS project reference check (Node, not native)
+        run: node src/projects/check_scenarios.mjs
       - name: Project reference-oracle regression tests (Python only)
         run: python3 -m unittest discover -s src/projects -p 'test_check_scenarios.py' -v
       - name: Source/oracle inventory

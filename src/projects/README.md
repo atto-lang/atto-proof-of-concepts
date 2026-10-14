@@ -12,3 +12,5 @@ These combine libraries and design patterns to stress feature interactions. All 
 ## New deterministic scenarios
 
 All six projects now have a [SCENARIOS.md](actor-banking/SCENARIOS.md) style specification and a machine-readable `scenario.json` that can be checked by running `python3 src/projects/check_scenarios.py`. These are small **Python reference state machines**, not native Oreslang integration implementations, compiler evidence, or thread-safety proofs.
+
+An additional independent JavaScript state-machine checker is available via `node src/projects/check_scenarios.mjs`. Run both JS and Python oracles: agreement reduces correlated fixture mistakes, but neither is evidence of native Oreslang behavior.
