@@ -47,7 +47,10 @@ mvn -B -ntp -q -f "$java_source/pom.xml" -DskipTests package \
 classpath="$java_source/target/classes:$(cat "$evidence/java-dependencies.classpath")"
 # shlex-safe command for the library harness. {source} is the ONLY substitution
 # and the harness invokes argv directly without a shell.
-printf -v prefix '%q ' "$java_bin" -cp "$classpath" dev.oreslang.launcher.OresMain
+# Oreslang is a named JPMS module, not an unnamed-classpath application.
+# Match the upstream Java CI launcher contract exactly.
+printf -v prefix '%q ' "$java_bin" --enable-native-access=ALL-UNNAMED \
+  -p "$classpath" -m dev.oreslang/dev.oreslang.launcher.OresMain
 python3 "$poc_source/src/libraries/check_prototypes.py" \
   --runner-command "${prefix} --check {source}" \
   --mode compile --backend java-graalvm-check \
