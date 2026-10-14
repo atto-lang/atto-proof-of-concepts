@@ -1,0 +1,23 @@
+// oreslang-interval-tree: Augmented max endpoint and interval overlaps baseline.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> lo=new Array<int>();
+  val Array<int> hi=new Array<int>();lo.add(1);hi.add(3);lo.add(5);hi.add(8);lo.add(10);hi.add(15);
+  let int max_end=0;
+  let int overlaps=0;
+  for let i=0;i<3;i++ do if hi.get(i)>max_end then max_end=hi.get(i);fi
+  if lo.get(i)<=11 && hi.get(i)>=7 then overlaps=overlaps+1;fi
+  done
+  if max_end!=15 || overlaps!=2 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-interval-tree:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-interval-tree");
+  return;
+}

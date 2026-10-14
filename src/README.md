@@ -1,6 +1,7 @@
 # Oreslang proof-of-concepts: source workspace
 
 - [60 proposed libraries](libraries/README.md).
+- [32 library source experiments](libraries/EXPERIMENTS.md) with independent expected outputs (unverified).
 - [70 design pattern briefs](patterns/README.md), now each with independent `example.ores` and `expected.stdout`.
 - [Pattern runner](patterns/EXECUTING.md) and [source harness](patterns/run_examples.py).
 - [Six integrated project plans](projects/README.md).

@@ -1,0 +1,21 @@
+// oreslang-work-stealing: Sequential owner pop and thief steal reference.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> q=new Array<int>(); q.add(5); q.add(7); q.add(11);
+  let int head=0;
+  let int tail=3;
+  let int stolen=q.get(head); head=head+1; tail=tail-1;
+  let int owned=q.get(tail);
+  if stolen!=5 || owned!=11 || q.get(head)!=7 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-work-stealing:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-work-stealing");
+  return;
+}

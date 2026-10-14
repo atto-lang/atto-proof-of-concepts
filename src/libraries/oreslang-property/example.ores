@@ -1,0 +1,20 @@
+// oreslang-property: Exhaustive bounded sum formula check.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  for let n=0;n<32;n++ do let int sum=0;
+  for let i=0;i<n;i++ do sum=sum+i;
+  done
+  if sum*2!=n*(n-1) then return 0;fi
+  done
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-property:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-property");
+  return;
+}

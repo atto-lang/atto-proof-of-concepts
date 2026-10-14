@@ -1,0 +1,19 @@
+// oreslang-iter: Deterministic filter-map-reduce oracle.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  let int sum=0;
+  for let i=0;i<8;i++ do if i%2==0 then sum=sum+i*i;fi
+  done
+  if sum!=56 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-iter:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-iter");
+  return;
+}

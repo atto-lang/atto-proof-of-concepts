@@ -1,0 +1,20 @@
+// oreslang-event-log: Deterministic append-only event replay.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> log=new Array<int>();log.add(100);log.add(-30);log.add(12);log.add(-12);
+  let int balance=0;
+  for let i=0;i<log.size();i++ do balance=balance+log.get(i);
+  done
+  if balance!=70 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-event-log:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-event-log");
+  return;
+}

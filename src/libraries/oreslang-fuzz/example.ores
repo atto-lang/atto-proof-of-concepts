@@ -1,0 +1,22 @@
+// oreslang-fuzz: Deterministic parser seed replay.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> corpus=new Array<int>();corpus.add(0);corpus.add(9);corpus.add(-1);corpus.add(10);corpus.add(3);
+  let int accepted=0;
+  let int rejected=0;
+  for let i=0;i<corpus.size();i++ do let int x=corpus.get(i);
+  if x>=0 && x<=9 then accepted=accepted+1;else rejected=rejected+1;fi
+  done
+  if accepted!=3 || rejected!=2 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-fuzz:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-fuzz");
+  return;
+}

@@ -1,0 +1,23 @@
+// oreslang-parser-combinators: Numeric token parser with consumption tracking.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> token=new Array<int>();token.add(4);token.add(2);token.add(7);
+  let int value=0;
+  let int consumed=0;
+  for let i=0;i<token.size();i++ do let int x=token.get(i);
+  if x<0 || x>9 then break;fi
+  value=value*10+x;consumed=consumed+1;
+  done
+  if value!=427 || consumed!=3 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-parser-combinators:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-parser-combinators");
+  return;
+}

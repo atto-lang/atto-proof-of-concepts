@@ -1,0 +1,20 @@
+// oreslang-channels: Bounded native channel send-receive FIFO smoke.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  let Channel<int> channel=Channel.new<int>(3); writech channel,4; writech channel,7; writech channel,9;
+  let int a=readch channel;
+  let int b=readch channel;
+  let int c=readch channel;
+  if a!=4 || b!=7 || c!=9 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-channels:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-channels");
+  return;
+}

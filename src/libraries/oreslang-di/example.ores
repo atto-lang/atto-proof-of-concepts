@@ -1,0 +1,18 @@
+// oreslang-di: Service replacement through function injection.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Fnc<int(int)> discount=|int n| -> {return n*8; };
+  val Fnc<int(int)> full=|int n| -> {return n*10; };
+  if discount(3)!=24 || full(3)!=30 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-di:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-di");
+  return;
+}

@@ -1,0 +1,17 @@
+// oreslang-ast: Postorder arithmetic tree evaluation.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> nodes=new Array<int>(); nodes.add(3); nodes.add(4); nodes.add(0); nodes.add(5); nodes.add(0); nodes.set(2,nodes.get(0)+nodes.get(1)); nodes.set(4,nodes.get(2)*nodes.get(3));
+  if nodes.get(4)!=35 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-ast:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-ast");
+  return;
+}

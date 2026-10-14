@@ -1,0 +1,21 @@
+// oreslang-persistent: Immutable snapshot reference after in-place source update.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> source=new Array<int>();source.add(2);source.add(4);source.add(6);
+  val Array<int> copy=new Array<int>();
+  for let i=0;i<3;i++ do copy.add(source.get(i));
+  done
+  source.set(1,99);
+  if source.get(1)!=99 || copy.get(1)!=4 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-persistent:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-persistent");
+  return;
+}

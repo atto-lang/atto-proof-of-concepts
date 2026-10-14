@@ -1,0 +1,20 @@
+// oreslang-scheduler: Round-robin distribution under twelve dispatches.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> served=new Array<int>();served.add(0);served.add(0);served.add(0);
+  for let turn=0;turn<12;turn++ do let int w=turn%3;served.set(w,served.get(w)+1);
+  done
+  for let w=0;w<3;w++ do if served.get(w)!=4 then return 0;fi
+  done
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-scheduler:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-scheduler");
+  return;
+}

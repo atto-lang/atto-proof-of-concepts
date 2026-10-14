@@ -1,0 +1,25 @@
+// oreslang-hashmap: Open addressing with colliding integer keys.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> keys=new Array<int>();
+  for let i=0;i<8;i++ do keys.add(-1);
+  done
+  for let i=0;i<3;i++ do let int key=1+i*8;
+  let int index=key%8;
+  for let probe=0;probe<8;probe++ do if keys.get(index)==-1 then keys.set(index,key);break;fi
+  index=(index+1)%8;
+  done
+  done
+  if keys.get(1)!=1 || keys.get(2)!=9 || keys.get(3)!=17 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-hashmap:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-hashmap");
+  return;
+}
