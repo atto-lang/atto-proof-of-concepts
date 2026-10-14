@@ -174,3 +174,35 @@ for (const [name, run] of Object.entries(runners).sort(([a], [b]) => a.localeCom
   console.log("PASS independent JS reference:", name);
 }
 console.log("Six JavaScript reference scenarios passed; NO native Oreslang execution.");
+// Adversarial checks prevent the positive fixtures from masking broken guards.
+{
+  const invalid = load("actor-banking");
+  invalid.steps.splice(1, 0, { op:"transfer", id:"t1", from:"bob", to:"alice", amount:1 });
+  assert.throws(() => banking(invalid), /conflicting idempotency key/);
+}
+{
+  const invalid = load("graph-editor");
+  invalid.steps = [{ op:"edge", from:"missing", to:"missing" }];
+  assert.throws(() => graph(invalid));
+}
+{
+  const invalid = load("async-http-server");
+  invalid.steps = [invalid.steps[0], invalid.steps[0]];
+  assert.throws(() => http(invalid), /duplicate completion/);
+}
+{
+  const invalid = load("embedded-kv-database");
+  invalid.steps = [{ op:"crash" }, { op:"put", key:"k", value:1 }];
+  assert.throws(() => kv(invalid));
+}
+{
+  const invalid = load("actor-scheduler");
+  invalid.steps = [{ op:"submit", id:"x" }, { op:"stop" }, { op:"run", id:"x" }];
+  assert.deepEqual(scheduler(invalid), { executed:[], cancelled:["x"], refused:["x"], stopped:true });
+}
+assert.throws(
+  () => evaluate({ kind:"int", value:true }, {}),
+  /non-integer-literal/
+);
+console.log("Six additional adversarial JavaScript checks passed; NO native Oreslang execution.");
+
