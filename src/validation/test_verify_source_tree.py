@@ -34,10 +34,12 @@ class ExactSourceTreeTests(unittest.TestCase):
         self.tree = git(self.root, "rev-parse", "HEAD:mirror")
         self.root_tree = git(self.root, "rev-parse", "HEAD^{tree}")
 
-    def verify(self, expected=None, directory=None):
-        return subprocess.run(["bash", str(VERIFY), str(directory or self.mirror),
-                               expected or self.tree], text=True,
-                              capture_output=True, check=False)
+    def verify(self, expected=None, directory=None, option=None):
+        argv = ["bash", str(VERIFY), str(directory or self.mirror),
+                expected or self.tree]
+        if option is not None:
+            argv.append(option)
+        return subprocess.run(argv, text=True, capture_output=True, check=False)
 
     def test_subtree_match_succeeds_with_ci_files_outside(self):
         result = self.verify()
