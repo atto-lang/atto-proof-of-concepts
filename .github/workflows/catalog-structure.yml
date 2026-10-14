@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Exact Git subtree admission self-tests (local fixture only)
+        run: python3 -m unittest discover -s src/validation -p 'test_verify_source_tree.py' -v
       - name: Structural catalog counts
         run: python3 src/validation/check_catalog.py
       - name: Library PoC inventory (structure only)

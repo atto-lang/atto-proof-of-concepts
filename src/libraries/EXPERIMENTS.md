@@ -76,3 +76,11 @@ The runner uses POSIX process groups and nonblocking pipes to enforce stdout/std
 ### Atomic evidence publication
 
 JSON reports are written to a freshly created temporary file in the target directory, flushed, synced, then atomically renamed over the destination. A subprocess-created late symlink/hardlink at the report pathname cannot redirect file writes into the source/oracle; the destination directory entry is replaced rather than followed. This is not a secure sandbox against a malicious actor that controls the entire filesystem hierarchy.
+
+## Exact-source Java/GraalVM guest gate
+
+`src/validation/run_java_guest_gate.sh` executes the full 32-probe Java compilation and JVM guest-output qualification **when both private source directories are already available in an authorized checkout**. It accepts five arguments, in order: the Java compiler source directory, expected Java Git **tree SHA**, expected PoC Git **tree SHA**, original Java commit SHA (provenance label), and a dedicated evidence directory outside both source trees.
+
+The gate first verifies the actual checked-out Git tree object of each source directory (including when mirrored into a subdirectory of a funded test repo). It rejects wrong tree identities, changed tracked files, staged modifications, and unexpected untracked files. It then builds the Java compiler using Maven, constructs an explicit `target/classes` plus dependency classpath, runs all 32 examples through the Java launcher `--check`, executes them again as JVM guests with exact output oracles, validates both complete JSON reports, and re-verifies source integrity. Reports and Java/JDK/Maven provenance are written outside the source tree.
+
+A matching Git tree is necessary evidence of source identity, **not** evidence of a successful compile, a trusted binary, permission-safe secret transfer, Java/LLVM parity, or correct actor semantics. The commit label supplied to the gate is not independently attested by a mirror. Run the actual gate only on an authorized checkout with real Java/JDK 25 and Maven. The eight local Git unit tests in `src/validation/test_verify_source_tree.py` exercise the admission verifier, **not** the guest compiler. The source-org Actions budget is still preventing those source workflows from starting.
