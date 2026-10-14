@@ -119,7 +119,7 @@ def main():
                 revision_format_verified=a.require_revision,
                 mode=a.mode, selected=len(cases), inventory_total=len(all_cases),
                 complete_catalog=len(cases)==len(all_cases),
-                execution_verified=a.mode=="run" and all(item["success"] for item in results),
+                output_oracle_matched=a.mode=="run" and all(item["success"] for item in results),
                 results=results), indent=2)+"\n")
         return 0 if all(item["success"] for item in results) else 1
     except (ValueError, OSError) as exc:
