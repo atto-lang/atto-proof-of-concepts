@@ -3,6 +3,10 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+import shlex
+import contextlib
+import io
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import check_prototypes as subject
 
@@ -85,6 +89,55 @@ class PrototypeInventoryTests(unittest.TestCase):
             p.write_text(p.read_text() + "\n/* unclosed")
             with self.assertRaisesRegex(ValueError, "lexical hygiene"):
                 subject.inventory(Path(path))
+
+    def test_runner_accepts_exact_stdout_and_rejects_different_output(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            case = fixture(root)
+            script = root / "runner.py"
+            script.write_text('import sys\\nfrom pathlib import Path\\nprint("PASS:" + Path(sys.argv[1]).parent.name)\\n')
+            selected = subject.inventory(root)
+            command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", command]
+            with patch.object(subject, "inventory", return_value=selected), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(subject.main(), 0)
+            script.write_text('print("INCORRECT")\\n')
+            with patch.object(subject, "inventory", return_value=selected), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(subject.main(), 1)
+
+    def test_compile_mode_is_not_stdout_verification(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            fixture(root)
+            script = root / "check.py"
+            script.write_text('print("compiler accepted")\\n')
+            command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", command, "--mode", "compile"]
+            with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(subject.main(), 0)
+
+    def test_filter_empty_selection_fails_closed(self):
+        with tempfile.TemporaryDirectory() as path:
+            fixture(Path(path))
+            argv = ["runner", "--list", "--filter", "does-not-exist"]
+            with patch.object(subject, "inventory", return_value=subject.inventory(Path(path))), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    self.assertEqual(subject.main(), 2)
+
+    def test_execution_rejects_mutated_source(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            folder = fixture(root)
+            script = root / "mutator.py"
+            script.write_text('import sys\\nfrom pathlib import Path\\np=Path(sys.argv[1])\\np.write_text(p.read_text()+"\\\\n// changed")\\nprint("PASS:"+p.parent.name)\\n')
+            command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", command]
+            with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(subject.main(), 1)
 
 if __name__ == "__main__":
     unittest.main()

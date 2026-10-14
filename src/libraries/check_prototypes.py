@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import math
+import re
 import runpy
 from pathlib import Path
 import shlex
@@ -59,6 +60,9 @@ def main():
     p.add_argument("--list", action="store_true")
     p.add_argument("--runner-command", help="argv, one {source} placeholder, no shell")
     p.add_argument("--backend", default="unspecified")
+    p.add_argument("--mode", choices=("run", "compile"), default="run",
+                   help="compile validates compiler exit only, NEVER guest behavior")
+    p.add_argument("--filter", help="optional regular expression matching library directory")
     p.add_argument("--compiler-revision", default="unknown")
     p.add_argument("--require-revision", action="store_true",
                    help="require full 40-hex caller-supplied compiler checkout revision")
@@ -66,13 +70,20 @@ def main():
     p.add_argument("--report")
     a = p.parse_args()
     try:
-        cases = inventory()
+        all_cases = inventory()
+        try:
+            selector = re.compile(a.filter) if a.filter is not None else None
+        except re.error as exc:
+            raise ValueError(f"invalid filter expression: {exc}") from exc
+        cases = [case for case in all_cases if selector is None or selector.search(case[0])]
+        if not cases:
+            raise ValueError("selection contains no library experiments")
         if a.list:
             if a.runner_command:
                 raise ValueError("--list and --runner-command are mutually exclusive")
             for name, _, _, _ in cases:
                 print("UNVERIFIED", name)
-            print(f"Inventory: {len(cases)} probes; NOT a compiler/runtime check")
+            print(f"Inventory: {len(cases)} of {len(all_cases)} probes; NOT a compiler/runtime check")
             return 0
         if not a.runner_command:
             raise ValueError("use --list, or pass a real --runner-command")
@@ -90,13 +101,14 @@ def main():
             cmd = [x.replace("{source}", str(source.resolve())) for x in argv]
             try:
                 proc = subprocess.run(cmd, cwd=HERE.parent.parent, capture_output=True,
-                                      text=True, timeout=a.timeout, check=False)
+                                      text=True, encoding="utf-8", errors="replace",
+                                      timeout=a.timeout, check=False)
                 unchanged = digest(source) == sh and digest(oracle) == eh
-                ok = unchanged and proc.returncode == 0 and proc.stdout == expected
-                item = dict(name=name, success=ok, returncode=proc.returncode,
+                ok = unchanged and proc.returncode == 0 and (a.mode == "compile" or proc.stdout == expected)
+                item = dict(name=name, success=ok, mode=a.mode, returncode=proc.returncode,
                             inputs_unchanged=unchanged, stdout=proc.stdout, stderr=proc.stderr)
             except (OSError, subprocess.TimeoutExpired) as exc:
-                item = dict(name=name, success=False, error=str(exc))
+                item = dict(name=name, success=False, mode=a.mode, error=str(exc))
             item.update(source_sha256=sh, oracle_sha256=eh)
             results.append(item)
             print(("PASS " if item["success"] else "FAIL ") + name)
@@ -105,6 +117,9 @@ def main():
                 compiler_revision=a.compiler_revision,
                 provenance="caller-supplied labels; verify separately",
                 revision_format_verified=a.require_revision,
+                mode=a.mode, selected=len(cases), inventory_total=len(all_cases),
+                complete_catalog=len(cases)==len(all_cases),
+                execution_verified=a.mode=="run" and all(item["success"] for item in results),
                 results=results), indent=2)+"\n")
         return 0 if all(item["success"] for item in results) else 1
     except (ValueError, OSError) as exc:

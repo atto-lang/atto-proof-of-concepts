@@ -46,3 +46,9 @@ Complete library work still needs API/implementation, negative compiler cases, r
 Library inventory now applies the existing Java-tip conservative lexical checker to every library source. This rejects C-style `&&` / `||` operators and unterminated source strings/comments but is still **not compiler parsing**. `--list` remains explicitly structural-only.
 
 The inventory rejects symlink library directories and symlink source/oracle fixtures. Execution mode optionally requires a full 40-character hexadecimal compiler revision via `--require-revision`; **format validation does not attest the compiler binary**.
+
+## Targeted backend execution
+
+Run a real compiler against the source examples by passing `--runner-command`. The command is split into argv without a shell. `--mode compile` checks only the process exit status (stdout is **not** validated); it never counts as runtime verification. The default `--mode run` requires an exact PASS oracle. Use `--filter 'oreslang-(vec|hashmap)'` for an explicit partial selection; empty matches fail, and JSON reports contain `selected`, `inventory_total`, `complete_catalog`, and the execution mode. A passing partial or compile-only run is not full library coverage. The backend and compiler-revision strings are caller assertions, not attested build identities.
+
+Self-tests for exact stdout, compile/run separation, filter fail-closed behavior, and input mutation are Python-only; run `python3 -m unittest discover -s src/libraries -p 'test_check_prototypes.py' -v` before trusting a new runner configuration.
