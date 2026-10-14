@@ -132,6 +132,16 @@ class PrototypeInventoryTests(unittest.TestCase):
                     self.assertEqual(subject.main(), 2)
             self.assertEqual(before, example.read_bytes())
 
+    def test_bounded_runner_reaps_timed_out_process(self):
+        import os
+        if os.name != "posix":
+            self.skipTest("process-group runner requires POSIX")
+        with tempfile.TemporaryDirectory() as path:
+            with self.assertRaises(subject.subprocess.TimeoutExpired):
+                subject.bounded_run([sys.executable, "-c",
+                                     "import time; time.sleep(5)"],
+                                    Path(path), 0.05, 128)
+
     def test_atomic_report_replaces_late_symlink_without_damaging_fixture(self):
         with tempfile.TemporaryDirectory() as path:
             root = Path(path)
