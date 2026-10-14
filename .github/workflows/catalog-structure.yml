@@ -16,6 +16,8 @@ jobs:
         run: python3 src/validation/check_catalog.py
       - name: Library PoC inventory (structure only)
         run: python3 src/libraries/check_prototypes.py --list
+      - name: Six project reference-oracle scenarios (Python only)
+        run: python3 src/projects/check_scenarios.py
       - name: Source/oracle inventory
         run: python3 src/patterns/run_examples.py --list
       - name: Pinned Java grammar source hygiene

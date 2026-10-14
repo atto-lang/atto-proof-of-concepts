@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "project": "self-hosted-interpreter",
+  "programs": [
+    {
+      "expr": {
+        "kind": "let",
+        "name": "x",
+        "value": {
+          "kind": "int",
+          "value": 7
+        },
+        "body": {
+          "kind": "add",
+          "left": {
+            "kind": "var",
+            "name": "x"
+          },
+          "right": {
+            "kind": "mul",
+            "left": {
+              "kind": "int",
+              "value": 3
+            },
+            "right": {
+              "kind": "int",
+              "value": 4
+            }
+          }
+        }
+      },
+      "expected": 19
+    },
+    {
+      "expr": {
+        "kind": "var",
+        "name": "missing"
+      },
+      "expected_error": "unbound:missing"
+    },
+    {
+      "expr": {
+        "kind": "let",
+        "name": "x",
+        "value": {
+          "kind": "int",
+          "value": 1
+        },
+        "body": {
+          "kind": "let",
+          "name": "x",
+          "value": {
+            "kind": "int",
+            "value": 9
+          },
+          "body": {
+            "kind": "var",
+            "name": "x"
+          }
+        }
+      },
+      "expected": 9
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "project": "async-http-server",
+  "initial": {},
+  "steps": [
+    {
+      "op": "request",
+      "id": "r1",
+      "method": "GET",
+      "path": "/health"
+    },
+    {
+      "op": "request",
+      "id": "r2",
+      "method": "GET",
+      "path": "/absent"
+    },
+    {
+      "op": "request",
+      "id": "r3",
+      "method": "POST",
+      "path": "/echo",
+      "body": "hello"
+    },
+    {
+      "op": "cancel",
+      "id": "r4"
+    },
+    {
+      "op": "request",
+      "id": "r4",
+      "method": "GET",
+      "path": "/health"
+    }
+  ],
+  "expected": {
+    "responses": [
+      [
+        "r1",
+        200,
+        "ok"
+      ],
+      [
+        "r2",
+        404,
+        "not found"
+      ],
+      [
+        "r3",
+        200,
+        "hello"
+      ]
+    ],
+    "released": [
+      "r1",
+      "r2",
+      "r3",
+      "r4"
+    ]
+  }
+}
