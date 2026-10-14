@@ -7,9 +7,14 @@ fnc probe(): int {
   let int max_end=0;
   let int overlaps=0;
   for let i=0;i<3;i++ do if hi.get(i)>max_end then max_end=hi.get(i);fi
-  if lo.get(i)<=11 && hi.get(i)>=7 then overlaps=overlaps+1;fi
+  if lo.get(i) <= 11 then
+    if hi.get(i) >= 7 then
+      overlaps = overlaps + 1;
+    fi
+  fi
   done
-  if max_end!=15 || overlaps!=2 then return 0; fi
+  if max_end!=15 then return 0; fi
+  if overlaps!=2 then return 0; fi
   return 1;
 }
 

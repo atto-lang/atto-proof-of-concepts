@@ -5,11 +5,13 @@ fnc probe(): int {
   let int generation=5;
   let int old_handle=5;
   let bool occupied=true;
-  if !(occupied && generation==old_handle) then return 0; fi
+  if !occupied then return 0; fi
+  if generation != old_handle then return 0; fi
   occupied=false; generation=generation+1; occupied=true;
   if old_handle==generation then return 0; fi
   let int new_handle=generation;
-  if !(occupied && new_handle==generation) then return 0; fi
+  if !occupied then return 0; fi
+  if new_handle != generation then return 0; fi
   return 1;
 }
 

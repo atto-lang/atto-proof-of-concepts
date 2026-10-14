@@ -7,7 +7,8 @@ fnc probe(): int {
   for let i=0;i<3;i++ do copy.add(source.get(i));
   done
   source.set(1,99);
-  if source.get(1)!=99 || copy.get(1)!=4 then return 0; fi
+  if source.get(1)!=99 then return 0; fi
+  if copy.get(1)!=4 then return 0; fi
   return 1;
 }
 

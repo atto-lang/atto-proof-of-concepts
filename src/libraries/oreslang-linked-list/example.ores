@@ -8,7 +8,8 @@ fnc probe(): int {
   let int sum=0;
   for let i=0; i<3; i++ do sum=sum+values.get(cursor); cursor=next.get(cursor);
   done
-  if cursor!=-1 || sum!=31 then return 0;  fi
+  if cursor!=-1 then return 0; fi
+  if sum!=31 then return 0; fi
   next.set(0,2);
   if values.get(next.get(0))!=13 then return 0;  fi
   return 1;

@@ -9,13 +9,20 @@ fnc probe(): int {
   done
   val Array<int> queue=new Array<int>();queue.add(0);seen.set(0,1);
   let int head=0;
-  for let turn=0;turn<4;turn++ do if head>=queue.size() then break;fi
+  for let turn=0;turn<4;turn++ do if head < queue.size() then
   let int vertex=queue.get(head);head=head+1;
   for let edge=0;edge<4;edge++ do let int dest=to.get(edge);
-  if from.get(edge)==vertex && seen.get(dest)==0 then seen.set(dest,1);queue.add(dest);fi
+  if from.get(edge) == vertex then
+    if seen.get(dest) == 0 then
+      seen.set(dest, 1);
+      queue.add(dest);
+    fi
+  fi
   done
+  fi
   done
-  if head!=4 || seen.get(3)!=1 then return 0; fi
+  if head!=4 then return 0; fi
+  if seen.get(3)!=1 then return 0; fi
   return 1;
 }
 

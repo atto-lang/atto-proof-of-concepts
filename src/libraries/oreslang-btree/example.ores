@@ -4,7 +4,8 @@
 fnc probe(): int {
   val Array<int> keys=new Array<int>();keys.add(2);keys.add(4);keys.add(6);keys.add(8);keys.add(10);
   let int mid=keys.get(2);
-  if keys.get(1)>=mid || keys.get(3)<=mid then return 0;fi
+  if keys.get(1)>=mid then return 0; fi
+  if keys.get(3)<=mid then return 0; fi
   for let i=1;i<5;i++ do if keys.get(i)<=keys.get(i-1) then return 0;fi
   done
   return 1;

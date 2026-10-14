@@ -7,11 +7,22 @@ fnc probe(): int {
   done
   for let i=0;i<3;i++ do let int key=1+i*8;
   let int index=key%8;
-  for let probe=0;probe<8;probe++ do if keys.get(index)==-1 then keys.set(index,key);break;fi
-  index=(index+1)%8;
+  let bool inserted = false;
+  for let probe = 0; probe < 8; probe++ do
+    if !inserted then
+      if keys.get(index) == -1 then
+        keys.set(index, key);
+        inserted = true;
+      else
+        index = (index + 1) % 8;
+      fi
+    fi
   done
+  if !inserted then return 0; fi
   done
-  if keys.get(1)!=1 || keys.get(2)!=9 || keys.get(3)!=17 then return 0; fi
+  if keys.get(1)!=1 then return 0; fi
+  if keys.get(2)!=9 then return 0; fi
+  if keys.get(3)!=17 then return 0; fi
   return 1;
 }
 

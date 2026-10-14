@@ -10,7 +10,10 @@ fnc probe(): int {
   for let n=1;n<=3;n++ do buf.set((head+len)%4,n*10);len=len+1;
   done
   head=(head+2)%4; len=len-2; buf.set((head+len)%4,40); len=len+1; buf.set((head+len)%4,50); len=len+1;
-  if len!=3 || buf.get(head)!=30 || buf.get((head+1)%4)!=40 || buf.get((head+2)%4)!=50 then return 0; fi
+  if len!=3 then return 0; fi
+  if buf.get(head)!=30 then return 0; fi
+  if buf.get((head+1)%4)!=40 then return 0; fi
+  if buf.get((head+2)%4)!=50 then return 0; fi
   return 1;
 }
 
