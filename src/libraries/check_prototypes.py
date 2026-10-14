@@ -15,6 +15,7 @@ import shlex
 import subprocess
 import sys
 import time
+import tempfile
 
 HERE = Path(__file__).resolve().parent
 GRAMMAR = runpy.run_path(str(HERE.parent / "patterns" / "tip_syntax_hygiene.py"))
@@ -160,6 +161,24 @@ def bounded_run(argv, cwd, timeout, max_bytes):
                 pass
             proc.wait()
 
+def publish_report(path, report):
+    """Atomically replace the report path; never follow a late symlink."""
+    target = Path(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=target.parent,
+                prefix=".oreslang-report-", suffix=".tmp", delete=False) as handle:
+            temporary = Path(handle.name)
+            json.dump(report, handle, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, target)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--list", action="store_true")
@@ -262,7 +281,7 @@ def main():
         if not catalog_unchanged:
             print("FAIL CATALOG INPUTS MUTATED", file=sys.stderr)
         if a.report:
-            Path(a.report).write_text(json.dumps(dict(backend=a.backend,
+            publish_report(a.report, dict(backend=a.backend,
                 compiler_revision=a.compiler_revision,
                 provenance="caller-supplied labels; verify separately",
                 revision_format_verified=a.require_revision,
@@ -272,7 +291,7 @@ def main():
                 catalog_inputs_unchanged=catalog_unchanged,
                 output_oracle_matched=a.mode=="run" and catalog_unchanged
                     and all(item["success"] for item in results),
-                results=results), indent=2)+"\n")
+                results=results))
         return 0 if catalog_unchanged and all(item["success"] for item in results) else 1
     except (ValueError, OSError) as exc:
         print("ERROR:", exc, file=sys.stderr)

@@ -72,3 +72,7 @@ The execution harness now pins the source/oracle content hash *and* regular-file
 ### Bounded subprocess execution
 
 The runner uses POSIX process groups and nonblocking pipes to enforce stdout/stderr limits **while a process is running**, rather than after accumulating unbounded temporary files. Output exceeding the limit causes process-group termination. Timeouts also terminate the process group, including non-detached children. This is **not** a sandbox against intentionally detached processes, privilege changes, or hostile toolchains. In `--mode run`, stderr must be empty unless `--allow-stderr` is explicitly specified; compile-only mode still accepts compiler diagnostic stderr, subject to byte limits.
+
+### Atomic evidence publication
+
+JSON reports are written to a freshly created temporary file in the target directory, flushed, synced, then atomically renamed over the destination. A subprocess-created late symlink/hardlink at the report pathname cannot redirect file writes into the source/oracle; the destination directory entry is replaced rather than followed. This is not a secure sandbox against a malicious actor that controls the entire filesystem hierarchy.

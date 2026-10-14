@@ -132,6 +132,30 @@ class PrototypeInventoryTests(unittest.TestCase):
                     self.assertEqual(subject.main(), 2)
             self.assertEqual(before, example.read_bytes())
 
+    def test_atomic_report_replaces_late_symlink_without_damaging_fixture(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            folder = fixture(root)
+            source = folder / "example.ores"
+            original = source.read_bytes()
+            report = root / "out.json"
+            script = root / "late_link.py"
+            script.write_text('from pathlib import Path\n'
+                              'import sys\n'
+                              'source=Path(sys.argv[1])\n'
+                              'Path(sys.argv[2]).symlink_to(source)\n'
+                              'print("PASS:"+source.parent.name)\n')
+            command = (f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} "
+                       f"{{source}} {shlex.quote(str(report))}")
+            argv = ["runner", "--runner-command", command, "--report", str(report)]
+            with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(subject.main(), 0)
+            self.assertEqual(source.read_bytes(), original)
+            self.assertFalse(report.is_symlink())
+            import json
+            self.assertTrue(json.loads(report.read_text())["output_oracle_matched"])
+
     def test_runner_accepts_exact_stdout_and_rejects_different_output(self):
         with tempfile.TemporaryDirectory() as path:
             root = Path(path)
