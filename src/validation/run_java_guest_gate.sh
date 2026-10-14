@@ -6,7 +6,7 @@ if (( $# != 5 )); then
   echo 'usage: run_java_guest_gate.sh JAVA_SOURCE_DIR JAVA_TREE POC_TREE JAVA_ORIGIN_COMMIT EVIDENCE_DIR' >&2
   exit 2
 fi
-java_source=$(cd -- "$1" && pwd -P)
+java_source=$(cd -- "$1" && pwd -P) || { echo "Java source directory not found" >&2; exit 2; }
 expected_java_tree=$2
 expected_poc_tree=$3
 java_origin_commit=${4,,}
@@ -21,11 +21,18 @@ validator="$(dirname -- "${BASH_SOURCE[0]}")/verify_source_tree.sh"
 if [[ ! -f "$java_source/pom.xml" ]]; then
   echo 'missing pinned Java Maven pom.xml' >&2; exit 2
 fi
+command -v realpath >/dev/null || { echo 'realpath is required' >&2; exit 2; }
+# Reject protected paths before mkdir can create files within source.
+evidence=$(realpath -m -- "$evidence")
+if [[ "$evidence" == "$poc_source" || "$evidence" == "$poc_source"/* ||
+      "$evidence" == "$java_source" || "$evidence" == "$java_source"/* ]]; then
+  echo 'evidence must be outside protected source trees' >&2; exit 2
+fi
 mkdir -p -- "$evidence"
 evidence=$(cd -- "$evidence" && pwd -P)
 if [[ "$evidence" == "$poc_source" || "$evidence" == "$poc_source"/* ||
       "$evidence" == "$java_source" || "$evidence" == "$java_source"/* ]]; then
-  echo 'evidence must be outside protected source trees' >&2; exit 2
+  echo 'evidence resolves inside protected source trees' >&2; exit 2
 fi
 command -v mvn >/dev/null || { echo 'mvn is required' >&2; exit 2; }
 command -v java >/dev/null || { echo 'java is required' >&2; exit 2; }
@@ -44,6 +51,13 @@ java_bin=$(command -v java)
 # actual dependency classpath rather than guessing a fat JAR exists.
 mvn -B -ntp -q -f "$java_source/pom.xml" -DskipTests package \
   dependency:build-classpath "-Dmdep.outputFile=$evidence/java-dependencies.classpath"
+if [[ ! -f "$java_source/target/classes/module-info.class" ||
+      ! -f "$evidence/java-dependencies.classpath" ]]; then
+  echo 'Maven did not produce expected modular Java compiler artifacts' >&2; exit 1
+fi
+# Permit only generated Java target/ AFTER strict source admission and build.
+"$validator" "$poc_source" "$expected_poc_tree"
+"$validator" "$java_source" "$expected_java_tree" --allow-generated-target
 classpath="$java_source/target/classes:$(cat "$evidence/java-dependencies.classpath")"
 # shlex-safe command for the library harness. {source} is the ONLY substitution
 # and the harness invokes argv directly without a shell.
@@ -79,4 +93,4 @@ for path, mode in zip(sys.argv[1:], ('compile', 'run')):
 PY
 # Catch compiler and source mutation after both modes have executed.
 "$validator" "$poc_source" "$expected_poc_tree"
-"$validator" "$java_source" "$expected_java_tree"
+"$validator" "$java_source" "$expected_java_tree" --allow-generated-target

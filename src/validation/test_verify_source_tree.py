@@ -27,6 +27,7 @@ class ExactSourceTreeTests(unittest.TestCase):
         self.mirror = self.root / "mirror"
         self.mirror.mkdir()
         (self.mirror / "example.txt").write_text("original\n")
+        (self.mirror / ".gitignore").write_text("target/\n*.cache\n")
         (self.root / "outside.txt").write_text("CI wrapper not part of source tree\n")
         git(self.root, "add", ".")
         git(self.root, "commit", "-qm", "fixture")
@@ -77,6 +78,68 @@ class ExactSourceTreeTests(unittest.TestCase):
         child.mkdir()
         result = self.verify(directory=child)
         self.assertNotEqual(result.returncode, 0)
+
+    def test_ignored_source_contamination_rejected(self):
+        (self.mirror / "hidden.cache").write_text("injected\n")
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ignored source", result.stderr)
+
+    def test_assume_unchanged_cannot_hide_mutation(self):
+        git(self.root, "update-index", "--assume-unchanged", "mirror/example.txt")
+        (self.mirror / "example.txt").write_text("hidden mutation\n")
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("source blob", result.stderr)
+
+    def test_skip_worktree_cannot_hide_mutation(self):
+        git(self.root, "update-index", "--skip-worktree", "mirror/example.txt")
+        (self.mirror / "example.txt").write_text("hidden mutation\n")
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("source blob", result.stderr)
+
+    def test_symlinked_source_rejected_even_with_identical_bytes(self):
+        outside = self.root / "copy.txt"
+        outside.write_text("original\n")
+        (self.mirror / "example.txt").unlink()
+        (self.mirror / "example.txt").symlink_to(outside)
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertRegex(result.stderr, "symlink|tracked source differs")
+
+    def test_executable_mode_change_rejected(self):
+        (self.mirror / "example.txt").chmod(0o755)
+        self.assertNotEqual(self.verify().returncode, 0)
+
+    def test_target_ignored_without_allowance_rejected(self):
+        target = self.mirror / "target"
+        target.mkdir()
+        (target / "classes.class").write_text("generated\n")
+        self.assertNotEqual(self.verify().returncode, 0)
+
+    def test_target_allowance_after_build_only(self):
+        target = self.mirror / "target"
+        target.mkdir()
+        (target / "classes.class").write_text("generated\n")
+        self.assertEqual(self.verify(None, None, "--allow-generated-target").returncode, 0)
+
+    def test_target_allowance_does_not_allow_other_ignored_content(self):
+        target = self.mirror / "target"
+        target.mkdir()
+        (target / "classes.class").write_text("generated\n")
+        (self.mirror / "hidden.cache").write_text("injected\n")
+        self.assertNotEqual(self.verify(None, None, "--allow-generated-target").returncode, 0)
+
+    def test_target_allowance_rejects_untracked_normal_file(self):
+        target = self.mirror / "target"
+        target.mkdir()
+        (target / "classes.class").write_text("generated\n")
+        (self.mirror / "untracked.txt").write_text("unexpected\n")
+        self.assertNotEqual(self.verify(None, None, "--allow-generated-target").returncode, 0)
+
+    def test_invalid_allowance_argument_rejected(self):
+        self.assertEqual(self.verify(None, None, "--ignore-everything").returncode, 2)
 
 
 if __name__ == "__main__":
