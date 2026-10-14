@@ -62,7 +62,7 @@ class PrototypeInventoryTests(unittest.TestCase):
             root = Path(path)
             d = fixture(root)
             target = root / "external.txt"
-            target.write_text("PASS:oreslang-testkit\\n")
+            target.write_text("PASS:oreslang-testkit\n")
             (d / "expected.stdout").unlink()
             (d / "expected.stdout").symlink_to(target)
             with self.assertRaisesRegex(ValueError, "symlink"):
@@ -95,14 +95,14 @@ class PrototypeInventoryTests(unittest.TestCase):
             root = Path(path)
             case = fixture(root)
             script = root / "runner.py"
-            script.write_text('import sys\\nfrom pathlib import Path\\nprint("PASS:" + Path(sys.argv[1]).parent.name)\\n')
+            script.write_text('import sys\nfrom pathlib import Path\nprint("PASS:" + Path(sys.argv[1]).parent.name)\n')
             selected = subject.inventory(root)
             command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
             argv = ["runner", "--runner-command", command]
             with patch.object(subject, "inventory", return_value=selected), patch.object(sys, "argv", argv):
                 with contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(subject.main(), 0)
-            script.write_text('print("INCORRECT")\\n')
+            script.write_text('print("INCORRECT")\n')
             with patch.object(subject, "inventory", return_value=selected), patch.object(sys, "argv", argv):
                 with contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(subject.main(), 1)
@@ -112,7 +112,7 @@ class PrototypeInventoryTests(unittest.TestCase):
             root = Path(path)
             fixture(root)
             script = root / "check.py"
-            script.write_text('print("compiler accepted")\\n')
+            script.write_text('print("compiler accepted")\n')
             command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
             argv = ["runner", "--runner-command", command, "--mode", "compile"]
             with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
@@ -132,7 +132,7 @@ class PrototypeInventoryTests(unittest.TestCase):
             root = Path(path)
             folder = fixture(root)
             script = root / "mutator.py"
-            script.write_text('import sys\\nfrom pathlib import Path\\np=Path(sys.argv[1])\\np.write_text(p.read_text()+"\\\\n// changed")\\nprint("PASS:"+p.parent.name)\\n')
+            script.write_text('import sys\nfrom pathlib import Path\np=Path(sys.argv[1])\np.write_text(p.read_text()+"\\\n// changed")\nprint("PASS:"+p.parent.name)\n')
             command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
             argv = ["runner", "--runner-command", command]
             with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
