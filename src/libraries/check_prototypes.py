@@ -10,9 +10,12 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
+import tempfile
 
 HERE = Path(__file__).resolve().parent
-HYGIENE = runpy.run_path(str(HERE.parent / "patterns" / "tip_syntax_hygiene.py"))["violations"]
+GRAMMAR = runpy.run_path(str(HERE.parent / "patterns" / "tip_syntax_hygiene.py"))
+HYGIENE = GRAMMAR["violations"]
+CODE_ONLY = GRAMMAR["code_only"]
 EXPECTED_NAMES = frozenset(["oreslang-vec","oreslang-linked-list","oreslang-deque","oreslang-hashmap","oreslang-trees","oreslang-graphs","oreslang-arena","oreslang-btree","oreslang-trie","oreslang-persistent","oreslang-interval-tree","oreslang-iter","oreslang-closures","oreslang-parser-combinators","oreslang-ast","oreslang-interpreter","oreslang-di","oreslang-cache","oreslang-serialize","oreslang-regex","oreslang-event-log","oreslang-compiler","oreslang-bytecode-vm","oreslang-dop","oreslang-property","oreslang-fuzz","oreslang-modelcheck","oreslang-bench","oreslang-scheduler","oreslang-work-stealing","oreslang-channels","oreslang-testkit"])
 
 def inventory(root=HERE):
@@ -32,18 +35,32 @@ def inventory(root=HERE):
         body, expected = s.read_text(), e.read_text()
         if expected != f"PASS:{d.name}\n":
             raise ValueError(f"{d.name}: invalid exact output oracle")
-        if body.count("pub routine main(") != 1 or body.count("{") != body.count("}"):
-            raise ValueError(f"{d.name}: invalid entrypoint or brace structure")
         try:
+            masked = CODE_ONLY(body)
             problems = HYGIENE(body)
         except ValueError as exc:
             raise ValueError(f"{d.name}: lexical hygiene: {exc}") from exc
         if problems:
             raise ValueError(f"{d.name}: lexical hygiene: {problems}")
-        if ('stdio.stdout.println("PASS:' + d.name + '")') not in body:
-            raise ValueError(f"{d.name}: missing PASS print")
-        if f"FAIL:{d.name}:" not in body:
-            raise ValueError(f"{d.name}: missing visible FAIL marker")
+        if len(re.findall(r"\bpub\s+(?:async\s+)?routine\s+main\s*\(", masked)) != 1:
+            raise ValueError(f"{d.name}: expected one active public main")
+        depth = 0
+        for char in masked:
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth < 0:
+                    raise ValueError(f"{d.name}: unmatched closing brace")
+        if depth != 0:
+            raise ValueError(f"{d.name}: unmatched opening brace")
+        print_calls = (body[m.end():] for m in re.finditer(
+            r"\bstdio\s*\.\s*stdout\s*\.\s*println\s*\(\s*", masked))
+        calls = list(print_calls)
+        if not any(re.match(r'"PASS:' + re.escape(d.name) + r'"\s*\)', c) for c in calls):
+            raise ValueError(f"{d.name}: missing active PASS print")
+        if not any(re.match(r'"FAIL:' + re.escape(d.name) + r':[^"]+"\s*\)', c) for c in calls):
+            raise ValueError(f"{d.name}: missing active FAIL print")
         cases.append((d.name, s, e, expected))
     actual = {name for name, _, _, _ in cases}
     if root == HERE and actual != EXPECTED_NAMES:
@@ -67,6 +84,8 @@ def main():
     p.add_argument("--require-revision", action="store_true",
                    help="require full 40-hex caller-supplied compiler checkout revision")
     p.add_argument("--timeout", type=float, default=40)
+    p.add_argument("--max-output-bytes", type=int, default=65536,
+                   help="per-stream byte limit for captured stdout/stderr")
     p.add_argument("--report")
     a = p.parse_args()
     try:
@@ -92,26 +111,56 @@ def main():
         if a.require_revision and (len(a.compiler_revision) != 40 or
                                   any(ch not in "0123456789abcdefABCDEF" for ch in a.compiler_revision)):
             raise ValueError("require full 40-hex compiler revision")
+        if not (1 <= a.max_output_bytes <= 16 * 1024 * 1024):
+            raise ValueError("max output bytes must be between 1 and 16777216")
         argv = shlex.split(a.runner_command)
-        if sum(x.count("{source}") for x in argv) != 1:
+        if not argv or sum(x.count("{source}") for x in argv) != 1:
             raise ValueError("runner must contain {source} exactly once")
+        # Pin ALL inputs before executing ANY runner. Later cases cannot silently
+        # inherit mutations introduced by earlier runner invocations.
+        pinned = {name: (digest(source), digest(oracle))
+                  for name, source, oracle, _ in all_cases}
         results = []
         for name, source, oracle, expected in cases:
-            sh, eh = digest(source), digest(oracle)
+            sh, eh = pinned[name]
+            unchanged_before = digest(source) == sh and digest(oracle) == eh
             cmd = [x.replace("{source}", str(source.resolve())) for x in argv]
             try:
-                proc = subprocess.run(cmd, cwd=HERE.parent.parent, capture_output=True,
-                                      text=True, encoding="utf-8", errors="replace",
-                                      timeout=a.timeout, check=False)
-                unchanged = digest(source) == sh and digest(oracle) == eh
-                ok = unchanged and proc.returncode == 0 and (a.mode == "compile" or proc.stdout == expected)
+                with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
+                    proc = subprocess.run(cmd, cwd=HERE.parent.parent, stdout=out,
+                                          stderr=err, timeout=a.timeout, check=False)
+                    stdout_bytes, stderr_bytes = out.tell(), err.tell()
+                    out.seek(0)
+                    err.seek(0)
+                    raw_stdout = out.read(a.max_output_bytes + 1)
+                    raw_stderr = err.read(a.max_output_bytes + 1)
+                oversized = stdout_bytes > a.max_output_bytes or stderr_bytes > a.max_output_bytes
+                actual = raw_stdout.decode("utf-8", errors="replace")
+                unchanged = (unchanged_before and digest(source) == sh
+                             and digest(oracle) == eh)
+                ok = (not oversized and unchanged and proc.returncode == 0
+                      and (a.mode == "compile" or raw_stdout == expected.encode("utf-8")))
                 item = dict(name=name, success=ok, mode=a.mode, returncode=proc.returncode,
-                            inputs_unchanged=unchanged, stdout=proc.stdout, stderr=proc.stderr)
+                            inputs_unchanged=unchanged, output_truncated=oversized,
+                            stdout_bytes=stdout_bytes, stderr_bytes=stderr_bytes,
+                            stdout=actual, stderr=raw_stderr.decode("utf-8", errors="replace"))
             except (OSError, subprocess.TimeoutExpired) as exc:
                 item = dict(name=name, success=False, mode=a.mode, error=str(exc))
             item.update(source_sha256=sh, oracle_sha256=eh)
             results.append(item)
-            print(("PASS " if item["success"] else "FAIL ") + name)
+        # Detect retroactive changes to previously tested cases AND changes to
+        # unselected fixtures. Per-result success remains false if its inputs drift.
+        catalog_unchanged = True
+        for name, src, oracle, _ in all_cases:
+            sh, eh = pinned[name]
+            stable = digest(src) == sh and digest(oracle) == eh
+            catalog_unchanged = catalog_unchanged and stable
+            for result in results:
+                if result["name"] == name and not stable:
+                    result["inputs_unchanged"] = False
+                    result["success"] = False
+        for item in results:
+            print(("PASS " if item["success"] else "FAIL ") + item["name"])
         if a.report:
             Path(a.report).write_text(json.dumps(dict(backend=a.backend,
                 compiler_revision=a.compiler_revision,
@@ -119,9 +168,11 @@ def main():
                 revision_format_verified=a.require_revision,
                 mode=a.mode, selected=len(cases), inventory_total=len(all_cases),
                 complete_catalog=len(cases)==len(all_cases),
-                output_oracle_matched=a.mode=="run" and all(item["success"] for item in results),
+                catalog_inputs_unchanged=catalog_unchanged,
+                output_oracle_matched=a.mode=="run" and catalog_unchanged
+                    and all(item["success"] for item in results),
                 results=results), indent=2)+"\n")
-        return 0 if all(item["success"] for item in results) else 1
+        return 0 if catalog_unchanged and all(item["success"] for item in results) else 1
     except (ValueError, OSError) as exc:
         print("ERROR:", exc, file=sys.stderr)
         return 2

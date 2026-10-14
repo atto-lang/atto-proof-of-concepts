@@ -90,6 +90,34 @@ class PrototypeInventoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "lexical hygiene"):
                 subject.inventory(Path(path))
 
+    def test_reject_comment_only_entrypoint(self):
+        with tempfile.TemporaryDirectory() as path:
+            fixture(Path(path), source="// pub routine main(): void {}\\nfnc probe(): int { return 1; }")
+            with self.assertRaisesRegex(ValueError, "active public main"):
+                subject.inventory(Path(path))
+
+    def test_reject_comment_only_pass_marker(self):
+        with tempfile.TemporaryDirectory() as path:
+            name = "oreslang-testkit"
+            body = ('pub routine main(): void {\\n'
+                    '  // stdio.stdout.println("PASS:' + name + '");\\n'
+                    '  stdio.stdout.println("FAIL:' + name + ':1");\\n'
+                    '}')
+            fixture(Path(path), source=body)
+            with self.assertRaisesRegex(ValueError, "active PASS"):
+                subject.inventory(Path(path))
+
+    def test_reject_comment_only_fail_marker(self):
+        with tempfile.TemporaryDirectory() as path:
+            name = "oreslang-testkit"
+            body = ('pub routine main(): void {\\n'
+                    '  // stdio.stdout.println("FAIL:' + name + ':1");\\n'
+                    '  stdio.stdout.println("PASS:' + name + '");\\n'
+                    '}')
+            fixture(Path(path), source=body)
+            with self.assertRaisesRegex(ValueError, "active FAIL"):
+                subject.inventory(Path(path))
+
     def test_runner_accepts_exact_stdout_and_rejects_different_output(self):
         with tempfile.TemporaryDirectory() as path:
             root = Path(path)
@@ -126,6 +154,38 @@ class PrototypeInventoryTests(unittest.TestCase):
             with patch.object(subject, "inventory", return_value=subject.inventory(Path(path))), patch.object(sys, "argv", argv):
                 with contextlib.redirect_stderr(io.StringIO()):
                     self.assertEqual(subject.main(), 2)
+
+    def test_reject_oversized_stdout_even_in_compile_mode(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            fixture(root)
+            script = root / "noisy.py"
+            script.write_text('print("x" * 100)\\n')
+            cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", cmd,
+                    "--mode", "compile", "--max-output-bytes", "32"]
+            with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(subject.main(), 1)
+
+    def test_reject_cross_case_fixture_mutation(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            fixture(root, "oreslang-alpha")
+            other = fixture(root, "oreslang-beta")
+            script = root / "contaminate.py"
+            script.write_text('import sys\\nfrom pathlib import Path\\n'
+                              'p=Path(sys.argv[1])\\n'
+                              'if p.parent.name == "oreslang-alpha":\\n'
+                              '  dst=p.parent.parent/"oreslang-beta"/"example.ores"\\n'
+                              '  dst.write_text(dst.read_text()+"\\\\n// tampered")\\n'
+                              'print("PASS:"+p.parent.name)\\n')
+            cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", cmd]
+            with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(subject.main(), 1)
+            self.assertIn("// tampered", other.joinpath("example.ores").read_text())
 
     def test_execution_rejects_mutated_source(self):
         with tempfile.TemporaryDirectory() as path:

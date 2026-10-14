@@ -54,3 +54,11 @@ Run a real compiler against the source examples by passing `--runner-command`. T
 Self-tests for exact stdout, compile/run separation, filter fail-closed behavior, and input mutation are Python-only; run `python3 -m unittest discover -s src/libraries -p 'test_check_prototypes.py' -v` before trusting a new runner configuration.
 
 An `output_oracle_matched` result proves only that the caller-supplied executable returned the expected process output under the runner. It is **not an attested compiler or guest-runtime result**; a mock runner can return the same output. Bind evidence to an independently verified toolchain checkout and executable before promoting an experiment's status.
+
+### 2026-10-13 runner integrity audit
+
+- All fixture SHA-256 hashes are pinned **before** the first subprocess starts, including fixtures outside any `--filter` selection. An earlier runner cannot rewrite a later example and cause the rewritten bytes to become the trusted baseline.
+- Every input is rehashed when execution finishes; retroactive changes to previously checked examples or modifications to unselected files fail the entire run.
+- Source markers and the public entrypoint are checked against an active-code lexical mask rather than raw comments and string literals. This remains lexical hygiene, **not** parsing.
+- `--max-output-bytes` (default 65,536 per stream; maximum 16 MiB) spools child output to temporary files and limits memory used for report text; oversized stdout **or** stderr fails even compile-only mode.
+- Reports include `catalog_inputs_unchanged` and stream byte counts; output matching still does not attest a compiler binary.
