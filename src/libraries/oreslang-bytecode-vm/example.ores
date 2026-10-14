@@ -4,7 +4,8 @@
 fnc probe(): int {
   val Array<int> s=new Array<int>(); s.add(3); s.add(4);
   let int sp=2; s.set(0,s.get(0)+s.get(1)); sp=sp-1; s.set(1,2); sp=sp+1; s.set(0,s.get(0)*s.get(1)); sp=sp-1;
-  if sp!=1 || s.get(0)!=14 then return 0; fi
+  if sp!=1 then return 0; fi
+  if s.get(0)!=14 then return 0; fi
   return 1;
 }
 

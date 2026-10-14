@@ -6,7 +6,9 @@ fnc probe(): int {
   let int a=readch channel;
   let int b=readch channel;
   let int c=readch channel;
-  if a!=4 || b!=7 || c!=9 then return 0; fi
+  if a!=4 then return 0; fi
+  if b!=7 then return 0; fi
+  if c!=9 then return 0; fi
   return 1;
 }
 

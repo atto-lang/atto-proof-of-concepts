@@ -4,7 +4,8 @@
 fnc probe(): int {
   val Fnc<int(int)> discount=|int n| -> {return n*8; };
   val Fnc<int(int)> full=|int n| -> {return n*10; };
-  if discount(3)!=24 || full(3)!=30 then return 0; fi
+  if discount(3)!=24 then return 0; fi
+  if full(3)!=30 then return 0; fi
   return 1;
 }
 
