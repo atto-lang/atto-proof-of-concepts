@@ -64,3 +64,7 @@ An `output_oracle_matched` result proves only that the caller-supplied executabl
 - Reports include `catalog_inputs_unchanged` and stream byte counts; output matching still does not attest a compiler binary.
 
 A `--report` destination that resolves to a source/oracle fixture (including a hardlink or symlink alias, selected or not) is rejected before invoking any runner. Persist evidence outside the protected examples.
+
+### Identity-based fail-closed admission
+
+The execution harness now pins the source/oracle content hash *and* regular-file identity (device, inode and mode), not just bytes. A replaced, symlinked or chmod-modified fixture is rejected even if its text is identical. If an input drifts before a given invocation, the runner does not execute that case. This is protection against persistent changes between checks, **not a sandbox or cryptographic attestation against a cooperating malicious runner**.

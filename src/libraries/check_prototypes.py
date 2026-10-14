@@ -6,6 +6,7 @@ import json
 import math
 import re
 import runpy
+import stat
 from pathlib import Path
 import shlex
 import subprocess
@@ -72,6 +73,22 @@ def inventory(root=HERE):
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
+def fingerprint(path):
+    """Bind bytes, inode, file type and mode; reject replacement by symlinks."""
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError(f"{path}: symlink fixture replacement")
+    metadata = path.stat()
+    if not stat.S_ISREG(metadata.st_mode):
+        raise ValueError(f"{path}: non-regular fixture replacement")
+    return (digest(path), metadata.st_dev, metadata.st_ino,
+            stat.S_IMODE(metadata.st_mode))
+
+def unchanged(path, original):
+    try:
+        return fingerprint(path) == original
+    except (OSError, ValueError):
+        return False
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--list", action="store_true")
@@ -128,12 +145,17 @@ def main():
                 raise ValueError("report destination aliases a protected fixture")
         # Pin ALL inputs before executing ANY runner. Later cases cannot silently
         # inherit mutations introduced by earlier runner invocations.
-        pinned = {name: (digest(source), digest(oracle))
+        pinned = {name: (fingerprint(source), fingerprint(oracle))
                   for name, source, oracle, _ in all_cases}
         results = []
         for name, source, oracle, expected in cases:
             sh, eh = pinned[name]
-            unchanged_before = digest(source) == sh and digest(oracle) == eh
+            unchanged_before = unchanged(source, sh) and unchanged(oracle, eh)
+            if not unchanged_before:
+                results.append(dict(name=name, success=False, mode=a.mode,
+                    inputs_unchanged=False, error="source or oracle changed before invocation",
+                    source_sha256=sh[0], oracle_sha256=eh[0]))
+                continue
             cmd = [x.replace("{source}", str(source.resolve())) for x in argv]
             try:
                 with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
@@ -146,24 +168,23 @@ def main():
                     raw_stderr = err.read(a.max_output_bytes + 1)
                 oversized = stdout_bytes > a.max_output_bytes or stderr_bytes > a.max_output_bytes
                 actual = raw_stdout.decode("utf-8", errors="replace")
-                unchanged = (unchanged_before and digest(source) == sh
-                             and digest(oracle) == eh)
-                ok = (not oversized and unchanged and proc.returncode == 0
+                stable = unchanged(source, sh) and unchanged(oracle, eh)
+                ok = (not oversized and stable and proc.returncode == 0
                       and (a.mode == "compile" or raw_stdout == expected.encode("utf-8")))
                 item = dict(name=name, success=ok, mode=a.mode, returncode=proc.returncode,
-                            inputs_unchanged=unchanged, output_truncated=oversized,
+                            inputs_unchanged=stable, output_truncated=oversized,
                             stdout_bytes=stdout_bytes, stderr_bytes=stderr_bytes,
                             stdout=actual, stderr=raw_stderr.decode("utf-8", errors="replace"))
             except (OSError, subprocess.TimeoutExpired) as exc:
                 item = dict(name=name, success=False, mode=a.mode, error=str(exc))
-            item.update(source_sha256=sh, oracle_sha256=eh)
+            item.update(source_sha256=sh[0], oracle_sha256=eh[0])
             results.append(item)
         # Detect retroactive changes to previously tested cases AND changes to
         # unselected fixtures. Per-result success remains false if its inputs drift.
         catalog_unchanged = True
         for name, src, oracle, _ in all_cases:
             sh, eh = pinned[name]
-            stable = digest(src) == sh and digest(oracle) == eh
+            stable = unchanged(src, sh) and unchanged(oracle, eh)
             catalog_unchanged = catalog_unchanged and stable
             for result in results:
                 if result["name"] == name and not stable:

@@ -227,12 +227,60 @@ class PrototypeInventoryTests(unittest.TestCase):
             self.assertFalse(evidence["output_oracle_matched"])
             self.assertIn("// tampered", other.joinpath("example.ores").read_text())
 
+    def test_detect_same_content_symlink_replacement(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            d = fixture(root)
+            p = d / "example.ores"
+            baseline = subject.fingerprint(p)
+            replacement = root / "replacement.ores"
+            replacement.write_bytes(p.read_bytes())
+            p.unlink()
+            p.symlink_to(replacement)
+            self.assertFalse(subject.unchanged(p, baseline))
+
+    def test_detect_same_content_inode_replacement(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            d = fixture(root)
+            p = d / "example.ores"
+            baseline = subject.fingerprint(p)
+            replacement = root / "replacement.ores"
+            replacement.write_bytes(p.read_bytes())
+            replacement.replace(p)
+            self.assertFalse(subject.unchanged(p, baseline))
+
+    def test_refuse_changed_case_before_invocation(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            folder = fixture(root)
+            cases = subject.inventory(root)
+            script = root / "runner.py"
+            marker = root / "executed"
+            script.write_text('from pathlib import Path\n'
+                              + f'Path({str(marker)!r}).write_text("bad")\n')
+            command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", command]
+            original_fingerprint = subject.fingerprint
+            # Simulate an adversarial change between initial catalog pinning
+            # and the immediately-pre-invocation fingerprint check.
+            calls = [0]
+            def swap(path):
+                calls[0] += 1
+                if calls[0] == 3:
+                    (folder / "example.ores").write_text("altered")
+                return original_fingerprint(path)
+            with patch.object(subject, "inventory", return_value=cases), patch.object(subject, "fingerprint", side_effect=swap), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                    self.assertEqual(subject.main(), 1)
+            self.assertFalse(marker.exists(), "changed input unexpectedly executed")
+
     def test_execution_rejects_mutated_source(self):
         with tempfile.TemporaryDirectory() as path:
             root = Path(path)
             folder = fixture(root)
             script = root / "mutator.py"
-            script.write_text('import sys\nfrom pathlib import Path\np=Path(sys.argv[1])\np.write_text(p.read_text()+"\n// changed")\nprint("PASS:"+p.parent.name)\n')
+            script.write_text('import sys\nfrom pathlib import Path\np=Path(sys.argv[1])\np.write_text(p.read_text()+"\\n// changed")\nprint("PASS:"+p.parent.name)\n')
             command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
             argv = ["runner", "--runner-command", command]
             with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
