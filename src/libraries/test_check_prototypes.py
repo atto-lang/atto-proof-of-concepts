@@ -53,6 +53,13 @@ class PrototypeInventoryTests(unittest.TestCase):
             p.write_text(p.read_text() + "\nfnc broken(): bool { return true && false; }")
             with self.assertRaisesRegex(ValueError, "lexical hygiene"):
                 subject.inventory(Path(path))
+    def test_reject_missing_actual_pass_print(self):
+        with tempfile.TemporaryDirectory() as path:
+            d = fixture(Path(path))
+            p = d / "example.ores"
+            p.write_text(p.read_text().replace("stdio.stdout.println", "stdout.fake_print"))
+            with self.assertRaisesRegex(ValueError, "missing PASS print"):
+                subject.inventory(Path(path))
     def test_reject_unterminated_comment(self):
         with tempfile.TemporaryDirectory() as path:
             d = fixture(Path(path))

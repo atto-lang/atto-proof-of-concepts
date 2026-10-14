@@ -4,7 +4,6 @@ import argparse
 import hashlib
 import json
 import math
-import re
 import runpy
 from pathlib import Path
 import shlex
@@ -36,7 +35,7 @@ def inventory(root=HERE):
             raise ValueError(f"{d.name}: lexical hygiene: {exc}") from exc
         if problems:
             raise ValueError(f"{d.name}: lexical hygiene: {problems}")
-        if not re.search(r'\\bstdio\\.stdout\\.println\\("PASS:' + re.escape(d.name) + r'"\\)', body):
+        if ('stdio.stdout.println("PASS:' + d.name + '")') not in body:
             raise ValueError(f"{d.name}: missing PASS print")
         if f"FAIL:{d.name}:" not in body:
             raise ValueError(f"{d.name}: missing visible FAIL marker")
