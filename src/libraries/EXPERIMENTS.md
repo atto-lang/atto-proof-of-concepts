@@ -62,3 +62,5 @@ An `output_oracle_matched` result proves only that the caller-supplied executabl
 - Source markers and the public entrypoint are checked against an active-code lexical mask rather than raw comments and string literals. This remains lexical hygiene, **not** parsing.
 - `--max-output-bytes` (default 65,536 per stream; maximum 16 MiB) spools child output to temporary files and limits memory used for report text; oversized stdout **or** stderr fails even compile-only mode.
 - Reports include `catalog_inputs_unchanged` and stream byte counts; output matching still does not attest a compiler binary.
+
+A `--report` destination that resolves to a source/oracle fixture (including a hardlink or symlink alias, selected or not) is rejected before invoking any runner. Persist evidence outside the protected examples.

@@ -116,6 +116,16 @@ def main():
         argv = shlex.split(a.runner_command)
         if not argv or sum(x.count("{source}") for x in argv) != 1:
             raise ValueError("runner must contain {source} exactly once")
+        # The optional report must never overwrite any fixture, including an
+        # unselected one or a hardlink/symlink alias to a protected path.
+        if a.report:
+            report_path = Path(a.report).resolve()
+            protected = [p for _, src, oracle, _ in all_cases
+                         for p in (src, oracle)]
+            if any(report_path == p.resolve() or
+                   (report_path.is_file() and report_path.samefile(p))
+                   for p in protected):
+                raise ValueError("report destination aliases a protected fixture")
         # Pin ALL inputs before executing ANY runner. Later cases cannot silently
         # inherit mutations introduced by earlier runner invocations.
         pinned = {name: (digest(source), digest(oracle))

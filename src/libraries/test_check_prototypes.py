@@ -118,6 +118,20 @@ class PrototypeInventoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "active FAIL"):
                 subject.inventory(Path(path))
 
+    def test_report_must_not_overwrite_source_fixture(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            example = fixture(root) / "example.ores"
+            before = example.read_bytes()
+            script = root / "runner.py"
+            script.write_text('print("PASS:oreslang-testkit")\n')
+            cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", cmd, "--report", str(example)]
+            with patch.object(subject, "inventory", return_value=subject.inventory(root)), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    self.assertEqual(subject.main(), 2)
+            self.assertEqual(before, example.read_bytes())
+
     def test_runner_accepts_exact_stdout_and_rejects_different_output(self):
         with tempfile.TemporaryDirectory() as path:
             root = Path(path)
