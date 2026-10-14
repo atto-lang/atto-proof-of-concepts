@@ -19,3 +19,5 @@ The [scenario.json](scenario.json) is an exact test vector. Run `python3 src/pro
 Carrier exclusivity, wakeup coalescing, atomic owner/thief races, suspension, fairness, supervisor STOP cleanup.
 
 Do not promote this project to `runtime-verified`, `formally-verified`, or `LLVM zero-GC` on the strength of these Python fixtures. Produce independent compiler-positive and targeted compiler-negative fixtures, exact-tree Java/LLVM runs, and a reproducible failure corpus first.
+
+The sequential reference STOP policy cancels every queued task once, allows no further dispatches, and refuses new submissions. Testing actual worker preemption, in-flight graceful draining, STOP resource cleanup, and cross-carrier resumption is still required.

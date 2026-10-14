@@ -4,12 +4,15 @@ import argparse
 import hashlib
 import json
 import math
+import re
+import runpy
 from pathlib import Path
 import shlex
 import subprocess
 import sys
 
 HERE = Path(__file__).resolve().parent
+HYGIENE = runpy.run_path(str(HERE.parent / "patterns" / "tip_syntax_hygiene.py"))["violations"]
 EXPECTED_NAMES = frozenset(["oreslang-vec","oreslang-linked-list","oreslang-deque","oreslang-hashmap","oreslang-trees","oreslang-graphs","oreslang-arena","oreslang-btree","oreslang-trie","oreslang-persistent","oreslang-interval-tree","oreslang-iter","oreslang-closures","oreslang-parser-combinators","oreslang-ast","oreslang-interpreter","oreslang-di","oreslang-cache","oreslang-serialize","oreslang-regex","oreslang-event-log","oreslang-compiler","oreslang-bytecode-vm","oreslang-dop","oreslang-property","oreslang-fuzz","oreslang-modelcheck","oreslang-bench","oreslang-scheduler","oreslang-work-stealing","oreslang-channels","oreslang-testkit"])
 
 def inventory(root=HERE):
@@ -27,8 +30,16 @@ def inventory(root=HERE):
             raise ValueError(f"{d.name}: invalid exact output oracle")
         if body.count("pub routine main(") != 1 or body.count("{") != body.count("}"):
             raise ValueError(f"{d.name}: invalid entrypoint or brace structure")
-        if f"PASS:{d.name}" not in body or f"FAIL:{d.name}:" not in body:
-            raise ValueError(f"{d.name}: missing visible self-test markers")
+        try:
+            problems = HYGIENE(body)
+        except ValueError as exc:
+            raise ValueError(f"{d.name}: lexical hygiene: {exc}") from exc
+        if problems:
+            raise ValueError(f"{d.name}: lexical hygiene: {problems}")
+        if not re.search(r'\\bstdio\\.stdout\\.println\\("PASS:' + re.escape(d.name) + r'"\\)', body):
+            raise ValueError(f"{d.name}: missing PASS print")
+        if f"FAIL:{d.name}:" not in body:
+            raise ValueError(f"{d.name}: missing visible FAIL marker")
         cases.append((d.name, s, e, expected))
     actual = {name for name, _, _, _ in cases}
     if root == HERE and actual != EXPECTED_NAMES:

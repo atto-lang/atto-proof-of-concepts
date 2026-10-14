@@ -15,19 +15,22 @@ def banking(v):
     balances = dict(v["initial"]["accounts"])
     initial_total = sum(balances.values())
     accepted, duplicates, rejected = [], [], []
-    seen = set()
+    seen = {}
     for s in v["steps"]:
         assert s["op"] == "transfer"
         tx, a, b, amount = s["id"], s["from"], s["to"], s["amount"]
         assert type(amount) is int and amount > 0 and a != b
+        fingerprint = (a, b, amount)
         if tx in seen:
+            if seen[tx] != fingerprint:
+                raise ValueError("conflicting-idempotency-key:" + tx)
             duplicates.append(tx)
         elif balances[a] < amount:
             rejected.append(tx)
         else:
             balances[a] -= amount
             balances[b] += amount
-            seen.add(tx)
+            seen[tx] = fingerprint
             accepted.append(tx)
         assert sum(balances.values()) == initial_total
         assert all(x >= 0 for x in balances.values())
@@ -128,7 +131,7 @@ def scheduler(v):
                 assert identity not in state
                 state[identity] = "queued"
         elif op == "run":
-            if state.get(identity) != "queued":
+            if stopped or state.get(identity) != "queued":
                 refused.append(identity)
             else:
                 state[identity] = "done"
@@ -138,7 +141,13 @@ def scheduler(v):
             state[identity] = "cancelled"
             cancelled.append(identity)
         elif op == "stop":
+            if stopped:
+                raise ValueError("repeated-stop")
             stopped = True
+            for pending_id, status in state.items():
+                if status == "queued":
+                    state[pending_id] = "cancelled"
+                    cancelled.append(pending_id)
         else:
             raise ValueError(op)
     assert len(executed) == len(set(executed))
@@ -147,6 +156,8 @@ def scheduler(v):
 def eval_expr(node, env):
     kind = node["kind"]
     if kind == "int":
+        if type(node["value"]) is not int:
+            raise ValueError("non-integer-literal")
         return node["value"]
     if kind == "var":
         if node["name"] not in env:

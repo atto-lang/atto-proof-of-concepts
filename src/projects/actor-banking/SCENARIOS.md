@@ -19,3 +19,5 @@ The [scenario.json](scenario.json) is an exact test vector. Run `python3 src/pro
 Actor termination races, CONTROL supervision, atomic two-party commit, reordering, and failure injection.
 
 Do not promote this project to `runtime-verified`, `formally-verified`, or `LLVM zero-GC` on the strength of these Python fixtures. Produce independent compiler-positive and targeted compiler-negative fixtures, exact-tree Java/LLVM runs, and a reproducible failure corpus first.
+
+Conflicting re-use of a successful idempotency ID with a different sender, recipient, or amount **fails closed**; equal replays leave both balances unchanged. Python integers have arbitrary precision, so native signed-overflow enforcement still needs targeted compiler/runtime tests.

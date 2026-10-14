@@ -45,5 +45,21 @@ class PrototypeInventoryTests(unittest.TestCase):
             p.write_text(p.read_text() + "\n// mutation")
             self.assertNotEqual(original, subject.digest(p))
 
+
+    def test_reject_c_style_boolean_syntax(self):
+        with tempfile.TemporaryDirectory() as path:
+            d = fixture(Path(path))
+            p = d / "example.ores"
+            p.write_text(p.read_text() + "\\nfnc broken(): bool { return true && false; }")
+            with self.assertRaisesRegex(ValueError, "lexical hygiene"):
+                subject.inventory(Path(path))
+    def test_reject_unterminated_comment(self):
+        with tempfile.TemporaryDirectory() as path:
+            d = fixture(Path(path))
+            p = d / "example.ores"
+            p.write_text(p.read_text() + "\\n/* unclosed")
+            with self.assertRaisesRegex(ValueError, "lexical hygiene"):
+                subject.inventory(Path(path))
+
 if __name__ == "__main__":
     unittest.main()

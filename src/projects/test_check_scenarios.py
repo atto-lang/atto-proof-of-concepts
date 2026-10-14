@@ -39,5 +39,24 @@ class ProjectOracleTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "^unbound:missing$"):
             subject.eval_expr({"kind":"var","name":"missing"}, {})
 
+
+    def test_bank_rejects_conflicting_idempotency_payload(self):
+        case = load("actor-banking")
+        case["steps"].insert(2, {"op":"transfer", "id":"t1",
+                                  "from":"bob", "to":"alice", "amount":30})
+        with self.assertRaisesRegex(ValueError, "conflicting-idempotency-key"):
+            subject.banking(case)
+    def test_scheduler_stop_cancels_pending_and_refuses_execution(self):
+        case = load("actor-scheduler")
+        case["steps"] = [{"op":"submit", "id":"x"}, {"op":"stop"},
+                          {"op":"run","id":"x"}, {"op":"submit","id":"y"}]
+        actual = subject.scheduler(case)
+        self.assertEqual(actual["cancelled"], ["x"])
+        self.assertEqual(actual["executed"], [])
+        self.assertEqual(actual["refused"], ["x","y"])
+    def test_interpreter_rejects_boolean_as_integer(self):
+        with self.assertRaisesRegex(ValueError, "non-integer-literal"):
+            subject.eval_expr({"kind":"int","value":True}, {})
+
 if __name__ == "__main__":
     unittest.main()

@@ -40,3 +40,7 @@
 Run `python3 src/libraries/check_prototypes.py --list` to check source/oracle structure **only**. An execution runner must use a real compiler and compare exact stdout and exit code. Source files must execute independently. No green structural CI should be presented as evidence of compiler support, AOT, zero-GC, thread safety, or memory/lifetime soundness.
 
 Complete library work still needs API/implementation, negative compiler cases, randomized differential/property testing, cancellation/failure injection, a real compiler checkout SHA, and Java/GraalVM + LLVM native execution records. Particularly: `graphs` traverses indexed data, `arena` models generations but does not control allocations, `persistent` models snapshots via copying, `work-stealing` and `scheduler` are sequential oracles, and `channels` is not a concurrent stress test.
+
+### Lexical hygiene gate
+
+Library inventory now applies the existing Java-tip conservative lexical checker to every library source. This rejects C-style `&&` / `||` operators and unterminated source strings/comments but is still **not compiler parsing**. `--list` remains explicitly structural-only.
