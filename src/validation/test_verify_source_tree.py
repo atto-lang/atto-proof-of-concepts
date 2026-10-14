@@ -85,6 +85,20 @@ class ExactSourceTreeTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("ignored source", result.stderr)
 
+    def test_index_staged_blob_must_match_head_even_when_worktree_matches_index(self):
+        path = self.mirror / "example.txt"
+        path.write_text("changed\n")
+        git(self.root, "add", "mirror/example.txt")
+        git(self.root, "update-index", "--skip-worktree", "mirror/example.txt")
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertRegex(result.stderr, "tracked source differs|Git index differs")
+
+    def test_missing_index_entry_cannot_look_like_complete_tree(self):
+        git(self.root, "rm", "--cached", "-q", "mirror/example.txt")
+        result = self.verify()
+        self.assertNotEqual(result.returncode, 0)
+
     def test_assume_unchanged_cannot_hide_mutation(self):
         git(self.root, "update-index", "--assume-unchanged", "mirror/example.txt")
         (self.mirror / "example.txt").write_text("hidden mutation\n")

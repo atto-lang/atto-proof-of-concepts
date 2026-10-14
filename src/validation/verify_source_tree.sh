@@ -53,6 +53,115 @@ if ! git -C "$repo" diff --cached --quiet HEAD -- "$scope"; then
   echo "staged source differs from committed Git tree: $scope" >&2
   exit 1
 fi
+# Independently compare HEAD's committed blob map with the *index* map.
+# Cached diffs can be influenced by per-path index flags; a missing/replaced
+# path is never acceptable just because Git's normal status is quiet.
+declare -A head_entries=()
+while IFS= read -r -d '' record; do
+  metadata=${record%% Independently
+# hash indexed physical bytes and executable modes so flags cannot hide edits.
+tracked=0
+while IFS= read -r -d '' record; do
+  metadata=${record%%
+\t'*}
+  relative=${record#*
+\t'}
+  read -r mode object stage <<< "$metadata"
+  if [[ "$stage" != 0 || ( "$mode" != '100644' && "$mode" != '100755' ) ]]; then
+    echo "unsupported staged object or source file mode: $relative" >&2; exit 1
+  fi
+  if [[ "${head_entries[$relative]-}" != "$mode $object" ]]; then
+    echo "Git index differs from HEAD tree: $relative" >&2; exit 1
+  fi
+  unset 'head_entries[$relative]'
+  physical="$repo/$relative"
+  if [[ ! -f "$physical" || -L "$physical" ]]; then
+    echo "source file missing, nonregular, or symlink: $relative" >&2; exit 1
+  fi
+  if [[ "$(realpath -e -- "$physical")" != "$physical" ]]; then
+    echo "source resolved through a symlink: $relative" >&2; exit 1
+  fi
+  if [[ "$(git -C "$repo" hash-object --no-filters -- "$physical")" != "$object" ]]; then
+    echo "source blob does not match Git index: $relative" >&2; exit 1
+  fi
+  if [[ "$mode" == 100755 && ! -x "$physical" ]] ||
+     [[ "$mode" == 100644 && -x "$physical" ]]; then
+    echo "source executable mode differs from Git index: $relative" >&2; exit 1
+  fi
+  tracked=$((tracked + 1))
+done < <(git -C "$repo" ls-files --stage -z -- "$scope")
+if (( tracked == 0 )); then
+  echo "empty tracked source subtree: $scope" >&2; exit 1
+fi
+if (( ${#head_entries[@]} != 0 )); then
+  echo "Git index omits a committed HEAD source path" >&2; exit 1
+fi
+# Ordinary untracked and ignored contents require separate queries.
+while IFS= read -r -d '' unexpected; do
+  echo "untracked source file would invalidate tree: $unexpected" >&2; exit 1
+done < <(git -C "$repo" ls-files --others --exclude-standard --directory -z -- "$scope")
+while IFS= read -r -d '' unexpected; do
+  if [[ "$allow_target" == true && "$unexpected" == "$generated" &&
+        -d "$checkout/target" && ! -L "$checkout/target" ]]; then
+    continue
+  fi
+  echo "ignored source file would invalidate tree: $unexpected" >&2; exit 1
+done < <(git -C "$repo" ls-files --others --ignored --exclude-standard --directory -z -- "$scope")
+printf 'SOURCE_TREE_VERIFIED sha=%s scope=%s tracked=%d\n' "$actual" "$scope" "$tracked"
+\t'*}
+  relative=${record#* Independently
+# hash indexed physical bytes and executable modes so flags cannot hide edits.
+tracked=0
+while IFS= read -r -d '' record; do
+  metadata=${record%%
+\t'*}
+  relative=${record#*
+\t'}
+  read -r mode object stage <<< "$metadata"
+  if [[ "$stage" != 0 || ( "$mode" != '100644' && "$mode" != '100755' ) ]]; then
+    echo "unsupported staged object or source file mode: $relative" >&2; exit 1
+  fi
+  physical="$repo/$relative"
+  if [[ ! -f "$physical" || -L "$physical" ]]; then
+    echo "source file missing, nonregular, or symlink: $relative" >&2; exit 1
+  fi
+  if [[ "$(realpath -e -- "$physical")" != "$physical" ]]; then
+    echo "source resolved through a symlink: $relative" >&2; exit 1
+  fi
+  if [[ "$(git -C "$repo" hash-object --no-filters -- "$physical")" != "$object" ]]; then
+    echo "source blob does not match Git index: $relative" >&2; exit 1
+  fi
+  if [[ "$mode" == 100755 && ! -x "$physical" ]] ||
+     [[ "$mode" == 100644 && -x "$physical" ]]; then
+    echo "source executable mode differs from Git index: $relative" >&2; exit 1
+  fi
+  tracked=$((tracked + 1))
+done < <(git -C "$repo" ls-files --stage -z -- "$scope")
+if (( tracked == 0 )); then
+  echo "empty tracked source subtree: $scope" >&2; exit 1
+fi
+# Ordinary untracked and ignored contents require separate queries.
+while IFS= read -r -d '' unexpected; do
+  echo "untracked source file would invalidate tree: $unexpected" >&2; exit 1
+done < <(git -C "$repo" ls-files --others --exclude-standard --directory -z -- "$scope")
+while IFS= read -r -d '' unexpected; do
+  if [[ "$allow_target" == true && "$unexpected" == "$generated" &&
+        -d "$checkout/target" && ! -L "$checkout/target" ]]; then
+    continue
+  fi
+  echo "ignored source file would invalidate tree: $unexpected" >&2; exit 1
+done < <(git -C "$repo" ls-files --others --ignored --exclude-standard --directory -z -- "$scope")
+printf 'SOURCE_TREE_VERIFIED sha=%s scope=%s tracked=%d\n' "$actual" "$scope" "$tracked"
+\t'}
+  read -r mode object_type object <<< "$metadata"
+  if [[ "$object_type" != 'blob' ]]; then
+    echo "HEAD contains unsupported non-blob: $relative" >&2; exit 1
+  fi
+  head_entries["$relative"]="$mode $object"
+done < <(git -C "$repo" ls-tree -r -z HEAD -- "$scope")
+if (( ${#head_entries[@]} == 0 )); then
+  echo "HEAD contains no source blobs at $scope" >&2; exit 1
+fi
 # Git diff/status honor assume-unchanged and skip-worktree. Independently
 # hash indexed physical bytes and executable modes so flags cannot hide edits.
 tracked=0
