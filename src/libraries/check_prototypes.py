@@ -171,6 +171,8 @@ def main():
                     result["success"] = False
         for item in results:
             print(("PASS " if item["success"] else "FAIL ") + item["name"])
+        if not catalog_unchanged:
+            print("FAIL CATALOG INPUTS MUTATED", file=sys.stderr)
         if a.report:
             Path(a.report).write_text(json.dumps(dict(backend=a.backend,
                 compiler_revision=a.compiler_revision,

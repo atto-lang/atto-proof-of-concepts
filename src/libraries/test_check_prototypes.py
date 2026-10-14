@@ -201,6 +201,32 @@ class PrototypeInventoryTests(unittest.TestCase):
                     self.assertEqual(subject.main(), 1)
             self.assertIn("// tampered", other.joinpath("example.ores").read_text())
 
+    def test_filtered_run_detects_unselected_fixture_mutation(self):
+        with tempfile.TemporaryDirectory() as path:
+            root = Path(path)
+            fixture(root, "oreslang-alpha")
+            other = fixture(root, "oreslang-beta")
+            script = root / "alter.py"
+            script.write_text('import sys\nfrom pathlib import Path\n'
+                              'p=Path(sys.argv[1])\n'
+                              'dst=p.parent.parent/"oreslang-beta"/"example.ores"\n'
+                              'dst.write_text(dst.read_text()+"\\n// tampered")\n'
+                              'print("PASS:"+p.parent.name)\n')
+            report = root / "out.json"
+            cmd = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} {{source}}"
+            argv = ["runner", "--runner-command", cmd, "--filter", "^oreslang-alpha$",
+                    "--report", str(report)]
+            cases = subject.inventory(root)
+            with patch.object(subject, "inventory", return_value=cases), patch.object(sys, "argv", argv):
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()) as stderr:
+                    self.assertEqual(subject.main(), 1)
+            self.assertIn("FAIL CATALOG INPUTS MUTATED", stderr.getvalue())
+            evidence = __import__("json").loads(report.read_text())
+            self.assertFalse(evidence["catalog_inputs_unchanged"])
+            self.assertFalse(evidence["complete_catalog"])
+            self.assertFalse(evidence["output_oracle_matched"])
+            self.assertIn("// tampered", other.joinpath("example.ores").read_text())
+
     def test_execution_rejects_mutated_source(self):
         with tempfile.TemporaryDirectory() as path:
             root = Path(path)
