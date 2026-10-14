@@ -50,14 +50,14 @@ class PrototypeInventoryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as path:
             d = fixture(Path(path))
             p = d / "example.ores"
-            p.write_text(p.read_text() + "\\nfnc broken(): bool { return true && false; }")
+            p.write_text(p.read_text() + "\nfnc broken(): bool { return true && false; }")
             with self.assertRaisesRegex(ValueError, "lexical hygiene"):
                 subject.inventory(Path(path))
     def test_reject_unterminated_comment(self):
         with tempfile.TemporaryDirectory() as path:
             d = fixture(Path(path))
             p = d / "example.ores"
-            p.write_text(p.read_text() + "\\n/* unclosed")
+            p.write_text(p.read_text() + "\n/* unclosed")
             with self.assertRaisesRegex(ValueError, "lexical hygiene"):
                 subject.inventory(Path(path))
 

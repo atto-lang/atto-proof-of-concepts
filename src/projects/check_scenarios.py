@@ -26,6 +26,7 @@ def banking(v):
                 raise ValueError("conflicting-idempotency-key:" + tx)
             duplicates.append(tx)
         elif balances[a] < amount:
+            seen[tx] = fingerprint
             rejected.append(tx)
         else:
             balances[a] -= amount

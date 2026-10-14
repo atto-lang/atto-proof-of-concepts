@@ -21,3 +21,5 @@ Actor termination races, CONTROL supervision, atomic two-party commit, reorderin
 Do not promote this project to `runtime-verified`, `formally-verified`, or `LLVM zero-GC` on the strength of these Python fixtures. Produce independent compiler-positive and targeted compiler-negative fixtures, exact-tree Java/LLVM runs, and a reproducible failure corpus first.
 
 Conflicting re-use of a successful idempotency ID with a different sender, recipient, or amount **fails closed**; equal replays leave both balances unchanged. Python integers have arbitrary precision, so native signed-overflow enforcement still needs targeted compiler/runtime tests.
+
+Insufficient-funds refusals also consume the idempotency key: if funds later arrive, replaying the same transaction ID remains a no-op. The conflict check compares payloads for both accepted and rejected attempts.

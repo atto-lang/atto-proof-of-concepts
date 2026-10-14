@@ -46,6 +46,18 @@ class ProjectOracleTests(unittest.TestCase):
                                   "from":"bob", "to":"alice", "amount":30})
         with self.assertRaisesRegex(ValueError, "conflicting-idempotency-key"):
             subject.banking(case)
+    def test_rejected_transaction_key_does_not_execute_after_funding(self):
+        case = load("actor-banking")
+        case["initial"] = {"accounts":{"alice":0,"bob":100}}
+        case["steps"] = [
+            {"op":"transfer","id":"denied","from":"alice","to":"bob","amount":50},
+            {"op":"transfer","id":"fund","from":"bob","to":"alice","amount":90},
+            {"op":"transfer","id":"denied","from":"alice","to":"bob","amount":50}
+        ]
+        actual = subject.banking(case)
+        self.assertEqual(actual["accounts"], {"alice":90,"bob":10})
+        self.assertEqual(actual["rejected"], ["denied"])
+        self.assertEqual(actual["duplicates"], ["denied"])
     def test_scheduler_stop_cancels_pending_and_refuses_execution(self):
         case = load("actor-scheduler")
         case["steps"] = [{"op":"submit", "id":"x"}, {"op":"stop"},
