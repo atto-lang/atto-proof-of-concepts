@@ -1,0 +1,19 @@
+// oreslang-modelcheck: Two bounded serial schedules preserve commutative total.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  for let schedule=0;schedule<2;schedule++ do let int result=0;
+  if schedule==0 then result=result+3;result=result+7;else result=result+7;result=result+3;fi
+  if result!=10 then return 0;fi
+  done
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-modelcheck:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-modelcheck");
+  return;
+}

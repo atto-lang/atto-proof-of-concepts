@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "project": "graph-editor",
+  "initial": {
+    "nodes": [],
+    "edges": []
+  },
+  "steps": [
+    {
+      "op": "node",
+      "id": "a"
+    },
+    {
+      "op": "node",
+      "id": "b"
+    },
+    {
+      "op": "edge",
+      "from": "a",
+      "to": "b"
+    },
+    {
+      "op": "edge",
+      "from": "b",
+      "to": "a"
+    },
+    {
+      "op": "undo"
+    },
+    {
+      "op": "redo"
+    },
+    {
+      "op": "undo"
+    },
+    {
+      "op": "node",
+      "id": "c"
+    }
+  ],
+  "expected": {
+    "nodes": [
+      "a",
+      "b",
+      "c"
+    ],
+    "edges": [
+      [
+        "a",
+        "b"
+      ]
+    ],
+    "undo_depth": 4,
+    "redo_depth": 0
+  }
+}

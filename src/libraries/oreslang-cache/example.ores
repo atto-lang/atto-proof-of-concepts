@@ -1,0 +1,21 @@
+// oreslang-cache: LRU victim after touch event.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> keys=new Array<int>();
+  val Array<int> last=new Array<int>();keys.add(11);last.add(4);keys.add(22);last.add(9);keys.add(33);last.add(6);last.set(0,10);
+  let int victim=0;
+  for let i=1;i<3;i++ do if last.get(i)<last.get(victim) then victim=i;fi
+  done
+  if keys.get(victim)!=33 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-cache:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-cache");
+  return;
+}

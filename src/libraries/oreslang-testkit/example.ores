@@ -1,0 +1,20 @@
+// oreslang-testkit: Three independent assertion conditions.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  let int n=0;
+  if 2+3==5 then n=n+1; fi
+  if 4*6==24 then n=n+1; fi
+  if 9/3==3 then n=n+1; fi
+  if n!=3 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-testkit:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-testkit");
+  return;
+}

@@ -1,0 +1,19 @@
+// oreslang-bytecode-vm: Stack VM sequential ADD and MUL instruction model.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> s=new Array<int>(); s.add(3); s.add(4);
+  let int sp=2; s.set(0,s.get(0)+s.get(1)); sp=sp-1; s.set(1,2); sp=sp+1; s.set(0,s.get(0)*s.get(1)); sp=sp-1;
+  if sp!=1 then return 0; fi
+  if s.get(0)!=14 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-bytecode-vm:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-bytecode-vm");
+  return;
+}
