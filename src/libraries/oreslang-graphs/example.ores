@@ -1,0 +1,36 @@
+// oreslang-graphs: Cycle-safe breadth-first exploration.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> edge_from=new Array<int>();
+  val Array<int> edge_to=new Array<int>();edge_from.add(0);edge_to.add(1);edge_from.add(1);edge_to.add(2);edge_from.add(2);edge_to.add(1);edge_from.add(2);edge_to.add(3);
+  val Array<int> seen=new Array<int>();
+  for let i=0;i<4;i++ do seen.add(0);
+  done
+  val Array<int> queue=new Array<int>();queue.add(0);seen.set(0,1);
+  let int head=0;
+  for let turn=0;turn<4;turn++ do if head < queue.size then
+  let int vertex=queue.get(head);head=head+1;
+  for let edge=0;edge<4;edge++ do let int dest=edge_to.get(edge);
+  if edge_from.get(edge) == vertex then
+    if seen.get(dest) == 0 then
+      seen.set(dest, 1);
+      queue.add(dest);
+    fi
+  fi
+  done
+  fi
+  done
+  if head!=4 then return 0; fi
+  if seen.get(3)!=1 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-graphs:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-graphs");
+  return;
+}

@@ -1,0 +1,21 @@
+// oreslang-dop: Structure-of-arrays reduction.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> x=new Array<int>();
+  val Array<int> y=new Array<int>();x.add(1);y.add(10);x.add(2);y.add(20);x.add(3);y.add(30);
+  let int sum=0;
+  for let i=0;i<x.size;i++ do sum=sum+x.get(i)*y.get(i);
+  done
+  if sum!=140 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-dop:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-dop");
+  return;
+}

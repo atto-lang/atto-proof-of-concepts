@@ -1,0 +1,18 @@
+// oreslang-closures: Composition of first-class functions.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Fnc<int(int)> add=|int n| -> {return n+7; };
+  val Fnc<int(int)> twice=|int n| -> {return n*2; };
+  if twice(add(5))!=24 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-closures:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-closures");
+  return;
+}

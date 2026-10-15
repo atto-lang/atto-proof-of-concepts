@@ -1,0 +1,25 @@
+// oreslang-linked-list: Index-linked traversal and unlink.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> next = new Array<int>(); next.add(1); next.add(2); next.add(-1);
+  val Array<int> values = new Array<int>(); values.add(7); values.add(11); values.add(13);
+  let int cursor=0;
+  let int sum=0;
+  for let i=0; i<3; i++ do sum=sum+values.get(cursor); cursor=next.get(cursor);
+  done
+  if cursor!=-1 then return 0; fi
+  if sum!=31 then return 0; fi
+  next.set(0,2);
+  if values.get(next.get(0))!=13 then return 0;  fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-linked-list:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-linked-list");
+  return;
+}

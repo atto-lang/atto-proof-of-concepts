@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "project": "embedded-kv-database",
+  "initial": {
+    "committed": {}
+  },
+  "steps": [
+    {
+      "op": "put",
+      "key": "a",
+      "value": 1
+    },
+    {
+      "op": "commit"
+    },
+    {
+      "op": "put",
+      "key": "b",
+      "value": 2
+    },
+    {
+      "op": "crash"
+    },
+    {
+      "op": "recover"
+    },
+    {
+      "op": "put",
+      "key": "a",
+      "value": 3
+    },
+    {
+      "op": "commit"
+    }
+  ],
+  "expected": {
+    "committed": {
+      "a": 3
+    },
+    "working": {
+      "a": 3
+    },
+    "commit_count": 2
+  }
+}

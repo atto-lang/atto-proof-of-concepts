@@ -68,3 +68,7 @@
 ## Evidence policy
 
 A passing library implementation requires compiler-positive, targeted compiler-negative, runtime, property-based and cross-backend results. Do not mark planned proposals as validated.
+
+## Source experiment coverage
+
+32/60 directories have bounded prototype examples and output oracles. See [EXPERIMENTS.md](EXPERIMENTS.md); compilation, memory safety, and Java/LLVM backend parity are **not** established.

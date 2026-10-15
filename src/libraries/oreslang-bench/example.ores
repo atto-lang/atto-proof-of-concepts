@@ -1,0 +1,18 @@
+// oreslang-bench: Sorted measurement median and maximum oracle.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> times=new Array<int>(); times.add(1); times.add(2); times.add(3); times.add(4); times.add(10);
+  if times.get(2)!=3 then return 0; fi
+  if times.get(4)!=10 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-bench:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-bench");
+  return;
+}

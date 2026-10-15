@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "project": "actor-scheduler",
+  "initial": {},
+  "steps": [
+    {
+      "op": "submit",
+      "id": "a"
+    },
+    {
+      "op": "submit",
+      "id": "b"
+    },
+    {
+      "op": "submit",
+      "id": "c"
+    },
+    {
+      "op": "run",
+      "id": "a"
+    },
+    {
+      "op": "cancel",
+      "id": "b"
+    },
+    {
+      "op": "run",
+      "id": "b"
+    },
+    {
+      "op": "run",
+      "id": "c"
+    },
+    {
+      "op": "run",
+      "id": "a"
+    },
+    {
+      "op": "stop"
+    },
+    {
+      "op": "submit",
+      "id": "d"
+    }
+  ],
+  "expected": {
+    "executed": [
+      "a",
+      "c"
+    ],
+    "cancelled": [
+      "b"
+    ],
+    "refused": [
+      "b",
+      "a",
+      "d"
+    ],
+    "stopped": true
+  }
+}
