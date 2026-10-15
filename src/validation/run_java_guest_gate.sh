@@ -79,7 +79,7 @@ classpath="$java_source/target/classes:$(cat "$evidence/java-dependencies.classp
 # and the harness invokes argv directly without a shell.
 # Oreslang is a named JPMS module, not an unnamed-classpath application.
 # Match the upstream Java CI launcher contract exactly.
-printf -v prefix '%q ' "$java_bin" --enable-native-access=ALL-UNNAMED \
+printf -v prefix '%q ' "$java_bin" --enable-native-access=org.graalvm.truffle,dev.oreslang,ALL-UNNAMED \
   -p "$classpath" -m dev.oreslang/dev.oreslang.launcher.OresMain
 python3 "$poc_source/src/libraries/check_prototypes.py" \
   --runner-command "${prefix} --check {source}" \
