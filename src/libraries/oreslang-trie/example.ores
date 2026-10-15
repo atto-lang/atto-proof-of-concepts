@@ -1,12 +1,23 @@
 // oreslang-trie: Digit trie single-path exact match.
 // UNVERIFIED: narrow deterministic behavioral probe/reference model only.
 // Not a complete library, a borrow/GC proof, or a concurrency verification.
+// Bounded positive integer quotient: source '/' produces float, even for ints.
+fnc quotient(int numerator, int denominator): int {
+  let int remaining = numerator;
+  let int result = 0;
+  while remaining >= denominator do
+    remaining = remaining - denominator;
+    result = result + 1;
+  done
+  return result;
+}
+
 fnc probe(): int {
   val Array<int> digits=new Array<int>();digits.add(4);digits.add(2);digits.add(7);
   let int key=427;
   let int divisor=100;
-  for let i=0;i<3;i++ do if digits.get(i)!=(key/divisor)%10 then return 0;fi
-  divisor=divisor/10;
+  for let i=0;i<3;i++ do if digits.get(i)!=quotient(key, divisor)%10 then return 0;fi
+  divisor=quotient(divisor, 10);
   done
   return 1;
 }

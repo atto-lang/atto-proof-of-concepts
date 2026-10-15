@@ -4,7 +4,7 @@
 fnc probe(): int {
   val Array<int> log=new Array<int>();log.add(100);log.add(-30);log.add(12);log.add(-12);
   let int balance=0;
-  for let i=0;i<log.size();i++ do balance=balance+log.get(i);
+  for let i=0;i<log.size;i++ do balance=balance+log.get(i);
   done
   if balance!=70 then return 0; fi
   return 1;
