@@ -17,6 +17,14 @@ define class IdempotentConsumer as
     if self.count >= 3 then
       return false;
     fi
+    // Reject overflow before recording the message ID; refused writes are retryable.
+    // The example deliberately constrains balances to +/- 1 billion.
+    if self.total > 1000000000 - amount then
+      return false;
+    fi
+    if self.total < -1000000000 - amount then
+      return false;
+    fi
     self.ids.add(id);
     self.count = self.count + 1;
     self.total = self.total + amount;
@@ -50,6 +58,26 @@ pub routine main(): void {
   fi
   if c.balance() != 10 then
     stdio.stdout.println("FAIL:71:7"); return;
+  fi
+  val IdempotentConsumer upper = new IdempotentConsumer();
+  if !upper.receive(1, 1000000000) then
+    stdio.stdout.println("FAIL:71:8"); return;
+  fi
+  if upper.receive(2, 1) then
+    stdio.stdout.println("FAIL:71:9"); return;
+  fi
+  if !upper.receive(2, -1) then
+    stdio.stdout.println("FAIL:71:10"); return;
+  fi
+  val IdempotentConsumer lower = new IdempotentConsumer();
+  if !lower.receive(1, -1000000000) then
+    stdio.stdout.println("FAIL:71:11"); return;
+  fi
+  if lower.receive(2, -1) then
+    stdio.stdout.println("FAIL:71:12"); return;
+  fi
+  if lower.balance() != -1000000000 then
+    stdio.stdout.println("FAIL:71:13"); return;
   fi
   stdio.stdout.println("PASS:71");
   return;
