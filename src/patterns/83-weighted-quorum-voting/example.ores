@@ -1,0 +1,51 @@
+// 83: Gifford weighted voting (2+1+1 votes), exhaustive static oracle.
+fnc votes(bool first, bool second, bool third): int {
+  let int result = 0;
+  if first then result = result + 2; fi
+  if second then result = result + 1; fi
+  if third then result = result + 1; fi
+  return result;
+}
+fnc intersects(bool r1, bool r2, bool r3, bool w1, bool w2, bool w3): bool {
+  return Or(Or(And(r1, w1), And(r2, w2)), And(r3, w3));
+}
+fnc valid_quorums(int total, int read_votes, int write_votes): bool {
+  if read_votes <= 0 then return false; fi
+  if write_votes <= 0 then return false; fi
+  if read_votes > total then return false; fi
+  if write_votes > total then return false; fi
+  return And(read_votes + write_votes > total, write_votes * 2 > total);
+}
+fnc exhaustive_intersection(): int {
+  let int pairs = 0;
+  for let a = 0; a < 2; a++ do
+    for let b = 0; b < 2; b++ do
+      for let c = 0; c < 2; c++ do
+        for let d = 0; d < 2; d++ do
+          for let e = 0; e < 2; e++ do
+            for let f = 0; f < 2; f++ do
+              val bool r1 = a == 1;
+              val bool r2 = b == 1;
+              val bool r3 = c == 1;
+              val bool w1 = d == 1;
+              val bool w2 = e == 1;
+              val bool w3 = f == 1;
+              if votes(r1, r2, r3) >= 2, votes(w1, w2, w3) >= 3 then
+                pairs = pairs + 1;
+                if !intersects(r1, r2, r3, w1, w2, w3) then return -1; fi
+              fi
+            done
+          done
+        done
+      done
+    done
+  done
+  return pairs;
+}
+pub routine main(): void {
+  if !valid_quorums(4, 2, 3) then stdio.stdout.println("FAIL:83:1"); return; fi
+  if valid_quorums(4, 2, 2) then stdio.stdout.println("FAIL:83:2"); return; fi
+  if valid_quorums(4, 1, 3) then stdio.stdout.println("FAIL:83:3"); return; fi
+  if exhaustive_intersection() != 15 then stdio.stdout.println("FAIL:83:4"); return; fi
+  stdio.stdout.println("PASS:83"); return;
+}
