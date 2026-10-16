@@ -8,6 +8,10 @@ define class CacheAside as
     if requested < 0 then
       return -1;
     fi
+    // Guard the signed 32-bit multiplication performed below.
+    if requested > 214748364 then
+      return -1;
+    fi
     if requested == self.key then
       return self.value;
     fi
@@ -56,6 +60,15 @@ pub routine main(): void {
   fi
   if cache.reads() != 3 then
     stdio.stdout.println("FAIL:77:8"); return;
+  fi
+  if cache.fetch(214748365) != -1 then
+    stdio.stdout.println("FAIL:77:9"); return;
+  fi
+  if cache.reads() != 3 then
+    stdio.stdout.println("FAIL:77:10"); return;
+  fi
+  if cache.fetch(214748364) != 2147483640 then
+    stdio.stdout.println("FAIL:77:11"); return;
   fi
   stdio.stdout.println("PASS:77");
   return;
