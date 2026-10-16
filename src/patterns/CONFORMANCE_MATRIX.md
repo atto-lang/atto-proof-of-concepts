@@ -96,16 +96,16 @@ The historical 70/70 Java guest run remains **limited to 01–70**. Java 25 [CI 
 
 | # | Native .ores source | Nature of exercise | Java status | LLVM status |
 |---|---|---|---|---|
-| 81 | [request-reply-correlation](81-request-reply-correlation/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 82 | [lease-expiration-renewal](82-lease-expiration-renewal/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 83 | [weighted-quorum-voting](83-weighted-quorum-voting/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 84 | [grow-only-counter-crdt](84-grow-only-counter-crdt/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 85 | [last-writer-wins-register](85-last-writer-wins-register/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 86 | [credit-based-flow-control](86-credit-based-flow-control/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 87 | [write-ahead-log-replay](87-write-ahead-log-replay/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 88 | [retry-budget](88-retry-budget/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 89 | [hedged-requests](89-hedged-requests/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
-| 90 | [deadline-propagation](90-deadline-propagation/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) (guest not run) | **Not run** |
+| 81 | [request-reply-correlation](81-request-reply-correlation/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 82 | [lease-expiration-renewal](82-lease-expiration-renewal/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 83 | [weighted-quorum-voting](83-weighted-quorum-voting/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 84 | [grow-only-counter-crdt](84-grow-only-counter-crdt/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 85 | [last-writer-wins-register](85-last-writer-wins-register/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 86 | [credit-based-flow-control](86-credit-based-flow-control/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 87 | [write-ahead-log-replay](87-write-ahead-log-replay/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 88 | [retry-budget](88-retry-budget/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 89 | [hedged-requests](89-hedged-requests/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
+| 90 | [deadline-propagation](90-deadline-propagation/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) (guest not run) | **Not run** |
 
 ## Evidence rules
 
@@ -116,4 +116,4 @@ The historical 70/70 Java guest run remains **limited to 01–70**. Java 25 [CI 
 - LLVM's documented narrow source subset does not support most of these programs. Rejecting unsupported code is not a successful cross-backend compatibility result.
 - Evidence is for Parser.parse + TypeChecker.check, including ownership and return-cleanup checking. It is not a full linked CLI compilation, guest runtime test, formal verification, or LLVM parity. Retain the actual run permalink and exact source SHA.
 
-**October 16, 2026 follow-up:** [CI run #38930550819](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) verifies all 20 new examples 71–90 on Java parser/type/ownership (20/20), seven targeted compile-fail fixtures (7/7), and exactly 59 pinned Git blobs. It does not prove any guest run or LLVM conformance for 71–90.
+**October 16, 2026 follow-up:** [CI run #38931053661](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661) verifies all 20 new examples 71–90 on Java parser/type/ownership (20/20), seven targeted compile-fail fixtures (7/7), and exactly 59 pinned Git blobs. It does not prove any guest run or LLVM conformance for 71–90.

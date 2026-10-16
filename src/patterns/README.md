@@ -97,7 +97,7 @@
 | 89 | [Hedged Requests](./89-hedged-requests/) | reliability | Choose earliest successful completion from primary and hedge. |
 | 90 | [Deadline Propagation](./90-deadline-propagation/) | reliability | Clamp child operation deadlines to an inherited parent limit. |
 
-Each of the 90 numbered folders includes a native `example.ores` and `expected.stdout`. The original 70 have pinned historical Java/GraalVM sample-execution evidence; 71–80 passed pinned Java parser/type/ownership verification [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) but are not guest runtime verified; 81–90 also passed funded [Java parser/type/ownership checking](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819); 7/7 targeted compiler-negative probes passed. LLVM parity is not established. Evidence does not imply full correctness or concurrency safety.
+Each of the 90 numbered folders includes a native `example.ores` and `expected.stdout`. The original 70 have pinned historical Java/GraalVM sample-execution evidence; 71–80 passed pinned Java parser/type/ownership verification [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) but are not guest runtime verified; 81–90 also passed funded [Java parser/type/ownership checking](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38931053661); 7/7 targeted compiler-negative probes passed. LLVM parity is not established. Evidence does not imply full correctness or concurrency safety.
 
 ## Status of individual exercises
 
