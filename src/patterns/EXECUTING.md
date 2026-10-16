@@ -26,7 +26,7 @@ The command is an **example placeholder**. Replace it with a working Java or LLV
 ## Current status and limitations
 
 - The original 70 patterns at Java revision 43edad9 have a funded exact-source 70/70 Java check-and-run result [run #38341093687](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) on the pinned historical PoC revision. LLVM execution is not yet verified.
-- 23 GoF + 27 enterprise/concurrency + 20 advanced + 20 reliability/distributed-systems/application/messaging/storage examples. Patterns 71–80 have pinned Java parser/type/ownership [static PASS](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) but no guest run. Patterns 81–90 are newly unverified.
+- 23 GoF + 27 enterprise/concurrency + 20 advanced + 20 reliability/distributed-systems/application/messaging/storage examples. Patterns 71–80 have pinned Java parser/type/ownership [static PASS](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) but no guest run. Patterns 81–90 now also have pinned Java parser/type/ownership [PASS](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819); 7/7 targeted compile-negative probes passed.
 - Examples for typestate, session types, capabilities, RAII, hazard pointers, epoch reclamation, RCU, sequence locks, work stealing, actor model and nonparking I/O **do not establish their named safety properties**. They are small reference models explicitly identifying missing runtime/compiler proof obligations in comments and README files.
 - Prioritize replacing models with complete algorithms and compiler-negative fixtures and testing on both Java/GraalVM and LLVM.
 
@@ -66,3 +66,7 @@ The pinned historic 70/70 Java guest result remains unchanged; patterns 71–80 
 ## Funded private static compiler carrier (71–80)
 
 The [Scintilla carrier run #38929258766](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) assigned a real hosted runner and passed SHA-verification of 11 pinned Java lexer/parser/type/ownership source blobs and 20 new pattern source/oracle blobs, compiled these checkers on Java 25, parsed 10 programs, and type/ownership-checked 10 programs. It did **not** build/run the full Oreslang guest runtime. This verifies 71–80 **only**, not the new 81–90 sources or full backend parity.
+
+## Full new-pattern Java static/negative gate (71–90)
+
+[Funded exact-source CI run #38930550819](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930550819) ran on `scintilla-run-test/gleam-runner-conformance` in a **private temporary mirror**, with no cross-organization checkout token: 59/59 Git blob identities (11 pinned Java compiler/parser/type-checker source files, 40 native source/oracle files, and 8 negative-test files including the Java probe); 20/20 parse; 20/20 type/ownership; 7/7 invalid programs rejected with targeted diagnostics. This is **static compiler-checker verification**, not native guest execution. Source pattern 85 originally failed due to reserved identifier `from` in [prior failed run](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38930125229), was renamed, and then passed. The donor carrier branch is test-only and must not be merged.
