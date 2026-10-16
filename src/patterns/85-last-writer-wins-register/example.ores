@@ -1,0 +1,32 @@
+// 85: last-writer-wins register, lexicographic (timestamp, writer).
+define class LwwRegister as
+  let int clock = 0;
+  let int writer = 0;
+  let int value = 0;
+  pub offer(mut self)(int at, int writer_id, int next): bool {
+    if at < 0 then return false; fi
+    if writer_id < 0 then return false; fi
+    if at < self.clock then return false; fi
+    if at == self.clock, writer_id <= self.writer then return false; fi
+    self.clock = at;
+    self.writer = writer_id;
+    self.value = next;
+    return true;
+  }
+  pub read(): int { return self.value; }
+  pub version(): int { return self.clock; }
+end
+pub routine main(): void {
+  val LwwRegister r = new LwwRegister();
+  if !r.offer(5, 1, 50) then stdio.stdout.println("FAIL:85:1"); return; fi
+  if r.offer(5, 0, 99) then stdio.stdout.println("FAIL:85:2"); return; fi
+  if !r.offer(5, 2, 70) then stdio.stdout.println("FAIL:85:3"); return; fi
+  if r.offer(4, 9, 100) then stdio.stdout.println("FAIL:85:4"); return; fi
+  if r.offer(5, 2, 200) then stdio.stdout.println("FAIL:85:5"); return; fi
+  if r.read() != 70 then stdio.stdout.println("FAIL:85:6"); return; fi
+  if !r.offer(6, 1, -10) then stdio.stdout.println("FAIL:85:7"); return; fi
+  if r.offer(-1, 20, 12) then stdio.stdout.println("FAIL:85:8"); return; fi
+  if r.read() != -10 then stdio.stdout.println("FAIL:85:9"); return; fi
+  if r.version() != 6 then stdio.stdout.println("FAIL:85:10"); return; fi
+  stdio.stdout.println("PASS:85"); return;
+}

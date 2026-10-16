@@ -1,0 +1,69 @@
+// 72 Token Bucket: integer-tick sequential state machine.
+// 5-token capacity, 2 tokens per tick. No distributed admission guarantee.
+define class TokenBucket as
+  let int tokens = 5;
+  let int last_tick = 0;
+
+  pub allow(mut self)(int now, int cost): bool {
+    if now < self.last_tick then
+      return false;
+    fi
+    if cost <= 0 then
+      return false;
+    fi
+    // Cap elapsed time before arithmetic so extreme ticks cannot overflow.
+    val int elapsed = now - self.last_tick;
+    if elapsed >= 3 then
+      self.tokens = 5;
+    else
+      self.tokens = self.tokens + elapsed * 2;
+      if self.tokens > 5 then self.tokens = 5; fi
+    fi
+    self.last_tick = now;
+    if cost > self.tokens then
+      return false;
+    fi
+    self.tokens = self.tokens - cost;
+    return true;
+  }
+
+  pub remaining(): int {
+    return self.tokens;
+  }
+end
+
+pub routine main(): void {
+  val TokenBucket bucket = new TokenBucket();
+  if !bucket.allow(0, 3) then
+    stdio.stdout.println("FAIL:72:1"); return;
+  fi
+  if bucket.allow(0, 3) then
+    stdio.stdout.println("FAIL:72:2"); return;
+  fi
+  if !bucket.allow(1, 2) then
+    stdio.stdout.println("FAIL:72:3"); return;
+  fi
+  if bucket.allow(1, 3) then
+    stdio.stdout.println("FAIL:72:4"); return;
+  fi
+  if !bucket.allow(5, 5) then
+    stdio.stdout.println("FAIL:72:5"); return;
+  fi
+  if bucket.allow(4, 1) then
+    stdio.stdout.println("FAIL:72:6"); return;
+  fi
+  if bucket.allow(5, 0) then
+    stdio.stdout.println("FAIL:72:7"); return;
+  fi
+  if !bucket.allow(1000000000, 5) then
+    stdio.stdout.println("FAIL:72:9"); return;
+  fi
+  if bucket.allow(1000000000, 1) then
+    stdio.stdout.println("FAIL:72:10"); return;
+  fi
+  if bucket.remaining() != 0 then
+    stdio.stdout.println("FAIL:72:8"); return;
+  fi
+  stdio.stdout.println("PASS:72");
+  return;
+}

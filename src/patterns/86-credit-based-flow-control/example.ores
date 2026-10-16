@@ -1,0 +1,49 @@
+// 86: two outstanding delivery credits, sequential model.
+define class Credits as
+  val Array<int> ids = new Array<int>();
+  let int active = 0;
+  let int allocated = 0;
+  pub send(mut self)(int id): bool {
+    if id < 0 then return false; fi
+    for let i = 0; i < self.active; i++ do
+      if self.ids.get(i) == id then return false; fi
+    done
+    if self.active >= 2 then return false; fi
+    if self.active < self.allocated then
+      self.ids.set(self.active, id);
+    else
+      self.ids.add(id);
+      self.allocated = self.allocated + 1;
+    fi
+    self.active = self.active + 1;
+    return true;
+  }
+  pub acknowledge(mut self)(int id): bool {
+    for let i = 0; i < self.active; i++ do
+      if self.ids.get(i) == id then
+        self.ids.set(i, self.ids.get(self.active - 1));
+        self.active = self.active - 1;
+        return true;
+      fi
+    done
+    return false;
+  }
+  pub available(): int { return 2 - self.active; }
+end
+pub routine main(): void {
+  val Credits flow = new Credits();
+  if !flow.send(1) then stdio.stdout.println("FAIL:86:1"); return; fi
+  if !flow.send(2) then stdio.stdout.println("FAIL:86:2"); return; fi
+  if flow.send(3) then stdio.stdout.println("FAIL:86:3"); return; fi
+  if flow.send(1) then stdio.stdout.println("FAIL:86:4"); return; fi
+  if flow.available() != 0 then stdio.stdout.println("FAIL:86:5"); return; fi
+  if !flow.acknowledge(2) then stdio.stdout.println("FAIL:86:6"); return; fi
+  if flow.acknowledge(2) then stdio.stdout.println("FAIL:86:7"); return; fi
+  if !flow.send(3) then stdio.stdout.println("FAIL:86:8"); return; fi
+  if flow.acknowledge(99) then stdio.stdout.println("FAIL:86:9"); return; fi
+  if flow.available() != 0 then stdio.stdout.println("FAIL:86:10"); return; fi
+  if !flow.acknowledge(1) then stdio.stdout.println("FAIL:86:11"); return; fi
+  if !flow.acknowledge(3) then stdio.stdout.println("FAIL:86:12"); return; fi
+  if flow.available() != 2 then stdio.stdout.println("FAIL:86:13"); return; fi
+  stdio.stdout.println("PASS:86"); return;
+}

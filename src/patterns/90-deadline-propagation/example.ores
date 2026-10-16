@@ -1,0 +1,27 @@
+// 90: child deadline is bounded by parent's absolute expiry.
+fnc child_deadline(int parent, int requested, int now): int {
+  if parent < 0 then return -1; fi
+  if requested < 0 then return -1; fi
+  if now < 0 then return -1; fi
+  if now >= parent then return -1; fi
+  if now >= requested then return -1; fi
+  if requested <= parent then return requested; fi
+  return parent;
+}
+fnc is_live(int deadline, int now): bool {
+  if deadline < 0 then return false; fi
+  if now < 0 then return false; fi
+  return now < deadline;
+}
+pub routine main(): void {
+  if child_deadline(100, 120, 20) != 100 then stdio.stdout.println("FAIL:90:1"); return; fi
+  if child_deadline(100, 60, 20) != 60 then stdio.stdout.println("FAIL:90:2"); return; fi
+  if child_deadline(100, 60, 60) != -1 then stdio.stdout.println("FAIL:90:3"); return; fi
+  if child_deadline(100, 200, 100) != -1 then stdio.stdout.println("FAIL:90:4"); return; fi
+  if child_deadline(-1, 20, 0) != -1 then stdio.stdout.println("FAIL:90:5"); return; fi
+  if child_deadline(100, -1, 0) != -1 then stdio.stdout.println("FAIL:90:6"); return; fi
+  if !is_live(100, 99) then stdio.stdout.println("FAIL:90:7"); return; fi
+  if is_live(100, 100) then stdio.stdout.println("FAIL:90:8"); return; fi
+  if child_deadline(100, 100, 0) != 100 then stdio.stdout.println("FAIL:90:9"); return; fi
+  stdio.stdout.println("PASS:90"); return;
+}

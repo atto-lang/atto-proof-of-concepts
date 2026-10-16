@@ -1,0 +1,50 @@
+// 73 Optimistic Concurrency Control: sequential compare-and-swap model.
+// Storage-level atomic compare-and-write must be supplied in production.
+define class VersionedBalance as
+  let int version = 1;
+  let int balance = 10;
+
+  pub try_write(mut self)(int expected, int next_balance): bool {
+    if expected != self.version then
+      return false;
+    fi
+    if next_balance < 0 then
+      return false;
+    fi
+    self.balance = next_balance;
+    self.version = self.version + 1;
+    return true;
+  }
+
+  pub current_version(): int {
+    return self.version;
+  }
+
+  pub current_balance(): int {
+    return self.balance;
+  }
+end
+
+pub routine main(): void {
+  val VersionedBalance account = new VersionedBalance();
+  if !account.try_write(1, 20) then
+    stdio.stdout.println("FAIL:73:1"); return;
+  fi
+  if account.try_write(1, 900) then
+    stdio.stdout.println("FAIL:73:2"); return;
+  fi
+  if account.try_write(2, -10) then
+    stdio.stdout.println("FAIL:73:3"); return;
+  fi
+  if !account.try_write(2, 25) then
+    stdio.stdout.println("FAIL:73:4"); return;
+  fi
+  if account.current_balance() != 25 then
+    stdio.stdout.println("FAIL:73:5"); return;
+  fi
+  if account.current_version() != 3 then
+    stdio.stdout.println("FAIL:73:6"); return;
+  fi
+  stdio.stdout.println("PASS:73");
+  return;
+}

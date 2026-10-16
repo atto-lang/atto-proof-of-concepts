@@ -31,6 +31,8 @@ def discover():
         number = int(directory.name[:2])
         source = directory / "example.ores"
         oracle = directory / "expected.stdout"
+        if source.is_symlink() or oracle.is_symlink():
+            raise ValueError(f"{directory.name}: source and oracle must not be symlinks")
         if not source.is_file() or not oracle.is_file():
             raise ValueError(f"{directory.name}: missing example.ores or expected.stdout")
         expected = oracle.read_text(encoding="utf-8")
@@ -44,8 +46,8 @@ def discover():
         if f"PASS:{number}" not in body or f"FAIL:{number}:" not in body:
             raise ValueError(f"{directory.name}: no visible behavioral assertion/marker")
         result.append((number, directory, source, expected))
-    if [item[0] for item in result] != list(range(1, 71)):
-        raise ValueError("expected exactly the numbered pattern directories 01..70")
+    if len(result) < 70 or [item[0] for item in result] != list(range(1, len(result) + 1)):
+        raise ValueError("expected at least 70 contiguous numbered pattern directories starting at 01")
     return result
 
 
@@ -146,7 +148,7 @@ def main():
         "command": args.runner_command,
         "revision_format_verified": args.require_revision,
         "selected": len(selected), "inventory_total": len(fixtures),
-        "complete_catalog": len(selected) == 70,
+        "complete_catalog": len(selected) == len(fixtures),
         "passed": passes, "failed": len(selected) - passes,
         "results": results,
     }

@@ -1,6 +1,6 @@
-# Design pattern catalog (70)
+# Design pattern catalog (90)
 
-23 classical GoF, 27 enterprise/application/concurrency, 20 advanced systems patterns. Curated list, not a measured popularity ranking. Each directory holds a concrete implementation specification; planned does not mean implemented.
+23 classical GoF, 27 enterprise/application/concurrency, 20 advanced systems patterns, and 20 reliability/distributed systems/application/messaging/storage patterns. Curated list, not a measured popularity ranking. Each directory holds a concrete implementation specification; planned does not mean implemented.
 
 | # | Pattern | Family | Intent |
 |---|---|---|---|
@@ -75,8 +75,30 @@
 | 69 | [Half Sync Half Async](./69-half-sync-half-async/) | advanced | Bridge sync-facing APIs onto asynchronous machinery |
 | 70 | [Supervisor Tree](./70-supervisor-tree/) | advanced | Supervise dependent actors under restart policy |
 
-Native source prototypes have been started for Strategy, Future Promise, Pipeline and Specification; all require actual compiler/runtime verification.
+| 71 | [Idempotent Consumer](./71-idempotent-consumer/) | reliability | Apply a message effect once when deliveries may be repeated. |
+| 72 | [Token Bucket Rate Limiter](./72-token-bucket-rate-limiter/) | reliability | Bound bursts and refill admission credits over time. |
+| 73 | [Optimistic Concurrency Control](./73-optimistic-concurrency-control/) | reliability | Reject a write when the caller's observed version is stale. |
+| 74 | [Fencing Tokens](./74-fencing-tokens/) | distributed systems | Reject effects from stale holders after a newer lease epoch is issued. |
+| 75 | [Rendezvous Hashing](./75-rendezvous-hashing/) | distributed systems | Assign a key deterministically to the highest-scoring available node. |
+| 76 | [Singleflight Request Coalescing](./76-singleflight/) | reliability | Admit only one in-flight operation per key until its leader completes. |
+| 77 | [Cache Aside](./77-cache-aside/) | enterprise/application | Load data on a miss and explicitly invalidate cached entries after changes. |
+| 78 | [Dead Letter Queue](./78-dead-letter-queue/) | reliability | Quarantine repeatedly failing messages after retry budget exhaustion. |
+| 79 | [Feature Flags and Sticky Rollout](./79-feature-flags-rollout/) | enterprise/application | Choose a deterministic per-account cohort and enforce a global kill switch. |
+| 80 | [Vector Clocks](./80-vector-clocks/) | distributed systems | Track causal ordering and detect concurrent events without a total order. |
+
+| 81 | [Request–Reply Correlation](./81-request-reply-correlation/) | messaging | Match out-of-order replies to outstanding request IDs. |
+| 82 | [Lease Expiration and Renewal](./82-lease-expiration-renewal/) | distributed systems | Bound an ownership claim by monotonic tick expiry. |
+| 83 | [Weighted Quorum Voting](./83-weighted-quorum-voting/) | distributed systems | Require read/write and write/write quorum intersection. |
+| 84 | [Grow-Only Counter CRDT](./84-grow-only-counter-crdt/) | distributed systems | Join concurrent replica increments by componentwise maximum. |
+| 85 | [Last-Writer-Wins Register](./85-last-writer-wins-register/) | distributed systems | Resolve version conflicts by logical timestamp and replica ID. |
+| 86 | [Credit-Based Flow Control](./86-credit-based-flow-control/) | messaging | Restrict outstanding sends to available delivery credits. |
+| 87 | [Write-Ahead Log Replay](./87-write-ahead-log-replay/) | storage | Replay an ordered write log from an explicit checkpoint. |
+| 88 | [Retry Budget](./88-retry-budget/) | reliability | Bound retry amplification with explicit admission credits. |
+| 89 | [Hedged Requests](./89-hedged-requests/) | reliability | Choose earliest successful completion from primary and hedge. |
+| 90 | [Deadline Propagation](./90-deadline-propagation/) | reliability | Clamp child operation deadlines to an inherited parent limit. |
+
+Each of the 90 numbered folders has native `example.ores` and `expected.stdout`. The original 70 have historical Java/GraalVM guest evidence; new examples 71–90 have [20/20 pinned Java/GraalVM guest check-and-run passes](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38932192949), with exact golden stdout. These are separate pinned cohorts, not one 90/90 same-revision test. LLVM parity and distributed-systems concurrency safety remain unverified.
 
 ## Status of individual exercises
 
-[Conformance matrix](CONFORMANCE_MATRIX.md) distinguishes concrete native prototypes from sequential reference models. No full Java/LLVM compiler pass is claimed.
+[Conformance matrix](CONFORMANCE_MATRIX.md) distinguishes concrete native prototypes from sequential reference models. The first 70 have a pinned Java check-and-run pass. No full 90-pattern Java guest run or any full LLVM pass is claimed.
