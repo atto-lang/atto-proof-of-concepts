@@ -6,7 +6,7 @@ src = Path(__file__).resolve().parents[1]
 libraries = sorted(d for d in (src / "libraries").iterdir() if d.is_dir() and d.name.startswith("oreslang-"))
 patterns = sorted(d for d in (src / "patterns").iterdir() if d.is_dir() and re.match(r"^[0-9][0-9]-", d.name))
 assert len(libraries) == 60, f"Expected 60 library briefs, found {len(libraries)}"
-assert len(patterns) == 80, f"Expected 70 pattern briefs, found {len(patterns)}"
+assert len(patterns) == 80, f"Expected 80 pattern briefs, found {len(patterns)}"
 assert [int(p.name[:2]) for p in patterns] == list(range(1, 81))
 for p in libraries + patterns:
     body = (p / "README.md").read_text(encoding="utf-8")

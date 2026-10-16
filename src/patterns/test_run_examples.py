@@ -4,6 +4,7 @@ import io
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest import mock
 import run_examples
@@ -26,6 +27,27 @@ class RunnerContractTests(unittest.TestCase):
         patterns = run_examples.discover()
         self.assertEqual(len(patterns), 80)
         self.assertEqual([n for n, _, _, _ in patterns], list(range(1, 81)))
+
+    def test_symlinked_source_or_oracle_is_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            target = root / "outside.ores"
+            target.write_text('pub routine main(): void { return; }')
+            case = root / "01-symlink"
+            case.mkdir()
+            oracle = case / "expected.stdout"
+            oracle.write_text("PASS:1\\n")
+            (case / "example.ores").symlink_to(target)
+            with mock.patch.object(run_examples, "PATTERNS", root):
+                with self.assertRaisesRegex(ValueError, "symlinks"):
+                    run_examples.discover()
+            (case / "example.ores").unlink()
+            (case / "example.ores").write_text('pub routine main(): void { return; }')
+            oracle.unlink()
+            oracle.symlink_to(target)
+            with mock.patch.object(run_examples, "PATTERNS", root):
+                with self.assertRaisesRegex(ValueError, "symlinks"):
+                    run_examples.discover()
 
     def test_exact_runtime_output_required(self):
         good = subprocess.CompletedProcess([], 0, "PASS:1\n", "")

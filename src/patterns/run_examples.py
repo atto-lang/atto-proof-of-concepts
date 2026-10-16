@@ -31,6 +31,8 @@ def discover():
         number = int(directory.name[:2])
         source = directory / "example.ores"
         oracle = directory / "expected.stdout"
+        if source.is_symlink() or oracle.is_symlink():
+            raise ValueError(f"{directory.name}: source and oracle must not be symlinks")
         if not source.is_file() or not oracle.is_file():
             raise ValueError(f"{directory.name}: missing example.ores or expected.stdout")
         expected = oracle.read_text(encoding="utf-8")
