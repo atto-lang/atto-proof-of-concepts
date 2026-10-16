@@ -1,6 +1,7 @@
 # 80. Vector Clocks
 
 - **Category:** distributed systems
+- **Hardening:** Rejects increment attempts when either component reaches the signed 32-bit maximum without wrapping, and tests unchanged state after the rejection.
 - **Status:** new native source prototype; Java/GraalVM and LLVM compilation/execution **not yet verified** for this revision.
 
 ## Intent
