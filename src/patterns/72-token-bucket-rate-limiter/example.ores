@@ -11,11 +11,14 @@ define class TokenBucket as
     if cost <= 0 then
       return false;
     fi
-    let int refilled = self.tokens + (now - self.last_tick) * 2;
-    if refilled > 5 then
-      refilled = 5;
+    // Cap elapsed time before arithmetic so extreme ticks cannot overflow.
+    val int elapsed = now - self.last_tick;
+    if elapsed >= 3 then
+      self.tokens = 5;
+    else
+      self.tokens = self.tokens + elapsed * 2;
+      if self.tokens > 5 then self.tokens = 5; fi
     fi
-    self.tokens = refilled;
     self.last_tick = now;
     if cost > self.tokens then
       return false;
@@ -51,6 +54,12 @@ pub routine main(): void {
   fi
   if bucket.allow(5, 0) then
     stdio.stdout.println("FAIL:72:7"); return;
+  fi
+  if !bucket.allow(1000000000, 5) then
+    stdio.stdout.println("FAIL:72:9"); return;
+  fi
+  if bucket.allow(1000000000, 1) then
+    stdio.stdout.println("FAIL:72:10"); return;
   fi
   if bucket.remaining() != 0 then
     stdio.stdout.println("FAIL:72:8"); return;

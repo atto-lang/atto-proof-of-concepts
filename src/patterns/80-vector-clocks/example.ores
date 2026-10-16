@@ -17,6 +17,9 @@ define class VectorClock2 as
   }
 
   pub merge_from(mut self)(int other_a, int other_b): void {
+    // Reject malformed remote components atomically.
+    if other_a < 0 then return; fi
+    if other_b < 0 then return; fi
     if other_a > self.a then
       self.a = other_a;
     fi
@@ -81,6 +84,9 @@ pub routine main(): void {
   if left.tick(3) then
     stdio.stdout.println("FAIL:80:7"); return;
   fi
+  left.merge_from(-1, 100);
+  if left.first() != 1 then stdio.stdout.println("FAIL:80:9"); return; fi
+  if left.second() != 1 then stdio.stdout.println("FAIL:80:10"); return; fi
   if left.compare(-1, 0) != -1 then
     stdio.stdout.println("FAIL:80:8"); return;
   fi

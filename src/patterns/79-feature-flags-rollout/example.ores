@@ -13,7 +13,8 @@ fnc feature_enabled(int account, int percentage, bool master_switch): bool {
   if percentage > 100 then
     return false;
   fi
-  val int bucket = (account * 17 + 11) % 100;
+  // Normalize before multiplication for even the largest integer IDs.
+  val int bucket = ((account % 100) * 17 + 11) % 100;
   return bucket < percentage;
 }
 
@@ -38,6 +39,9 @@ pub routine main(): void {
   fi
   if feature_enabled(-1, 50, true) then
     stdio.stdout.println("FAIL:79:7"); return;
+  fi
+  if feature_enabled(2147483647, 50, true) != feature_enabled(47, 50, true) then
+    stdio.stdout.println("FAIL:79:9"); return;
   fi
   if feature_enabled(0, 50, true) != feature_enabled(0, 50, true) then
     stdio.stdout.println("FAIL:79:8"); return;

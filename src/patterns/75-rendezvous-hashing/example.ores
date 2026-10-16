@@ -1,7 +1,8 @@
 // 75 Rendezvous Hashing: deterministic maximum-score node selection.
 // This toy modulus is not a production hash or a distribution-quality proof.
 fnc score(int key, int node): int {
-  return ((key + node * 17) * 7) % 97;
+  // Reduce untrusted key before multiplication to prevent overflow.
+  return (((key % 97) + node * 17) * 7) % 97;
 }
 
 fnc choose_node(int key, int nodes): int {
@@ -44,6 +45,9 @@ pub routine main(): void {
   fi
   if choose_node(-1, 2) != -1 then
     stdio.stdout.println("FAIL:75:6"); return;
+  fi
+  if choose_node(2147483647, 3) != choose_node(2147483647 % 97, 3) then
+    stdio.stdout.println("FAIL:75:8"); return;
   fi
   if choose_node(5, 4) != -1 then
     stdio.stdout.println("FAIL:75:7"); return;
