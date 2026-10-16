@@ -38,7 +38,7 @@ pub routine main(): void {
   if owner(5, 1) != 1 then
     stdio.stdout.println("FAIL:75:2"); return;
   fi
-  if owner(9, 2) != owner(9, 2) then
+  if owner(9, 2) != 2 then
     stdio.stdout.println("FAIL:75:3"); return;
   fi
   stdio.stdout.println("PASS:75");
