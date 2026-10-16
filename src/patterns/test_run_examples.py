@@ -25,8 +25,8 @@ def check_run(args, result):
 class RunnerContractTests(unittest.TestCase):
     def test_all_pattern_files_have_oracles(self):
         patterns = run_examples.discover()
-        self.assertEqual(len(patterns), 80)
-        self.assertEqual([n for n, _, _, _ in patterns], list(range(1, 81)))
+        self.assertEqual(len(patterns), 90)
+        self.assertEqual([n for n, _, _, _ in patterns], list(range(1, 91)))
 
     def test_symlinked_source_or_oracle_is_rejected(self):
         with tempfile.TemporaryDirectory() as folder:

@@ -46,8 +46,8 @@ def discover():
         if f"PASS:{number}" not in body or f"FAIL:{number}:" not in body:
             raise ValueError(f"{directory.name}: no visible behavioral assertion/marker")
         result.append((number, directory, source, expected))
-    if [item[0] for item in result] != list(range(1, 81)):
-        raise ValueError("expected exactly the numbered pattern directories 01..80")
+    if [item[0] for item in result] != list(range(1, 91)):
+        raise ValueError("expected exactly the numbered pattern directories 01..90")
     return result
 
 
@@ -148,7 +148,7 @@ def main():
         "command": args.runner_command,
         "revision_format_verified": args.require_revision,
         "selected": len(selected), "inventory_total": len(fixtures),
-        "complete_catalog": len(selected) == 80,
+        "complete_catalog": len(selected) == 90,
         "passed": passes, "failed": len(selected) - passes,
         "results": results,
     }

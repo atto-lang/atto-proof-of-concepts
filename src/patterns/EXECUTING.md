@@ -1,6 +1,6 @@
 # Executable pattern prototypes
 
-All 80 numbered folders now contain an independently executable-intent native Oreslang `example.ores` plus an `expected.stdout` oracle, and each README links those files. They exercise representative behaviors; the complex concurrency/ownership cases are **sequential reference models**, not safe complete production implementations or formal proofs.
+All 90 numbered folders now contain an independently executable-intent native Oreslang `example.ores` plus an `expected.stdout` oracle, and each README links those files. They exercise representative behaviors; the complex concurrency/ownership cases are **sequential reference models**, not safe complete production implementations or formal proofs.
 
 ## Structural check
 
@@ -26,7 +26,7 @@ The command is an **example placeholder**. Replace it with a working Java or LLV
 ## Current status and limitations
 
 - The original 70 patterns at Java revision 43edad9 have a funded exact-source 70/70 Java check-and-run result [run #38341093687](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) on the pinned historical PoC revision. LLVM execution is not yet verified.
-- 23 GoF + 27 enterprise/concurrency + 20 advanced + 10 reliability/distributed-systems/application examples. Patterns 71–80 have no compilation/runtime evidence yet.
+- 23 GoF + 27 enterprise/concurrency + 20 advanced + 20 reliability/distributed-systems/application/messaging/storage examples. Patterns 71–80 have pinned Java parser/type/ownership [static PASS](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) but no guest run. Patterns 81–90 are newly unverified.
 - Examples for typestate, session types, capabilities, RAII, hazard pointers, epoch reclamation, RCU, sequence locks, work stealing, actor model and nonparking I/O **do not establish their named safety properties**. They are small reference models explicitly identifying missing runtime/compiler proof obligations in comments and README files.
 - Prioritize replacing models with complete algorithms and compiler-negative fixtures and testing on both Java/GraalVM and LLVM.
 
@@ -62,3 +62,7 @@ Source PR #11 tip `246d685fdc436c743a965f4349516b82af99bfe0` has 10 new programs
 A second private test branch was created under [fiducia-cloud/fiducia-docs](https://github.com/fiducia-cloud/fiducia-docs/tree/test/oreslang-patterns-80-20261016): 11 pinned Java lexer/parser/type/ownership sources plus 10 Oreslang programs and 10 oracles, with an exact Git-blob manifest and Java 25 probe workflow. Its [initial run #38928536679](https://github.com/fiducia-cloud/fiducia-docs/actions/runs/38928536679) likewise failed **before runner assignment and before any steps**, despite that organization having successful workflow runs on October 15. These failures must not be labeled parser, type-checker or runtime test failures; Actions budget/billing and runner admission could not be definitively distinguished by the accessible GitHub API. The test branch is temporary and must not be merged.
 
 The pinned historic 70/70 Java guest result remains unchanged; patterns 71–80 still have **no actual compiler/runtime evidence**.
+
+## Funded private static compiler carrier (71–80)
+
+The [Scintilla carrier run #38929258766](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) assigned a real hosted runner and passed SHA-verification of 11 pinned Java lexer/parser/type/ownership source blobs and 20 new pattern source/oracle blobs, compiled these checkers on Java 25, parsed 10 programs, and type/ownership-checked 10 programs. It did **not** build/run the full Oreslang guest runtime. This verifies 71–80 **only**, not the new 81–90 sources or full backend parity.

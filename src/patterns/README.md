@@ -1,6 +1,6 @@
-# Design pattern catalog (80)
+# Design pattern catalog (90)
 
-23 classical GoF, 27 enterprise/application/concurrency, 20 advanced systems patterns, and 10 reliability/distributed systems/application patterns. Curated list, not a measured popularity ranking. Each directory holds a concrete implementation specification; planned does not mean implemented.
+23 classical GoF, 27 enterprise/application/concurrency, 20 advanced systems patterns, and 20 reliability/distributed systems/application/messaging/storage patterns. Curated list, not a measured popularity ranking. Each directory holds a concrete implementation specification; planned does not mean implemented.
 
 | # | Pattern | Family | Intent |
 |---|---|---|---|
@@ -86,8 +86,19 @@
 | 79 | [Feature Flags and Sticky Rollout](./79-feature-flags-rollout/) | enterprise/application | Choose a deterministic per-account cohort and enforce a global kill switch. |
 | 80 | [Vector Clocks](./80-vector-clocks/) | distributed systems | Track causal ordering and detect concurrent events without a total order. |
 
-Each of the 80 numbered folders includes a native `example.ores` and `expected.stdout`. The original 70 have pinned historical Java/GraalVM sample-execution evidence; numbers 71–80 are newly added and have **not** been compiler/runtime verified. Evidence does not imply full correctness or concurrency safety.
+| 81 | [Request–Reply Correlation](./81-request-reply-correlation/) | messaging | Match out-of-order replies to outstanding request IDs. |
+| 82 | [Lease Expiration and Renewal](./82-lease-expiration-renewal/) | distributed systems | Bound an ownership claim by monotonic tick expiry. |
+| 83 | [Weighted Quorum Voting](./83-weighted-quorum-voting/) | distributed systems | Require read/write and write/write quorum intersection. |
+| 84 | [Grow-Only Counter CRDT](./84-grow-only-counter-crdt/) | distributed systems | Join concurrent replica increments by componentwise maximum. |
+| 85 | [Last-Writer-Wins Register](./85-last-writer-wins-register/) | distributed systems | Resolve version conflicts by logical timestamp and replica ID. |
+| 86 | [Credit-Based Flow Control](./86-credit-based-flow-control/) | messaging | Restrict outstanding sends to available delivery credits. |
+| 87 | [Write-Ahead Log Replay](./87-write-ahead-log-replay/) | storage | Replay an ordered write log from an explicit checkpoint. |
+| 88 | [Retry Budget](./88-retry-budget/) | reliability | Bound retry amplification with explicit admission credits. |
+| 89 | [Hedged Requests](./89-hedged-requests/) | reliability | Choose earliest successful completion from primary and hedge. |
+| 90 | [Deadline Propagation](./90-deadline-propagation/) | reliability | Clamp child operation deadlines to an inherited parent limit. |
+
+Each of the 90 numbered folders includes a native `example.ores` and `expected.stdout`. The original 70 have pinned historical Java/GraalVM sample-execution evidence; 71–80 passed pinned Java parser/type/ownership verification [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) but are not guest runtime verified; 81–90 remain unverified. LLVM parity is not established. Evidence does not imply full correctness or concurrency safety.
 
 ## Status of individual exercises
 
-[Conformance matrix](CONFORMANCE_MATRIX.md) distinguishes concrete native prototypes from sequential reference models. The first 70 have a pinned Java check-and-run pass. No full 80-pattern Java run or any full LLVM pass is claimed.
+[Conformance matrix](CONFORMANCE_MATRIX.md) distinguishes concrete native prototypes from sequential reference models. The first 70 have a pinned Java check-and-run pass. No full 90-pattern Java guest run or any full LLVM pass is claimed.

@@ -75,22 +75,37 @@
 | 69 | [half-sync-half-async](69-half-sync-half-async/example.ores) | Reference model | **Static + Java guest PASS** [CI](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) | Not run (feature scope may be unsupported) |
 | 70 | [supervisor-tree](70-supervisor-tree/example.ores) | Reference model | **Static + Java guest PASS** [CI](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) | Not run (feature scope may be unsupported) |
 
-## New additions (71–80): no verified compiler execution
+## New additions (71–80): exact-source Java static verification
 
-These are additional sources and exact-output oracles. The historical 70/70 Java result above remains **limited to the original 70**; do not extrapolate it to these new examples.
+The historical 70/70 Java guest run remains **limited to 01–70**. Java 25 [CI #38929258766](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) verified exact source blobs and **10/10 Java parser/type/ownership** for 71–80, but did not run their guest runtime; LLVM remains untested.
 
 | # | Native .ores source | Nature of exercise | Java status | LLVM status |
 |---|---|---|---|---|
-| 71 | [idempotent-consumer](71-idempotent-consumer/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 72 | [token-bucket-rate-limiter](72-token-bucket-rate-limiter/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 73 | [optimistic-concurrency-control](73-optimistic-concurrency-control/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 74 | [fencing-tokens](74-fencing-tokens/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 75 | [rendezvous-hashing](75-rendezvous-hashing/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 76 | [singleflight](76-singleflight/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 77 | [cache-aside](77-cache-aside/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 78 | [dead-letter-queue](78-dead-letter-queue/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 79 | [feature-flags-rollout](79-feature-flags-rollout/example.ores) | Sequential native reference model | **Not run** | **Not run** |
-| 80 | [vector-clocks](80-vector-clocks/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 71 | [idempotent-consumer](71-idempotent-consumer/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 72 | [token-bucket-rate-limiter](72-token-bucket-rate-limiter/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 73 | [optimistic-concurrency-control](73-optimistic-concurrency-control/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 74 | [fencing-tokens](74-fencing-tokens/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 75 | [rendezvous-hashing](75-rendezvous-hashing/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 76 | [singleflight](76-singleflight/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 77 | [cache-aside](77-cache-aside/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 78 | [dead-letter-queue](78-dead-letter-queue/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 79 | [feature-flags-rollout](79-feature-flags-rollout/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+| 80 | [vector-clocks](80-vector-clocks/example.ores) | Sequential native reference model | **Java static PASS** [CI](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38929258766) (guest not run) | **Not run** |
+
+## New additions (81–90): compiler and runtime pending
+
+| # | Native .ores source | Nature of exercise | Java status | LLVM status |
+|---|---|---|---|---|
+| 81 | [request-reply-correlation](81-request-reply-correlation/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 82 | [lease-expiration-renewal](82-lease-expiration-renewal/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 83 | [weighted-quorum-voting](83-weighted-quorum-voting/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 84 | [grow-only-counter-crdt](84-grow-only-counter-crdt/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 85 | [last-writer-wins-register](85-last-writer-wins-register/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 86 | [credit-based-flow-control](86-credit-based-flow-control/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 87 | [write-ahead-log-replay](87-write-ahead-log-replay/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 88 | [retry-budget](88-retry-budget/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 89 | [hedged-requests](89-hedged-requests/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 90 | [deadline-propagation](90-deadline-propagation/example.ores) | Sequential native reference model | **Not run** | **Not run** |
 
 ## Evidence rules
 
