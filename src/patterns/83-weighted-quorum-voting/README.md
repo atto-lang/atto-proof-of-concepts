@@ -1,7 +1,7 @@
 # 83. Weighted Quorum Voting
 
 - **Category:** distributed systems
-- **Status:** native source prototype, not yet compiler-verified.
+- **Status:** native source prototype; Java parser/type/ownership PASS (20/20 funded exact-source CI), guest runtime and LLVM not yet verified.
 
 ## Intent
 
@@ -17,6 +17,6 @@ Fixed membership, no failures or split-brain coordinator; actual distributed sta
 
 ## Acceptance
 
-Run the actual pinned Oreslang parser, type/ownership checker and guest runtime using [runner instructions](../EXECUTING.md). Require exact `PASS:83\n` and exit 0; negative fixtures and concurrent state histories are required for stronger guarantees. The oracle is only a sample behavior, not a proof.
+The pinned Java parser/type/ownership gate has passed; run the actual Oreslang guest runtime using [runner instructions](../EXECUTING.md). Require exact `PASS:83\n` and exit 0; negative fixtures and concurrent state histories are required for stronger guarantees. The oracle is only a sample behavior, not a proof.
 
 [Source](example.ores) · [Output oracle](expected.stdout)

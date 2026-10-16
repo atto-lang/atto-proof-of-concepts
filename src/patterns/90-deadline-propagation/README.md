@@ -1,7 +1,7 @@
 # 90. Deadline Propagation
 
 - **Category:** reliability
-- **Status:** native source prototype, not yet compiler-verified.
+- **Status:** native source prototype; Java parser/type/ownership PASS (20/20 funded exact-source CI), guest runtime and LLVM not yet verified.
 
 ## Intent
 
@@ -17,6 +17,6 @@ Uses caller-supplied integer ticks; no real clock, async cancellation, propagati
 
 ## Acceptance
 
-Use the [pattern runner](../EXECUTING.md) with pinned real Oreslang compiler and runtime; require exit 0 and `PASS:90\n`. No sequential oracle establishes scheduler safety, durability or cross-backend parity.
+Use the [pattern runner](../EXECUTING.md) with a pinned real Oreslang guest runtime; require exit 0 and `PASS:90\n`. No sequential oracle establishes scheduler safety, durability or cross-backend parity.
 
 [Source](example.ores) · [Output oracle](expected.stdout)
