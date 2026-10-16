@@ -13,7 +13,7 @@ Acquire, conflict rejection, holder-only renewal, takeover at expiration, releas
 
 ## Safety and production limitations
 
-Local clock and authority model, not a network lease or fencing-token-enforced durable lock; tick arithmetic overflow must be bounded by callers.
+Local clock and authority model, not a network lease or fencing-token-enforced durable lock; the demo rejects ticks and durations beyond one million to keep 32-bit arithmetic bounded; real deployments require a monotonic trusted clock and fencing.
 
 ## Acceptance
 

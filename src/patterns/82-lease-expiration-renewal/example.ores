@@ -6,6 +6,8 @@ define class TimedLease as
   pub acquire(mut self)(int id, int now, int ttl): bool {
     if id < 0 then return false; fi
     if ttl <= 0 then return false; fi
+    if ttl > 1000000 then return false; fi
+    if now > 1000000 then return false; fi
     if now < self.last_tick then return false; fi
     if self.holder >= 0, now < self.expires then return false; fi
     self.last_tick = now;
@@ -15,18 +17,20 @@ define class TimedLease as
   }
   pub renew(mut self)(int id, int now, int ttl): bool {
     if ttl <= 0 then return false; fi
+    if ttl > 1000000 then return false; fi
+    if now > 1000000 then return false; fi
     if now < self.last_tick then return false; fi
-    self.last_tick = now;
     if self.holder != id then return false; fi
     if now >= self.expires then return false; fi
+    self.last_tick = now;
     self.expires = now + ttl;
     return true;
   }
   pub release(mut self)(int id, int now): bool {
     if now < self.last_tick then return false; fi
-    self.last_tick = now;
     if self.holder != id then return false; fi
     if now >= self.expires then return false; fi
+    self.last_tick = now;
     self.holder = -1;
     return true;
   }
@@ -36,6 +40,7 @@ pub routine main(): void {
   val TimedLease lease = new TimedLease();
   if !lease.acquire(7, 0, 3) then stdio.stdout.println("FAIL:82:1"); return; fi
   if lease.acquire(8, 2, 3) then stdio.stdout.println("FAIL:82:2"); return; fi
+  if lease.renew(8, 100, 2) then stdio.stdout.println("FAIL:82:11"); return; fi
   if !lease.renew(7, 2, 2) then stdio.stdout.println("FAIL:82:3"); return; fi
   if lease.renew(8, 3, 5) then stdio.stdout.println("FAIL:82:4"); return; fi
   if !lease.acquire(8, 4, 3) then stdio.stdout.println("FAIL:82:5"); return; fi
@@ -43,6 +48,7 @@ pub routine main(): void {
   if !lease.release(8, 4) then stdio.stdout.println("FAIL:82:7"); return; fi
   if !lease.acquire(9, 5, 4) then stdio.stdout.println("FAIL:82:8"); return; fi
   if lease.acquire(10, 4, 1) then stdio.stdout.println("FAIL:82:9"); return; fi
+  if lease.acquire(10, 1000001, 1) then stdio.stdout.println("FAIL:82:12"); return; fi
   if lease.current_holder() != 9 then stdio.stdout.println("FAIL:82:10"); return; fi
   stdio.stdout.println("PASS:82"); return;
 }
