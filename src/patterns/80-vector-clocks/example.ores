@@ -6,10 +6,12 @@ define class VectorClock2 as
 
   pub tick(mut self)(int node): bool {
     if node == 1 then
+      if self.a >= 2147483647 then return false; fi
       self.a = self.a + 1;
       return true;
     fi
     if node == 2 then
+      if self.b >= 2147483647 then return false; fi
       self.b = self.b + 1;
       return true;
     fi
@@ -89,6 +91,17 @@ pub routine main(): void {
   if left.second() != 1 then stdio.stdout.println("FAIL:80:10"); return; fi
   if left.compare(-1, 0) != -1 then
     stdio.stdout.println("FAIL:80:8"); return;
+  fi
+  val VectorClock2 at_limit = new VectorClock2();
+  at_limit.merge_from(2147483647, 2147483647);
+  if at_limit.tick(1) then
+    stdio.stdout.println("FAIL:80:11"); return;
+  fi
+  if at_limit.tick(2) then
+    stdio.stdout.println("FAIL:80:12"); return;
+  fi
+  if at_limit.compare(2147483647, 2147483647) != 0 then
+    stdio.stdout.println("FAIL:80:13"); return;
   fi
   stdio.stdout.println("PASS:80");
   return;
