@@ -1,0 +1,54 @@
+// 77: small cache-aside with logical TTL and explicit invalidation.
+// The origin is supplied as a value; reads are sequential and in-memory.
+define class CacheAside as
+  let bool present = false;
+  let int cached = 0;
+  let int expires = 0;
+  let int loads = 0;
+
+  pub read(mut self)(int tick, int origin): int {
+    if self.present then
+      if tick < self.expires then return self.cached; fi
+    fi
+    self.cached = origin;
+    self.expires = tick + 3;
+    self.present = true;
+    self.loads = self.loads + 1;
+    return origin;
+  }
+
+  pub invalidate(mut self)(): void {
+    self.present = false;
+    return;
+  }
+
+  pub origin_loads(): int { return self.loads; }
+end
+
+pub routine main(): void {
+  val CacheAside cache = new CacheAside();
+  if cache.read(0, 10) != 10 then
+    stdio.stdout.println("FAIL:77:1"); return;
+  fi
+  if cache.read(1, 999) != 10 then
+    stdio.stdout.println("FAIL:77:2"); return;
+  fi
+  if cache.origin_loads() != 1 then
+    stdio.stdout.println("FAIL:77:3"); return;
+  fi
+  if cache.read(3, 20) != 20 then
+    stdio.stdout.println("FAIL:77:4"); return;
+  fi
+  cache.invalidate();
+  if cache.read(4, 30) != 30 then
+    stdio.stdout.println("FAIL:77:5"); return;
+  fi
+  if cache.read(5, 99) != 30 then
+    stdio.stdout.println("FAIL:77:6"); return;
+  fi
+  if cache.origin_loads() != 3 then
+    stdio.stdout.println("FAIL:77:7"); return;
+  fi
+  stdio.stdout.println("PASS:77");
+  return;
+}

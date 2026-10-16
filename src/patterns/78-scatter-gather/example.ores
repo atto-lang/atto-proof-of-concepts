@@ -1,0 +1,53 @@
+// 78: deadline-limited gather with one contribution per worker.
+// Sequential response model; real async fan-out and cancellation not proven.
+define class Gather as
+  val Array<int> workers = new Array<int>();
+  let int received = 0;
+  let int aggregate = 0;
+
+  pub accept(mut self)(int worker, int value, int tick, int deadline): bool {
+    if worker < 1 then return false; fi
+    if worker > 3 then return false; fi
+    if tick > deadline then return false; fi
+    for let i = 0; i < self.received; i++ do
+      if self.workers.get(i) == worker then return false; fi
+    done
+    self.workers.add(worker);
+    self.received = self.received + 1;
+    self.aggregate = self.aggregate + value;
+    return true;
+  }
+
+  pub count(): int { return self.received; }
+  pub total(): int { return self.aggregate; }
+end
+
+pub routine main(): void {
+  val Gather gather = new Gather();
+  if !gather.accept(3, 30, 2, 5) then
+    stdio.stdout.println("FAIL:78:1"); return;
+  fi
+  if !gather.accept(1, 10, 1, 5) then
+    stdio.stdout.println("FAIL:78:2"); return;
+  fi
+  if gather.accept(1, 100, 3, 5) then
+    stdio.stdout.println("FAIL:78:3"); return;
+  fi
+  if gather.accept(2, 20, 6, 5) then
+    stdio.stdout.println("FAIL:78:4"); return;
+  fi
+  if gather.accept(4, 99, 4, 5) then
+    stdio.stdout.println("FAIL:78:5"); return;
+  fi
+  if !gather.accept(2, 20, 5, 5) then
+    stdio.stdout.println("FAIL:78:6"); return;
+  fi
+  if gather.count() != 3 then
+    stdio.stdout.println("FAIL:78:7"); return;
+  fi
+  if gather.total() != 60 then
+    stdio.stdout.println("FAIL:78:8"); return;
+  fi
+  stdio.stdout.println("PASS:78");
+  return;
+}

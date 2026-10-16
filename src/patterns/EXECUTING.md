@@ -1,6 +1,6 @@
 # Executable pattern prototypes
 
-All 70 numbered folders now contain an independently executable-intent native Oreslang `example.ores` plus an `expected.stdout` oracle, and each README links those files. They exercise representative behaviors; the complex concurrency/ownership cases are **sequential reference models**, not safe complete production implementations or formal proofs.
+All 78 numbered folders now contain an independently executable-intent native Oreslang `example.ores` plus an `expected.stdout` oracle, and each README links those files. They exercise representative behaviors; the complex concurrency/ownership cases are **sequential reference models**, not safe complete production implementations or formal proofs.
 
 ## Structural check
 
@@ -26,7 +26,7 @@ The command is an **example placeholder**. Replace it with a working Java or LLV
 ## Current status and limitations
 
 - Java revision 43edad9 has a funded exact-source 70/70 Java check-and-run result [run #38341093687](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) on the pinned historical PoC revision. LLVM execution is not yet verified.
-- 23 GoF + 27 enterprise/concurrency + 20 advanced examples.
+- 23 GoF + 27 enterprise/concurrency + 20 advanced + 8 distributed-systems examples. Patterns 71–78 have no compiler/runtime evidence yet.
 - Examples for typestate, session types, capabilities, RAII, hazard pointers, epoch reclamation, RCU, sequence locks, work stealing, actor model and nonparking I/O **do not establish their named safety properties**. They are small reference models explicitly identifying missing runtime/compiler proof obligations in comments and README files.
 - Prioritize replacing models with complete algorithms and compiler-negative fixtures and testing on both Java/GraalVM and LLVM.
 

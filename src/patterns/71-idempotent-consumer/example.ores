@@ -1,0 +1,48 @@
+// 71: replay of a processed message returns the original result.
+// Sequential in-memory model; durable atomic deduplication is not proved.
+define class IdempotentConsumer as
+  val Array<int> ids = new Array<int>();
+  val Array<int> results = new Array<int>();
+  let int entries = 0;
+  let int total = 0;
+
+  pub deliver(mut self)(int message_id, int delta): int {
+    for let i = 0; i < self.entries; i++ do
+      if self.ids.get(i) == message_id then
+        return self.results.get(i);
+      fi
+    done
+    self.total = self.total + delta;
+    self.ids.add(message_id);
+    self.results.add(self.total);
+    self.entries = self.entries + 1;
+    return self.total;
+  }
+
+  pub applied_count(): int { return self.entries; }
+  pub balance(): int { return self.total; }
+end
+
+pub routine main(): void {
+  val IdempotentConsumer consumer = new IdempotentConsumer();
+  if consumer.deliver(10, 5) != 5 then
+    stdio.stdout.println("FAIL:71:1"); return;
+  fi
+  if consumer.deliver(10, 999) != 5 then
+    stdio.stdout.println("FAIL:71:2"); return;
+  fi
+  if consumer.deliver(11, -2) != 3 then
+    stdio.stdout.println("FAIL:71:3"); return;
+  fi
+  if consumer.deliver(11, 100) != 3 then
+    stdio.stdout.println("FAIL:71:4"); return;
+  fi
+  if consumer.applied_count() != 2 then
+    stdio.stdout.println("FAIL:71:5"); return;
+  fi
+  if consumer.balance() != 3 then
+    stdio.stdout.println("FAIL:71:6"); return;
+  fi
+  stdio.stdout.println("PASS:71");
+  return;
+}

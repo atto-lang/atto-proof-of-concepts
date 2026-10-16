@@ -1,6 +1,6 @@
-# Design pattern catalog (70)
+# Design pattern catalog (78)
 
-23 classical GoF, 27 enterprise/application/concurrency, 20 advanced systems patterns. Curated list, not a measured popularity ranking. Each directory holds a concrete implementation specification; planned does not mean implemented.
+23 classical GoF, 27 enterprise/application/concurrency, 20 advanced systems patterns, and 8 distributed-systems patterns. Curated list, not a measured popularity ranking. Each directory holds a concrete implementation specification; planned does not mean implemented.
 
 | # | Pattern | Family | Intent |
 |---|---|---|---|
@@ -74,8 +74,16 @@
 | 68 | [Transactional Outbox](./68-transactional-outbox/) | advanced | Write state and message record in one transaction |
 | 69 | [Half Sync Half Async](./69-half-sync-half-async/) | advanced | Bridge sync-facing APIs onto asynchronous machinery |
 | 70 | [Supervisor Tree](./70-supervisor-tree/) | advanced | Supervise dependent actors under restart policy |
+| 71 | [Idempotent Consumer](./71-idempotent-consumer/) | distributed systems | Process a logical message once while returning the original result on duplicate delivery. |
+| 72 | [Transactional Inbox](./72-transactional-inbox/) | distributed systems | Apply an incoming message only if the inbox record and domain update commit together. |
+| 73 | [Token Bucket](./73-token-bucket/) | distributed systems | Admit requests up to a burst capacity and replenish tokens at a fixed logical rate. |
+| 74 | [Fencing Tokens](./74-fencing-tokens/) | distributed systems | Prevent a previous lease holder from mutating shared state after a successor receives a higher token. |
+| 75 | [Rendezvous Hashing](./75-rendezvous-hashing/) | distributed systems | Choose a deterministic shard by highest per-key/node score, with minimal reassignment when a node joins. |
+| 76 | [Dead Letter Queue](./76-dead-letter-queue/) | distributed systems | Retry transient failures to a bounded budget and quarantine repeatedly failing messages. |
+| 77 | [Cache Aside](./77-cache-aside/) | distributed systems | Read through to an origin on cache miss/expiration and explicitly invalidate on writes. |
+| 78 | [Scatter Gather](./78-scatter-gather/) | distributed systems | Collect worker responses from a fan-out request up to a deadline, counting each worker at most once. |
 
-Native source prototypes have been started for Strategy, Future Promise, Pipeline and Specification; all require actual compiler/runtime verification.
+Patterns 01–70 have historical pinned Java/GraalVM source execution evidence (see COMPILER_TIP_AUDIT.md); this does not prove complete algorithm safety. New patterns 71–78 are source prototypes with deterministic oracles and **no compiler/runtime verification yet**. The distributed patterns model sequential state transitions; they do not prove durable storage, distributed atomicity, or concurrent actor safety.
 
 ## Status of individual exercises
 

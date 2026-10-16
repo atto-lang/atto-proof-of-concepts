@@ -74,6 +74,16 @@
 | 68 | [transactional-outbox](68-transactional-outbox/example.ores) | Reference model | **Static + Java guest PASS** [CI](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) | Not run (feature scope may be unsupported) |
 | 69 | [half-sync-half-async](69-half-sync-half-async/example.ores) | Reference model | **Static + Java guest PASS** [CI](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) | Not run (feature scope may be unsupported) |
 | 70 | [supervisor-tree](70-supervisor-tree/example.ores) | Reference model | **Static + Java guest PASS** [CI](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) | Not run (feature scope may be unsupported) |
+| 71 | [idempotent-consumer](71-idempotent-consumer/example.ores) | Sequential reference model | **Not run — new source prototype** | **Not run** |
+| 72 | [transactional-inbox](72-transactional-inbox/example.ores) | Sequential reference model | **Not run — new source prototype** | **Not run** |
+| 73 | [token-bucket](73-token-bucket/example.ores) | Sequential reference model | **Not run — new source prototype** | **Not run** |
+| 74 | [fencing-tokens](74-fencing-tokens/example.ores) | Sequential reference model | **Not run — new source prototype** | **Not run** |
+| 75 | [rendezvous-hashing](75-rendezvous-hashing/example.ores) | Sequential reference model | **Not run — new source prototype** | **Not run** |
+| 76 | [dead-letter-queue](76-dead-letter-queue/example.ores) | Sequential reference model | **Not run — new source prototype** | **Not run** |
+| 77 | [cache-aside](77-cache-aside/example.ores) | Sequential reference model | **Not run — new source prototype** | **Not run** |
+| 78 | [scatter-gather](78-scatter-gather/example.ores) | Sequential reference model | **Not run — new source prototype** | **Not run** |
+
+**New entries 71–78 have not participated in the historical 70/70 run; the existing evidence must not be extrapolated to them.**
 
 ## Evidence rules
 

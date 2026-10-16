@@ -1,0 +1,46 @@
+// 75: highest-random-weight (rendezvous) shard placement model.
+// Deterministic small-integer scoring, NOT a production-quality hash.
+fnc score(int key, int node): int {
+  return (key * 31 + node * 17 + key * node * 13) % 101;
+}
+
+fnc owner(int key, int nodes): int {
+  let int best_node = 1;
+  let int best_score = score(key, 1);
+  for let candidate = 2; candidate <= nodes; candidate++ do
+    val int candidate_score = score(key, candidate);
+    if candidate_score > best_score then
+      best_score = candidate_score;
+      best_node = candidate;
+    fi
+  done
+  return best_node;
+}
+
+fnc join_preserves_ownership(): bool {
+  let int moved = 0;
+  for let key = 1; key <= 30; key++ do
+    val int before = owner(key, 2);
+    val int after = owner(key, 3);
+    if after != before then
+      if after != 3 then return false; fi
+      moved = moved + 1;
+    fi
+    if owner(key, 3) != after then return false; fi
+  done
+  return moved > 0;
+}
+
+pub routine main(): void {
+  if !join_preserves_ownership() then
+    stdio.stdout.println("FAIL:75:1"); return;
+  fi
+  if owner(5, 1) != 1 then
+    stdio.stdout.println("FAIL:75:2"); return;
+  fi
+  if owner(9, 2) != owner(9, 2) then
+    stdio.stdout.println("FAIL:75:3"); return;
+  fi
+  stdio.stdout.println("PASS:75");
+  return;
+}

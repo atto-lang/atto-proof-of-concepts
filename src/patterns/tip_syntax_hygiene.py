@@ -86,8 +86,8 @@ def violations(source: str) -> list[str]:
 
 def main() -> int:
     folders = sorted(p for p in ROOT.iterdir() if p.is_dir() and re.match(r"^[0-9]{2}-", p.name))
-    if len(folders) != 70:
-        print(f"expected 70 folders, found {len(folders)}", file=sys.stderr)
+    if len(folders) < 70 or [int(folder.name[:2]) for folder in folders] != list(range(1, len(folders) + 1)):
+        print(f"expected at least 70 contiguous folders, found {len(folders)}", file=sys.stderr)
         return 1
     failures = []
     for folder in folders:
@@ -113,7 +113,7 @@ def main() -> int:
         print(f"FAIL {failure}", file=sys.stderr)
     if failures:
         return 1
-    print("70 pattern sources passed grammar-aligned hygiene checks (NOT compilation)")
+    print(f"{len(folders)} pattern sources passed grammar-aligned hygiene checks (NOT compilation)")
     return 0
 
 

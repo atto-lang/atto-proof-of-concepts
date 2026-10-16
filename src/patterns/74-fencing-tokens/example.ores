@@ -1,0 +1,52 @@
+// 74: a resource accepts only the latest issued fencing token.
+// Models linearizable issuer+resource together; no real distributed lease.
+define class FencedResource as
+  let int issued = 0;
+  let int payload = 0;
+  let int writes = 0;
+
+  pub acquire(mut self)(): int {
+    self.issued = self.issued + 1;
+    return self.issued;
+  }
+
+  pub write(mut self)(int token, int value): bool {
+    if token == 0 then return false; fi
+    if token != self.issued then return false; fi
+    self.payload = value;
+    self.writes = self.writes + 1;
+    return true;
+  }
+
+  pub value(): int { return self.payload; }
+  pub write_count(): int { return self.writes; }
+end
+
+pub routine main(): void {
+  val FencedResource resource = new FencedResource();
+  if resource.write(1, 10) then
+    stdio.stdout.println("FAIL:74:1"); return;
+  fi
+  val int first = resource.acquire();
+  if !resource.write(first, 10) then
+    stdio.stdout.println("FAIL:74:2"); return;
+  fi
+  val int second = resource.acquire();
+  if resource.write(first, 99) then
+    stdio.stdout.println("FAIL:74:3"); return;
+  fi
+  if resource.write(second + 1, 99) then
+    stdio.stdout.println("FAIL:74:4"); return;
+  fi
+  if !resource.write(second, 20) then
+    stdio.stdout.println("FAIL:74:5"); return;
+  fi
+  if resource.value() != 20 then
+    stdio.stdout.println("FAIL:74:6"); return;
+  fi
+  if resource.write_count() != 2 then
+    stdio.stdout.println("FAIL:74:7"); return;
+  fi
+  stdio.stdout.println("PASS:74");
+  return;
+}

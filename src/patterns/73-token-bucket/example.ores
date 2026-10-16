@@ -1,0 +1,54 @@
+// 73: fixed-capacity token bucket with an injected monotonic tick.
+// Rate: 2 tokens per tick; capacity: 5; no real clock or threads.
+define class TokenBucket as
+  let int tokens = 5;
+  let int last_tick = 0;
+
+  pub take(mut self)(int tick, int cost): bool {
+    if cost <= 0 then return false; fi
+    if cost > 5 then return false; fi
+    if tick < self.last_tick then return false; fi
+    let int replenished = self.tokens + (tick - self.last_tick) * 2;
+    if replenished > 5 then replenished = 5; fi
+    self.tokens = replenished;
+    self.last_tick = tick;
+    if self.tokens < cost then return false; fi
+    self.tokens = self.tokens - cost;
+    return true;
+  }
+
+  pub remaining(): int { return self.tokens; }
+end
+
+pub routine main(): void {
+  val TokenBucket bucket = new TokenBucket();
+  if !bucket.take(0, 4) then
+    stdio.stdout.println("FAIL:73:1"); return;
+  fi
+  if bucket.take(0, 2) then
+    stdio.stdout.println("FAIL:73:2"); return;
+  fi
+  if !bucket.take(1, 2) then
+    stdio.stdout.println("FAIL:73:3"); return;
+  fi
+  if !bucket.take(3, 5) then
+    stdio.stdout.println("FAIL:73:4"); return;
+  fi
+  if bucket.take(2, 1) then
+    stdio.stdout.println("FAIL:73:5"); return;
+  fi
+  if !bucket.take(4, 1) then
+    stdio.stdout.println("FAIL:73:6"); return;
+  fi
+  if bucket.take(4, 0) then
+    stdio.stdout.println("FAIL:73:7"); return;
+  fi
+  if bucket.take(4, 6) then
+    stdio.stdout.println("FAIL:73:8"); return;
+  fi
+  if bucket.remaining() != 1 then
+    stdio.stdout.println("FAIL:73:9"); return;
+  fi
+  stdio.stdout.println("PASS:73");
+  return;
+}

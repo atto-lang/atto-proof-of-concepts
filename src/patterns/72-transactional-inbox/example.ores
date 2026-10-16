@@ -1,0 +1,52 @@
+// 72: logical transactional inbox state machine.
+// The injected commit outcome models an atomic boundary; no database IO.
+define class TransactionalInbox as
+  val Array<int> committed_ids = new Array<int>();
+  let int committed_count = 0;
+  let int total = 0;
+
+  pub receive(mut self)(int message_id, int delta, bool commit): bool {
+    for let i = 0; i < self.committed_count; i++ do
+      if self.committed_ids.get(i) == message_id then
+        return false;
+      fi
+    done
+    if !commit then
+      return false;
+    fi
+    self.committed_ids.add(message_id);
+    self.committed_count = self.committed_count + 1;
+    self.total = self.total + delta;
+    return true;
+  }
+
+  pub balance(): int { return self.total; }
+  pub commits(): int { return self.committed_count; }
+end
+
+pub routine main(): void {
+  val TransactionalInbox inbox = new TransactionalInbox();
+  if inbox.receive(7, 10, false) then
+    stdio.stdout.println("FAIL:72:1"); return;
+  fi
+  if inbox.balance() != 0 then
+    stdio.stdout.println("FAIL:72:2"); return;
+  fi
+  if !inbox.receive(7, 10, true) then
+    stdio.stdout.println("FAIL:72:3"); return;
+  fi
+  if inbox.receive(7, 900, true) then
+    stdio.stdout.println("FAIL:72:4"); return;
+  fi
+  if !inbox.receive(8, -3, true) then
+    stdio.stdout.println("FAIL:72:5"); return;
+  fi
+  if inbox.commits() != 2 then
+    stdio.stdout.println("FAIL:72:6"); return;
+  fi
+  if inbox.balance() != 7 then
+    stdio.stdout.println("FAIL:72:7"); return;
+  fi
+  stdio.stdout.println("PASS:72");
+  return;
+}

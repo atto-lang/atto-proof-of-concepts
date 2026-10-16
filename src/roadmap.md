@@ -5,7 +5,7 @@
 3. **Closures and runtime lifetimes**: closure captures, iterators, persistent structures, GC lab and parser combinators.
 4. **Concurrency**: mutexes, reader/writer locks, atomics, channels, concurrent queues, actors, futures and model checking.
 5. **Systems integration**: FFI, serialization, network, KV store and bytecode VM.
-6. **Design pattern catalog and self-hosting**: all 70 patterns with code and tests; reference interpreter and both-backend conformance.
+6. **Design pattern catalog and self-hosting**: 78 patterns with code and tests (71–78 need compiler verification); reference interpreter and both-backend conformance.
 
 ## Twelve highest-value proof targets
 
