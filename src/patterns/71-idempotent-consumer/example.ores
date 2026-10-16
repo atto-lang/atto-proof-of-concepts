@@ -17,6 +17,8 @@ define class IdempotentConsumer as
     if self.count >= 3 then
       return false;
     fi
+    if amount > 1000000000 then return false; fi
+    if amount < -1000000000 then return false; fi
     // Reject overflow before recording the message ID; refused writes are retryable.
     // The example deliberately constrains balances to +/- 1 billion.
     if self.total > 1000000000 - amount then
