@@ -75,6 +75,23 @@
 | 69 | [half-sync-half-async](69-half-sync-half-async/example.ores) | Reference model | **Static + Java guest PASS** [CI](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) | Not run (feature scope may be unsupported) |
 | 70 | [supervisor-tree](70-supervisor-tree/example.ores) | Reference model | **Static + Java guest PASS** [CI](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) | Not run (feature scope may be unsupported) |
 
+## New additions (71–80): no verified compiler execution
+
+These are additional sources and exact-output oracles. The historical 70/70 Java result above remains **limited to the original 70**; do not extrapolate it to these new examples.
+
+| # | Native .ores source | Nature of exercise | Java status | LLVM status |
+|---|---|---|---|---|
+| 71 | [idempotent-consumer](71-idempotent-consumer/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 72 | [token-bucket-rate-limiter](72-token-bucket-rate-limiter/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 73 | [optimistic-concurrency-control](73-optimistic-concurrency-control/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 74 | [fencing-tokens](74-fencing-tokens/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 75 | [rendezvous-hashing](75-rendezvous-hashing/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 76 | [singleflight](76-singleflight/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 77 | [cache-aside](77-cache-aside/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 78 | [dead-letter-queue](78-dead-letter-queue/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 79 | [feature-flags-rollout](79-feature-flags-rollout/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+| 80 | [vector-clocks](80-vector-clocks/example.ores) | Sequential native reference model | **Not run** | **Not run** |
+
 ## Evidence rules
 
 - Reference model: verifies only a sequential arithmetic/state-machine oracle, not the named full concurrent/resource/ownership guarantee.

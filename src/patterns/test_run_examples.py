@@ -24,8 +24,8 @@ def check_run(args, result):
 class RunnerContractTests(unittest.TestCase):
     def test_all_pattern_files_have_oracles(self):
         patterns = run_examples.discover()
-        self.assertEqual(len(patterns), 70)
-        self.assertEqual([n for n, _, _, _ in patterns], list(range(1, 71)))
+        self.assertEqual(len(patterns), 80)
+        self.assertEqual([n for n, _, _, _ in patterns], list(range(1, 81)))
 
     def test_exact_runtime_output_required(self):
         good = subprocess.CompletedProcess([], 0, "PASS:1\n", "")

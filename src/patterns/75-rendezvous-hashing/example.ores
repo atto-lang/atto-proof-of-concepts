@@ -1,0 +1,53 @@
+// 75 Rendezvous Hashing: deterministic maximum-score node selection.
+// This toy modulus is not a production hash or a distribution-quality proof.
+fnc score(int key, int node): int {
+  return ((key + node * 17) * 7) % 97;
+}
+
+fnc choose_node(int key, int nodes): int {
+  if key < 0 then
+    return -1;
+  fi
+  if nodes < 1 then
+    return -1;
+  fi
+  if nodes > 3 then
+    return -1;
+  fi
+  let int winner = -1;
+  let int best = -1;
+  for let node = 1; node <= nodes; node++ do
+    val int candidate = score(key, node);
+    if candidate > best then
+      winner = node;
+      best = candidate;
+    fi
+  done
+  return winner;
+}
+
+pub routine main(): void {
+  if choose_node(5, 3) != 2 then
+    stdio.stdout.println("FAIL:75:1"); return;
+  fi
+  if choose_node(5, 2) != 2 then
+    stdio.stdout.println("FAIL:75:2"); return;
+  fi
+  if choose_node(3, 3) != 3 then
+    stdio.stdout.println("FAIL:75:3"); return;
+  fi
+  if choose_node(3, 2) != 2 then
+    stdio.stdout.println("FAIL:75:4"); return;
+  fi
+  if choose_node(5, 3) != choose_node(5, 3) then
+    stdio.stdout.println("FAIL:75:5"); return;
+  fi
+  if choose_node(-1, 2) != -1 then
+    stdio.stdout.println("FAIL:75:6"); return;
+  fi
+  if choose_node(5, 4) != -1 then
+    stdio.stdout.println("FAIL:75:7"); return;
+  fi
+  stdio.stdout.println("PASS:75");
+  return;
+}

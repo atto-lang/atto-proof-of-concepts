@@ -1,0 +1,56 @@
+// 71 Idempotent Consumer: bounded sequential inbox model.
+// Durable transaction and concurrent duplicate races are NOT modeled.
+define class IdempotentConsumer as
+  val Array<int> ids = new Array<int>();
+  let int count = 0;
+  let int total = 0;
+
+  pub receive(mut self)(int id, int amount): bool {
+    if id < 0 then
+      return false;
+    fi
+    for let i = 0; i < self.count; i++ do
+      if self.ids.get(i) == id then
+        return false;
+      fi
+    done
+    if self.count >= 3 then
+      return false;
+    fi
+    self.ids.add(id);
+    self.count = self.count + 1;
+    self.total = self.total + amount;
+    return true;
+  }
+
+  pub balance(): int {
+    return self.total;
+  }
+end
+
+pub routine main(): void {
+  val IdempotentConsumer c = new IdempotentConsumer();
+  if !c.receive(10, 5) then
+    stdio.stdout.println("FAIL:71:1"); return;
+  fi
+  if c.receive(10, 100) then
+    stdio.stdout.println("FAIL:71:2"); return;
+  fi
+  if !c.receive(11, -2) then
+    stdio.stdout.println("FAIL:71:3"); return;
+  fi
+  if !c.receive(12, 7) then
+    stdio.stdout.println("FAIL:71:4"); return;
+  fi
+  if c.receive(13, 9) then
+    stdio.stdout.println("FAIL:71:5"); return;
+  fi
+  if c.receive(-1, 9) then
+    stdio.stdout.println("FAIL:71:6"); return;
+  fi
+  if c.balance() != 10 then
+    stdio.stdout.println("FAIL:71:7"); return;
+  fi
+  stdio.stdout.println("PASS:71");
+  return;
+}

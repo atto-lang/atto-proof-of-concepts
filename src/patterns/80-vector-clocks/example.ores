@@ -1,0 +1,89 @@
+// 80 Vector Clocks: 2-node causal order and component-wise merge.
+// Demonstrates state transitions, not distributed delivery guarantees.
+define class VectorClock2 as
+  let int a = 0;
+  let int b = 0;
+
+  pub tick(mut self)(int node): bool {
+    if node == 1 then
+      self.a = self.a + 1;
+      return true;
+    fi
+    if node == 2 then
+      self.b = self.b + 1;
+      return true;
+    fi
+    return false;
+  }
+
+  pub merge_from(mut self)(int other_a, int other_b): void {
+    if other_a > self.a then
+      self.a = other_a;
+    fi
+    if other_b > self.b then
+      self.b = other_b;
+    fi
+    return;
+  }
+
+  // 0 equal, 1 before, 2 after, 3 concurrent, -1 invalid.
+  pub compare(int other_a, int other_b): int {
+    if other_a < 0 then
+      return -1;
+    fi
+    if other_b < 0 then
+      return -1;
+    fi
+    if self.a == other_a, self.b == other_b then
+      return 0;
+    fi
+    if self.a <= other_a, self.b <= other_b then
+      return 1;
+    fi
+    if self.a >= other_a, self.b >= other_b then
+      return 2;
+    fi
+    return 3;
+  }
+
+  pub first(): int {
+    return self.a;
+  }
+
+  pub second(): int {
+    return self.b;
+  }
+end
+
+pub routine main(): void {
+  val VectorClock2 left = new VectorClock2();
+  val VectorClock2 right = new VectorClock2();
+  if !left.tick(1) then
+    stdio.stdout.println("FAIL:80:1"); return;
+  fi
+  if !right.tick(2) then
+    stdio.stdout.println("FAIL:80:2"); return;
+  fi
+  if left.compare(right.first(), right.second()) != 3 then
+    stdio.stdout.println("FAIL:80:3"); return;
+  fi
+  right.merge_from(left.first(), left.second());
+  if left.compare(right.first(), right.second()) != 1 then
+    stdio.stdout.println("FAIL:80:4"); return;
+  fi
+  if right.compare(left.first(), left.second()) != 2 then
+    stdio.stdout.println("FAIL:80:5"); return;
+  fi
+  left.merge_from(right.first(), right.second());
+  if left.compare(right.first(), right.second()) != 0 then
+    stdio.stdout.println("FAIL:80:6"); return;
+  fi
+  if left.tick(3) then
+    stdio.stdout.println("FAIL:80:7"); return;
+  fi
+  if left.compare(-1, 0) != -1 then
+    stdio.stdout.println("FAIL:80:8"); return;
+  fi
+  stdio.stdout.println("PASS:80");
+  return;
+}

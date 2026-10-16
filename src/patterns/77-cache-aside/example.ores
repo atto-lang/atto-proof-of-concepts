@@ -1,0 +1,62 @@
+// 77 Cache Aside: one-entry demand-loading cache, sequential only.
+define class CacheAside as
+  let int key = -1;
+  let int value = 0;
+  let int backing_reads = 0;
+
+  pub fetch(mut self)(int requested): int {
+    if requested < 0 then
+      return -1;
+    fi
+    if requested == self.key then
+      return self.value;
+    fi
+    self.backing_reads = self.backing_reads + 1;
+    self.key = requested;
+    self.value = requested * 10;
+    return self.value;
+  }
+
+  pub invalidate(mut self)(int requested): void {
+    if requested == self.key then
+      self.key = -1;
+    fi
+    return;
+  }
+
+  pub reads(): int {
+    return self.backing_reads;
+  }
+end
+
+pub routine main(): void {
+  val CacheAside cache = new CacheAside();
+  if cache.fetch(2) != 20 then
+    stdio.stdout.println("FAIL:77:1"); return;
+  fi
+  if cache.fetch(2) != 20 then
+    stdio.stdout.println("FAIL:77:2"); return;
+  fi
+  if cache.reads() != 1 then
+    stdio.stdout.println("FAIL:77:3"); return;
+  fi
+  if cache.fetch(3) != 30 then
+    stdio.stdout.println("FAIL:77:4"); return;
+  fi
+  cache.invalidate(2);
+  if cache.fetch(3) != 30 then
+    stdio.stdout.println("FAIL:77:5"); return;
+  fi
+  if cache.reads() != 2 then
+    stdio.stdout.println("FAIL:77:6"); return;
+  fi
+  cache.invalidate(3);
+  if cache.fetch(3) != 30 then
+    stdio.stdout.println("FAIL:77:7"); return;
+  fi
+  if cache.reads() != 3 then
+    stdio.stdout.println("FAIL:77:8"); return;
+  fi
+  stdio.stdout.println("PASS:77");
+  return;
+}

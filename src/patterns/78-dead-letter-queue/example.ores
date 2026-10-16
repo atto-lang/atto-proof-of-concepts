@@ -1,0 +1,71 @@
+// 78 Dead Letter Queue: bounded, deduplicated terminal failure record.
+define class DeadLetters as
+  val Array<int> ids = new Array<int>();
+  let int used = 0;
+
+  pub quarantine(mut self)(int id, int attempt): bool {
+    if id < 0 then
+      return false;
+    fi
+    if attempt < 3 then
+      return false;
+    fi
+    for let i = 0; i < self.used; i++ do
+      if self.ids.get(i) == id then
+        return false;
+      fi
+    done
+    if self.used >= 2 then
+      return false;
+    fi
+    self.ids.add(id);
+    self.used = self.used + 1;
+    return true;
+  }
+
+  pub contains(int id): bool {
+    for let i = 0; i < self.used; i++ do
+      if self.ids.get(i) == id then
+        return true;
+      fi
+    done
+    return false;
+  }
+
+  pub count(): int {
+    return self.used;
+  }
+end
+
+pub routine main(): void {
+  val DeadLetters dlq = new DeadLetters();
+  if dlq.quarantine(10, 2) then
+    stdio.stdout.println("FAIL:78:1"); return;
+  fi
+  if !dlq.quarantine(10, 3) then
+    stdio.stdout.println("FAIL:78:2"); return;
+  fi
+  if dlq.quarantine(10, 4) then
+    stdio.stdout.println("FAIL:78:3"); return;
+  fi
+  if !dlq.quarantine(11, 4) then
+    stdio.stdout.println("FAIL:78:4"); return;
+  fi
+  if dlq.quarantine(12, 9) then
+    stdio.stdout.println("FAIL:78:5"); return;
+  fi
+  if dlq.quarantine(-1, 9) then
+    stdio.stdout.println("FAIL:78:6"); return;
+  fi
+  if !dlq.contains(10) then
+    stdio.stdout.println("FAIL:78:7"); return;
+  fi
+  if dlq.contains(12) then
+    stdio.stdout.println("FAIL:78:8"); return;
+  fi
+  if dlq.count() != 2 then
+    stdio.stdout.println("FAIL:78:9"); return;
+  fi
+  stdio.stdout.println("PASS:78");
+  return;
+}
