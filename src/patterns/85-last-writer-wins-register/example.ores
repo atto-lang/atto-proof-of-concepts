@@ -3,13 +3,13 @@ define class LwwRegister as
   let int clock = 0;
   let int writer = 0;
   let int value = 0;
-  pub offer(mut self)(int at, int from, int next): bool {
+  pub offer(mut self)(int at, int writer_id, int next): bool {
     if at < 0 then return false; fi
-    if from < 0 then return false; fi
+    if writer_id < 0 then return false; fi
     if at < self.clock then return false; fi
-    if at == self.clock, from <= self.writer then return false; fi
+    if at == self.clock, writer_id <= self.writer then return false; fi
     self.clock = at;
-    self.writer = from;
+    self.writer = writer_id;
     self.value = next;
     return true;
   }
