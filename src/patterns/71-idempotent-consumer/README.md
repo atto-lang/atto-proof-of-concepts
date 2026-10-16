@@ -1,6 +1,7 @@
 # 71. Idempotent Consumer
 
 - **Category:** reliability
+- **Hardening:** The in-memory example bounds signed balance updates before committing the message ID, and exercises both positive and negative boundary refusals. It does not implement a durable atomic inbox.
 - **Status:** new native source prototype; Java/GraalVM and LLVM compilation/execution **not yet verified** for this revision.
 
 ## Intent
