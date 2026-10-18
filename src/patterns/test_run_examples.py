@@ -13,9 +13,9 @@ CASE = run_examples.PATTERNS / "01-factory-method"
 FAKE = [(1, CASE, CASE / "example.ores", "PASS:1\n")]
 COMMAND = "python3 fake.py {source}"
 
-def check_run(args, result):
+def check_run(args, result, fixtures=None):
     stdout = io.StringIO()
-    with mock.patch.object(run_examples, "discover", return_value=FAKE):
+    with mock.patch.object(run_examples, "discover", return_value=FAKE if fixtures is None else fixtures):
         with mock.patch.object(sys, "argv", ["run_examples.py", *args]):
             with mock.patch.object(run_examples.subprocess, "run", return_value=result) as runner:
                 with contextlib.redirect_stdout(stdout):
@@ -102,10 +102,13 @@ class RunnerContractTests(unittest.TestCase):
             report_path = Path(folder) / "evidence.json"
             good = subprocess.CompletedProcess([], 0, "PASS:1\n", "")
             code, _, calls = check_run(
-                ["--runner-command", COMMAND, "--report", str(report_path)], good)
+                ["--runner-command", COMMAND, "--filter", "^01-", "--report", str(report_path)], good,
+                fixtures=FAKE + [(2, CASE.with_name("02-abstract-factory"),
+                                  CASE.with_name("02-abstract-factory") / "example.ores", "PASS:2\n")])
             self.assertEqual((code, calls), (0, 1))
             report = json.loads(report_path.read_text())
-            self.assertEqual(report["inventory_total"], 1)
+            self.assertEqual(report["inventory_total"], 2)
+            self.assertEqual(report["selected"], 1)
             self.assertFalse(report["complete_catalog"])
             self.assertIn("caller-supplied", report["provenance"])
             self.assertEqual(len(report["results"][0]["source_sha256"]), 64)
