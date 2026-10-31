@@ -853,6 +853,31 @@ mod tests {
     }
 
     #[test]
+    fn report_cannot_overwrite_pattern_readme_or_create_inside_catalog() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let readme = dir.root().join("01-fixture/README.md");
+        fs::write(&readme, "Do not overwrite").unwrap();
+        assert!(protect_report_path(&readme, &cases).is_err());
+        assert!(protect_report_path(&dir.root().join("02-fixture/new-report.json"), &cases).is_err());
+        assert_eq!(fs::read(&readme).unwrap(), b"Do not overwrite");
+    }
+
+    #[test]
+    fn nonzero_exit_and_stderr_waiver_are_distinct() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let mut opts = options("sh -c 'printf \"PASS:1\\n\"; exit 7' {source}");
+        assert!(!execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap().passed_all());
+        opts.command_template = "sh -c 'printf \"PASS:1\\n\"; echo diagnostic >&2' {source}".into();
+        assert!(!execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap().passed_all());
+        opts.allow_stderr = true;
+        assert!(execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap().passed_all());
+    }
+
+    #[test]
     fn atomic_report_does_not_follow_final_symlink() {
         let dir = Temp::new();
         let protected = dir.root().join("protected");
