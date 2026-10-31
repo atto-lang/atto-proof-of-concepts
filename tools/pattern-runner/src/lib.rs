@@ -1,7 +1,6 @@
 //! Bounded POSIX pattern runner. Structural/host evidence only until a real compiler is supplied.
 pub mod sha256;
 
-use std::ffi::OsStr;
 use std::fs::{self, Metadata, OpenOptions};
 use std::io::{self, Read, Write};
 use std::os::unix::fs::MetadataExt;
@@ -38,6 +37,18 @@ fn regular(path: &Path) -> io::Result<Metadata> {
     Ok(metadata)
 }
 
+fn read_fixture(path: &Path) -> io::Result<Vec<u8>> {
+    regular(path)?;
+    let mut data = Vec::new();
+    fs::File::open(path)?
+        .take(MAX_FIXTURE_BYTES + 1)
+        .read_to_end(&mut data)?;
+    if data.len() as u64 > MAX_FIXTURE_BYTES {
+        return Err(invalid(format!("oversized fixture: {}", path.display())));
+    }
+    Ok(data)
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Fingerprint {
     pub digest: String,
@@ -49,7 +60,7 @@ pub struct Fingerprint {
 
 pub fn fingerprint(path: &Path) -> io::Result<Fingerprint> {
     let metadata = regular(path)?;
-    let data = fs::read(path)?;
+    let data = read_fixture(path)?;
     let after = regular(path)?;
     if metadata.dev() != after.dev()
         || metadata.ino() != after.ino()
@@ -107,10 +118,11 @@ pub fn discover(patterns: &Path, expected_count: usize) -> io::Result<Vec<Case>>
         let source_fp = fingerprint(&source)?;
         let oracle_fp = fingerprint(&oracle)?;
         let expected = format!("PASS:{number}\n").into_bytes();
-        if fs::read(&oracle)? != expected {
+        if read_fixture(&oracle)? != expected {
             return Err(invalid(format!("{name}: mismatched exact stdout oracle")));
         }
-        let body = fs::read_to_string(&source)?;
+        let body = String::from_utf8(read_fixture(&source)?)
+            .map_err(|_| invalid(format!("{name}: non-UTF-8 pattern source")))?;
         if body.matches('{').count() != body.matches('}').count()
             || body.matches("pub routine main(").count()
                 + body.matches("pub async routine main(").count() != 1
@@ -143,6 +155,22 @@ pub fn protect_report_path(path: &Path, cases: &[Case]) -> io::Result<()> {
             path.file_name().ok_or_else(|| invalid("invalid report file name"))?,
         )
     };
+    // The report must never replace another catalog entry (including READMEs),
+    // not merely avoid the two executable fixtures.
+    let destination_parent = path.parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let destination = fs::canonicalize(destination_parent)?.join(
+        path.file_name().ok_or_else(|| invalid("missing report filename"))?,
+    );
+    let patterns_root = fs::canonicalize(
+        cases.first().ok_or_else(|| invalid("empty catalog"))?
+            .source.parent().ok_or_else(|| invalid("missing pattern parent"))?
+            .parent().ok_or_else(|| invalid("missing catalog root"))?,
+    )?;
+    if destination.starts_with(&patterns_root) {
+        return Err(invalid("reports may not be written inside the pattern catalog"));
+    }
     let existing = fs::metadata(path).ok();
     for case in cases {
         for fixture in [&case.source, &case.oracle] {
@@ -267,7 +295,7 @@ pub fn bounded_run(
             truncated: false, error: Some("cancelled"),
         });
     }
-    let mut command = Command::new(OsStr::new(&argv[0]));
+    let mut command = Command::new(&argv[0]);
     command.args(&argv[1..])
         .current_dir(cwd)
         .stdin(Stdio::null())
@@ -293,7 +321,13 @@ pub fn bounded_run(
             error = Some("timeout");
             break None;
         }
-        let status = child.try_wait()?;
+        let status = match child.try_wait() {
+            Ok(status) => status,
+            Err(_) => {
+                error = Some("child status poll error");
+                break None;
+            }
+        };
         if ended == 2 && status.is_some() {
             break status;
         }
@@ -468,7 +502,7 @@ pub fn execute(
                         && (options.mode == Mode::Compile || result.stdout == case.expected);
                 }
                 Err(err) => {
-                    result.error = Some(format!("runner I/O error: {}", err.kind()));
+                    result.error = Some(format!("runner I/O error: {:?}", err.kind()));
                     result.inputs_unchanged = unchanged(&case.source, &case.source_fp)
                         && unchanged(&case.oracle, &case.oracle_fp);
                 }
