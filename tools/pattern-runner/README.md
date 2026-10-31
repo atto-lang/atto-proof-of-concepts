@@ -21,6 +21,10 @@ Python implementation from PR #16. This is the next stage of issue #15.
   unchanged inputs. Compile mode checks only process exit, not stdout.
 - Reports are atomic JSON files, refuse aliases to source/oracle fixtures,
   and store SHA-256 of the command template rather than the raw command.
+  Raw subprocess stdout and stderr are intentionally **not persisted**:
+  receipts contain byte counts, SHA-256 digests, and redaction flags.
+  Output digests and result labels are unauthenticated host metadata, not
+  independently verified compiler execution evidence.
 - A requested compiler revision is a caller-supplied label, NOT attested.
 
 ## Commands
@@ -51,7 +55,12 @@ This is illustrative only. No working compiler or guest execution is implied.
   detached descendants or modify arbitrary files. Only run authorized
   compiler binaries on trusted isolated hosts.
 - Large fixtures (>4MiB), symlinks and nonregular files fail closed.
-  Reports may include stdout/stderr and must be treated as sensitive.
+  Report labels and output hashes may still disclose information. Protect
+  receipts, and avoid passing credentials in backend/revision labels.
+- The runner attempts to kill the entire process group **after successful
+  leader exit as well as after failures**. This helps retire background
+  descendants that close inherited stdout/stderr pipes. Descendants that
+  deliberately detach to a new process group/session are not contained.
 - Rust host tests (including synthetic sh children) cannot prove native
   Oreslang, Java/LLVM parity, scheduler safety or liveness.
 - The CI workflow is admission-gated: steps=[] means NOT_EXECUTED.
