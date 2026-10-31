@@ -869,7 +869,7 @@ mod tests {
             fs::metadata(&cases[0].oracle).unwrap().ino()
         );
         assert!(protect_report_path(&report, &cases).is_err());
-        assert_eq!(fs::read(&cases[0].oracle).unwrap(), b"PASS:1\\n");
+        assert_eq!(fs::read(&cases[0].oracle).unwrap(), b"PASS:1\n");
         fs::remove_file(report).unwrap();
     }
 
@@ -971,7 +971,7 @@ mod tests {
             &argv, dir.root(), Duration::from_secs(2), 64, &AtomicI32::new(0)
         ).unwrap();
         assert_eq!(result.exit_code, Some(0));
-        assert_eq!(result.stdout, b"PASS:1\\n");
+        assert_eq!(result.stdout, b"PASS:1\n");
         thread::sleep(Duration::from_millis(550));
         assert!(!marker.exists(), "background process escaped after successful leader exit");
     }
