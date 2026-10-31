@@ -86,7 +86,11 @@ fn readme(path: &Path) -> io::Result<()> {
 
 fn pattern_number(name: &str) -> Option<usize> {
     let bytes = name.as_bytes();
-    if bytes.len() < 4 || !bytes[0].is_ascii_digit() || !bytes[1].is_ascii_digit() || bytes[2] != b'-' {
+    if bytes.len() < 4
+        || !bytes[0].is_ascii_digit()
+        || !bytes[1].is_ascii_digit()
+        || bytes[2] != b'-'
+    {
         return None;
     }
     Some(usize::from(bytes[0] - b'0') * 10 + usize::from(bytes[1] - b'0'))
