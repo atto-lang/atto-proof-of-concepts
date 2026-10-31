@@ -61,6 +61,11 @@ This is illustrative only. No working compiler or guest execution is implied.
   leader exit as well as after failures**. This helps retire background
   descendants that close inherited stdout/stderr pipes. Descendants that
   deliberately detach to a new process group/session are not contained.
+- On Linux, status polling uses waitid(WNOWAIT|WNOHANG) so the group leader
+  stays unreaped until after process-group retirement. That prevents the
+  group ID from being recycled before final group signaling. Other POSIX
+  platforms currently **fail closed at runtime** rather than using reaping
+  try_wait and exposing an unbounded PID-reuse race.
 - Rust host tests (including synthetic sh children) cannot prove native
   Oreslang, Java/LLVM parity, scheduler safety or liveness.
 - The CI workflow is admission-gated: steps=[] means NOT_EXECUTED.
