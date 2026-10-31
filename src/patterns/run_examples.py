@@ -199,7 +199,7 @@ def main():
         "backend": args.backend, "mode": args.mode,
         "compiler_revision": args.compiler_revision,
         "provenance": "caller-supplied labels; verify compiler revision independently",
-        "command": args.runner_command,
+        "runner_command_sha256": hashlib.sha256(args.runner_command.encode("utf-8")).hexdigest(),
         "revision_format_verified": args.require_revision,
         "selected": len(selected), "inventory_total": len(fixtures),
         "complete_catalog": len(selected) == len(fixtures),
