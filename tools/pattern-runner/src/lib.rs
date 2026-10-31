@@ -976,6 +976,35 @@ mod tests {
         assert!(!marker.exists(), "background process escaped after successful leader exit");
     }
 
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn non_reaping_exit_poll_keeps_leader_waitable() {
+        let mut child = Command::new("sh")
+            .args(["-c", "exit 0"])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .process_group(0)
+            .spawn()
+            .unwrap();
+        let pid = child.id();
+        let start = Instant::now();
+        loop {
+            if exited_but_unreaped(pid).unwrap() {
+                break;
+            }
+            assert!(
+                start.elapsed() < Duration::from_secs(2),
+                "waitid(WNOWAIT) never observed child exit"
+            );
+            thread::sleep(Duration::from_millis(5));
+        }
+        // A non-reaping poll must leave the child reapable, otherwise the
+        // numeric process-group ID might be recycled before teardown.
+        kill_group(pid);
+        assert_eq!(child.wait().unwrap().code(), Some(0));
+    }
+
     #[test]
     fn deadline_kills_slow_child() {
         let argv = vec!["sh".into(), "-c".into(), "sleep 3".into()];
