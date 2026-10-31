@@ -96,7 +96,7 @@ class CatalogContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             fixture(root)
-            (root / "patterns" / "02-beta" / "expected.stdout").write_text("PASS:1\\n")
+            (root / "patterns" / "02-beta" / "expected.stdout").write_text("PASS:1\n")
             self.assertRaisesRegex(ValueError, "invalid pattern output oracle",
                                    validate_catalog, root, 2, 2, 2)
 
@@ -135,10 +135,10 @@ class CatalogContractTests(unittest.TestCase):
             root = Path(directory)
             fixture(root)
             lib = root / "libraries" / "oreslang-a"
-            (lib / "expected.stdout").write_text("PASS:wrong\\n")
+            (lib / "expected.stdout").write_text("PASS:wrong\n")
             self.assertRaisesRegex(ValueError, "invalid library output oracle",
                                    validate_catalog, root, 2, 2, 2)
-            (lib / "expected.stdout").write_text("PASS:oreslang-a\\n")
+            (lib / "expected.stdout").write_text("PASS:oreslang-a\n")
             (lib / "example.ores").write_text("")
             self.assertRaisesRegex(ValueError, "empty library source",
                                    validate_catalog, root, 2, 2, 2)
