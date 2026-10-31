@@ -414,19 +414,19 @@ pub fn bounded_run(
                 if bytes.len() > available {
                     truncated = true;
                     error = Some("output limit");
-                    break None;
+                    break;
                 }
             }
             Ok(PipeEvent::End) => ended += 1,
             Ok(PipeEvent::ReadError) => {
                 error = Some("pipe read error");
-                break None;
+                break;
             }
             Err(RecvTimeoutError::Timeout) => {}
             Err(RecvTimeoutError::Disconnected) if ended == 2 => {}
             Err(RecvTimeoutError::Disconnected) => {
                 error = Some("pipe reader disconnected");
-                break None;
+                break;
             }
         }
     };
