@@ -30,7 +30,7 @@ jobs:
           test -z "$(git status --porcelain --untracked-files=all)" || { echo "::error::dirty checkout"; exit 1; }
           tree="$(git rev-parse 'HEAD^{tree}')"
           [[ "$tree" =~ ^[a-f0-9]{40}$ ]] || exit 1
-          printf 'SOURCE_HEAD_VERIFIED sha=%s tree=%s\\n' "$actual" "$tree"
+          printf 'SOURCE_HEAD_VERIFIED sha=%s tree=%s\n' "$actual" "$tree"
       - name: Toolchain identity
         run: |
           rustc --version
