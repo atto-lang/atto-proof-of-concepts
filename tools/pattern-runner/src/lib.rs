@@ -38,13 +38,37 @@ fn regular(path: &Path) -> io::Result<Metadata> {
 }
 
 fn read_fixture(path: &Path) -> io::Result<Vec<u8>> {
-    regular(path)?;
+    // Check both the directory entry and the *opened descriptor*. This makes
+    // an inode replacement during open fail rather than trusting only lstat.
+    let before = regular(path)?;
+    let mut file = fs::File::open(path)?;
+    let opened = file.metadata()?;
+    if !opened.file_type().is_file()
+        || opened.dev() != before.dev()
+        || opened.ino() != before.ino()
+        || opened.mode() != before.mode()
+        || opened.len() != before.len()
+    {
+        return Err(invalid(format!("fixture replaced during open: {}", path.display())));
+    }
     let mut data = Vec::new();
-    fs::File::open(path)?
-        .take(MAX_FIXTURE_BYTES + 1)
-        .read_to_end(&mut data)?;
+    file.by_ref().take(MAX_FIXTURE_BYTES + 1).read_to_end(&mut data)?;
     if data.len() as u64 > MAX_FIXTURE_BYTES {
         return Err(invalid(format!("oversized fixture: {}", path.display())));
+    }
+    let after_open = file.metadata()?;
+    let after_path = regular(path)?;
+    if after_open.dev() != before.dev()
+        || after_open.ino() != before.ino()
+        || after_open.mode() != before.mode()
+        || after_open.len() != before.len()
+        || after_path.dev() != before.dev()
+        || after_path.ino() != before.ino()
+        || after_path.mode() != before.mode()
+        || after_path.len() != before.len()
+        || data.len() as u64 != before.len()
+    {
+        return Err(invalid(format!("fixture mutated during read: {}", path.display())));
     }
     Ok(data)
 }
@@ -745,9 +769,21 @@ mod tests {
         let dir = Temp::new();
         dir.setup_cases();
         let cases = dir.cases();
-        let report = dir.root().join("evidence.json");
+        // Deliberately place the alias OUTSIDE the pattern root to exercise
+        // inode hardlink detection instead of the catalog-path rejection.
+        let report = dir.root().parent().unwrap().join(format!(
+            "oreslang-pattern-hardlink-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, Ordering::Relaxed)
+        ));
         fs::hard_link(&cases[0].oracle, &report).unwrap();
+        assert_eq!(
+            fs::metadata(&report).unwrap().ino(),
+            fs::metadata(&cases[0].oracle).unwrap().ino()
+        );
         assert!(protect_report_path(&report, &cases).is_err());
+        assert_eq!(fs::read(&cases[0].oracle).unwrap(), b"PASS:1\\n");
+        fs::remove_file(report).unwrap();
     }
 
     #[test]
