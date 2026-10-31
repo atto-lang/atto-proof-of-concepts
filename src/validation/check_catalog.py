@@ -58,7 +58,7 @@ def validate_catalog(src: Path, expected_libraries: int = 60,
             _require_fixture(oracle)
             if not source.read_text(encoding="utf-8").strip():
                 raise ValueError(f"empty library source: {source}")
-            if oracle.read_bytes() != f"PASS:{directory.name}\\n".encode("utf-8"):
+            if oracle.read_bytes() != f"PASS:{directory.name}\n".encode("utf-8"):
                 raise ValueError(f"invalid library output oracle: {oracle}")
             library_probes += 1
     if library_probes != expected_library_probes:
@@ -72,7 +72,7 @@ def validate_catalog(src: Path, expected_libraries: int = 60,
         _require_fixture(oracle)
         if not source.read_text(encoding="utf-8").strip():
             raise ValueError(f"empty pattern source: {source}")
-        if oracle.read_bytes() != f"PASS:{int(directory.name[:2])}\\n".encode("utf-8"):
+        if oracle.read_bytes() != f"PASS:{int(directory.name[:2])}\n".encode("utf-8"):
             raise ValueError(f"invalid pattern output oracle: {oracle}")
     for relative in ("README.md", "libraries/README.md",
                      "patterns/README.md", "validation/README.md"):
