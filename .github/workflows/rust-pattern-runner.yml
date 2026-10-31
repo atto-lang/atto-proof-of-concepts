@@ -46,4 +46,5 @@ jobs:
       - name: Inventory only, no backend execution
         run: cargo run --manifest-path tools/pattern-runner/Cargo.toml --offline --locked -- --root . --list
       - name: Evidence boundary
-        run: echo 'HOST_ONLY: no Java/GraalVM, LLVM, native compiler or Oreslang guest executed.'
+        run: |
+          echo 'HOST_ONLY: no Java/GraalVM, LLVM, native compiler or Oreslang guest executed.'
