@@ -304,6 +304,47 @@ extern "C" {
     fn kill(pid: i32, signal: i32) -> i32;
 }
 
+/// Linux waitid(WNOWAIT) observes child exit without reaping its PID.
+/// Keeping the leader unreaped until after killpg avoids signaling a recycled
+/// process group ID. This implementation intentionally fails closed elsewhere.
+/// siginfo_t is a 128-byte Linux ABI object, aligned at least as strictly as
+/// the platform siginfo_t (8 bytes on common supported 64-bit Linux ABIs).
+#[cfg(target_os = "linux")]
+fn exited_but_unreaped(pid: u32) -> io::Result<bool> {
+    #[repr(C, align(16))]
+    struct SigInfo([u8; 128]);
+    extern "C" {
+        fn waitid(idtype: i32, id: u32, info: *mut std::ffi::c_void, options: i32) -> i32;
+    }
+    const P_PID: i32 = 1;
+    const WNOHANG: i32 = 1;
+    const WEXITED: i32 = 4;
+    const WNOWAIT: i32 = 0x0100_0000;
+    let mut info = SigInfo([0; 128]);
+    // SAFETY: waitid writes a siginfo_t to a 128-byte, 16-byte-aligned buffer.
+    // P_PID is restricted to the child PID owned by this Child handle.
+    let outcome = unsafe {
+        waitid(
+            P_PID,
+            pid,
+            &mut info as *mut _ as *mut std::ffi::c_void,
+            WEXITED | WNOHANG | WNOWAIT,
+        )
+    };
+    if outcome != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    // si_signo is the first C int in Linux siginfo_t. Zero means WNOHANG
+    // found no exited child. The buffer is zero-initialized for old kernels.
+    let signo = i32::from_ne_bytes(info.0[..4].try_into().expect("four signal bytes"));
+    Ok(signo != 0)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn exited_but_unreaped(_pid: u32) -> io::Result<bool> {
+    Err(invalid("non-reaping group-safe child wait is supported on Linux only"))
+}
+
 /// Group-wide termination. POSIX group leader was established with process_group(0).
 fn kill_group(pid: u32) {
     // SAFETY: negative PID addresses only the new child process group.
@@ -346,24 +387,24 @@ pub fn bounded_run(
     let mut ended = 0_usize;
     let mut truncated = false;
     let mut error = None;
-    let status = loop {
+    loop {
         if cancellation.load(Ordering::SeqCst) != 0 {
             error = Some("cancelled");
-            break None;
+            break;
         }
         if Instant::now() >= deadline {
             error = Some("timeout");
-            break None;
+            break;
         }
-        let status = match child.try_wait() {
-            Ok(status) => status,
+        let exited = match exited_but_unreaped(child_pid) {
+            Ok(exited) => exited,
             Err(_) => {
-                error = Some("child status poll error");
-                break None;
+                error = Some("non-reaping child status poll error");
+                break;
             }
         };
-        if ended == 2 && status.is_some() {
-            break status;
+        if ended == 2 && exited {
+            break;
         }
         let remaining = deadline.saturating_duration_since(Instant::now());
         match rx.recv_timeout(remaining.min(Duration::from_millis(25))) {
@@ -400,10 +441,10 @@ pub fn bounded_run(
         // running while wait() blocks indefinitely.
         let _ = child.kill();
     }
-    let final_status = match status {
-        Some(status) => status,
-        None => child.wait()?,
-    };
+    // The leader has intentionally NOT been reaped at this point. Therefore
+    // child_pid cannot be recycled into an unrelated process group before
+    // the group signal above. Reap only after that signal is sent.
+    let final_status = child.wait()?;
     Ok(BoundedOutcome {
         exit_code: if error.is_none() { final_status.code() } else { None },
         stdout: std::mem::take(&mut output[0]),
