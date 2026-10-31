@@ -117,6 +117,18 @@ class RunnerContractTests(unittest.TestCase):
             self.assertEqual(len(report["results"][0]["source_sha256"]), 64)
             self.assertTrue(report["results"][0]["inputs_unchanged"])
 
+    def test_evidence_does_not_store_raw_runner_credentials(self):
+        import json
+        with tempfile.TemporaryDirectory() as folder:
+            report = Path(folder) / "receipt.json"
+            private_command = "python3 fake.py --token=PRIVATE_SENTINEL {source}"
+            result = subprocess.CompletedProcess([], 0, "PASS:1\n", "")
+            self.assertEqual(check_run(
+                ["--runner-command", private_command, "--report", str(report)], result)[0], 0)
+            content = report.read_text()
+            self.assertNotIn("PRIVATE_SENTINEL", content)
+            self.assertEqual(len(json.loads(content)["runner_command_sha256"]), 64)
+
     def test_stderr_is_rejected_by_default(self):
         noisy = subprocess.CompletedProcess([], 0, "PASS:1\n", "diagnostic")
         self.assertEqual(check_run(["--runner-command", COMMAND], noisy)[0], 1)
