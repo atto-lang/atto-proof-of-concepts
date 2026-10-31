@@ -500,3 +500,333 @@ pub fn execute(
 pub fn is_sha(s: &str) -> bool {
     s.len() == 40 && s.bytes().all(|ch| ch.is_ascii_hexdigit())
 }
+
+fn json_quote(s: &str) -> String {
+    let mut result = String::from("\"");
+    for c in s.chars() {
+        match c {
+            '"' => result.push_str("\\\""),
+            '\\' => result.push_str("\\\\"),
+            '\n' => result.push_str("\\n"),
+            '\r' => result.push_str("\\r"),
+            '\t' => result.push_str("\\t"),
+            c if c < ' ' => result.push_str(&format!("\\u{:04x}", c as u32)),
+            c => result.push(c),
+        }
+    }
+    result.push('"');
+    result
+}
+
+impl Report {
+    /// JSON is escaped manually to keep the harness dependency-free.
+    /// Compiler/source revision labels are still caller-supplied, not attested.
+    pub fn to_json(&self) -> String {
+        use std::fmt::Write as _;
+        let mut output = String::new();
+        let _ = writeln!(output, "{{");
+        let _ = writeln!(output, "  \"backend\": {},", json_quote(&self.backend));
+        let _ = writeln!(output, "  \"mode\": {},", json_quote(self.mode));
+        let _ = writeln!(output, "  \"compiler_revision\": {},", json_quote(&self.revision));
+        let _ = writeln!(output, "  \"provenance\": \"caller-supplied labels; verify independently\",");
+        let _ = writeln!(output, "  \"runner_command_sha256\": {},", json_quote(&self.command_digest));
+        let _ = writeln!(output, "  \"revision_format_verified\": {},", self.require_revision);
+        let _ = writeln!(output, "  \"selected\": {},", self.selected);
+        let _ = writeln!(output, "  \"inventory_total\": {},", self.total);
+        let _ = writeln!(output, "  \"complete_catalog\": {},", self.selected == self.total);
+        let _ = writeln!(output, "  \"catalog_inputs_unchanged\": {},", self.catalog_unchanged);
+        let _ = writeln!(output, "  \"output_oracle_matched\": {},", self.mode == "run" && self.passed_all());
+        let _ = writeln!(output, "  \"allow_stderr\": {},", self.allow_stderr);
+        let _ = writeln!(output, "  \"max_output_bytes\": {},", self.max_output);
+        let _ = writeln!(output, "  \"passed\": {},", self.passed());
+        let _ = writeln!(output, "  \"failed\": {},", self.selected - self.passed());
+        let _ = writeln!(output, "  \"results\": [");
+        for (index, result) in self.results.iter().enumerate() {
+            let _ = writeln!(output, "    {{");
+            let _ = writeln!(output, "      \"pattern\": {},", json_quote(&result.pattern));
+            let _ = writeln!(output, "      \"source_sha256\": {},", json_quote(&result.source_sha256));
+            let _ = writeln!(output, "      \"oracle_sha256\": {},", json_quote(&result.oracle_sha256));
+            let _ = writeln!(output, "      \"inputs_unchanged\": {},", result.inputs_unchanged);
+            let _ = writeln!(output, "      \"success\": {},", result.success);
+            match result.exit_code {
+                Some(code) => { let _ = writeln!(output, "      \"exit_code\": {code},"); }
+                None => { let _ = writeln!(output, "      \"exit_code\": null,"); }
+            }
+            let _ = writeln!(output, "      \"output_truncated\": {},", result.output_truncated);
+            let _ = writeln!(output, "      \"stdout_bytes\": {},", result.stdout.len());
+            let _ = writeln!(output, "      \"stderr_bytes\": {},", result.stderr.len());
+            let _ = writeln!(output, "      \"stdout\": {},", json_quote(&String::from_utf8_lossy(&result.stdout)));
+            let _ = writeln!(output, "      \"stderr\": {},", json_quote(&String::from_utf8_lossy(&result.stderr)));
+            match &result.error {
+                Some(error) => { let _ = writeln!(output, "      \"error\": {}", json_quote(error)); }
+                None => { let _ = writeln!(output, "      \"error\": null"); }
+            }
+            let _ = writeln!(output, "    }}{}", if index + 1 == self.results.len() { "" } else { "," });
+        }
+        let _ = writeln!(output, "  ]");
+        let _ = writeln!(output, "}}");
+        output
+    }
+}
+
+/// Atomically publish evidence in the same directory. Renaming a temporary
+/// file never follows a late symlink in the destination itself.
+pub fn publish_report(path: &Path, json: &str) -> io::Result<()> {
+    use std::os::unix::fs::OpenOptionsExt;
+    let parent = path.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
+    let nanos = SystemTime::now().duration_since(UNIX_EPOCH)
+        .map_err(|_| invalid("system clock before epoch"))?
+        .as_nanos();
+    for attempt in 0..16 {
+        let temporary = parent.join(format!(
+            ".oreslang-pattern-report-{}-{nanos}-{attempt}.tmp",
+            std::process::id()
+        ));
+        match OpenOptions::new().write(true).create_new(true).mode(0o600).open(&temporary) {
+            Ok(mut file) => {
+                let result = (|| {
+                    file.write_all(json.as_bytes())?;
+                    file.sync_all()?;
+                    fs::rename(&temporary, path)?;
+                    Ok(())
+                })();
+                if result.is_err() {
+                    let _ = fs::remove_file(&temporary);
+                }
+                return result;
+            }
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
+            Err(error) => return Err(error),
+        }
+    }
+    Err(invalid("unable to allocate unique evidence report file"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::AtomicI32;
+
+    static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+    struct Temp(PathBuf);
+    impl Temp {
+        fn new() -> Self {
+            let id = NEXT.fetch_add(1, Ordering::Relaxed);
+            let path = std::env::temp_dir().join(format!(
+                "oreslang-pattern-rust-test-{}-{id}", std::process::id()
+            ));
+            fs::create_dir(&path).unwrap();
+            Self(path)
+        }
+        fn root(&self) -> &Path { &self.0 }
+        fn cases(&self) -> Vec<Case> {
+            discover(&self.0, 2).unwrap()
+        }
+        fn setup_cases(&self) {
+            for n in 1..=2 {
+                let case = self.0.join(format!("{n:02}-fixture"));
+                fs::create_dir(&case).unwrap();
+                fs::write(
+                    case.join("example.ores"),
+                    format!("pub routine main() {{ \"PASS:{n}\"; \"FAIL:{n}:x\"; }}"),
+                ).unwrap();
+                fs::write(case.join("expected.stdout"), format!("PASS:{n}\n")).unwrap();
+            }
+        }
+    }
+    impl Drop for Temp {
+        fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); }
+    }
+
+    fn options(command_template: &str) -> Options {
+        Options {
+            backend: "synthetic-host".into(),
+            mode: Mode::Run,
+            revision: "unknown".into(),
+            require_revision: false,
+            command_template: command_template.into(),
+            timeout: Duration::from_millis(500),
+            max_output: 64,
+            allow_stderr: false,
+            filter_prefix: Some("01-".into()),
+        }
+    }
+
+    #[test]
+    fn inventory_and_exact_oracles() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        assert_eq!(cases.len(), 2);
+        assert_eq!(cases[0].expected, b"PASS:1\n");
+        assert_eq!(cases[0].source_fp.digest.len(), 64);
+    }
+
+    #[test]
+    fn missing_oracle_and_symlinked_source_fail() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        fs::remove_file(dir.root().join("01-fixture/expected.stdout")).unwrap();
+        assert!(discover(dir.root(), 2).is_err());
+        let dir = Temp::new();
+        dir.setup_cases();
+        let source = dir.root().join("01-fixture/example.ores");
+        let real = dir.root().join("real.ores");
+        fs::rename(&source, &real).unwrap();
+        std::os::unix::fs::symlink(&real, &source).unwrap();
+        assert!(discover(dir.root(), 2).is_err());
+    }
+
+    #[test]
+    fn reject_missing_cases_and_wrong_stdout() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        assert!(discover(dir.root(), 90).is_err());
+        fs::write(dir.root().join("02-fixture/expected.stdout"), b"PASS:1\n").unwrap();
+        assert!(discover(dir.root(), 2).is_err());
+    }
+
+    #[test]
+    fn quoted_argv_parsing_never_invokes_a_shell_implicitly() {
+        let parsed = parse_argv("runner --flag 'arg with spaces' \"another arg\" {source}").unwrap();
+        assert_eq!(parsed, vec!["runner", "--flag", "arg with spaces", "another arg", "{source}"]);
+        assert!(parse_argv("runner 'oops {source}").is_err());
+        assert!(parse_argv("runner --foo").is_err());
+        assert!(parse_argv("runner {source} {source}").is_err());
+    }
+
+    #[test]
+    fn fingerprints_detect_in_place_and_inode_mutation() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let case = dir.cases().remove(0);
+        assert!(unchanged(&case.source, &case.source_fp));
+        fs::write(&case.source, "changed").unwrap();
+        assert!(!unchanged(&case.source, &case.source_fp));
+    }
+
+    #[test]
+    fn report_hardlink_alias_rejected() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let report = dir.root().join("evidence.json");
+        fs::hard_link(&cases[0].oracle, &report).unwrap();
+        assert!(protect_report_path(&report, &cases).is_err());
+    }
+
+    #[test]
+    fn generated_json_does_not_contain_command_secret() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let command = "sh -c 'printf PASS:1' --secret=PRIVATE_SENTINEL {source}";
+        let mut opts = options(command);
+        opts.mode = Mode::Compile;
+        let report = execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap();
+        let json = report.to_json();
+        assert!(!json.contains("PRIVATE_SENTINEL"));
+        assert_eq!(report.command_digest.len(), 64);
+        assert!(json.contains("runner_command_sha256"));
+        assert!(json.contains("caller-supplied"));
+    }
+
+    #[test]
+    fn invalid_revision_and_zero_max_output_fail_closed() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let mut opts = options("sh -c 'exit 0' {source}");
+        opts.require_revision = true;
+        assert!(execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).is_err());
+        opts.revision = "a".repeat(40);
+        opts.max_output = 0;
+        assert!(execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).is_err());
+    }
+
+    #[test]
+    fn exact_stdout_and_stderr_default() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let opts = options("sh -c 'printf \"PASS:1\\n\"' {source}");
+        let report = execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap();
+        assert!(report.passed_all());
+        let opts = options("sh -c 'printf \"PASS:2\\n\"' {source}");
+        assert!(!execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap().passed_all());
+        let opts = options("sh -c 'printf \"PASS:1\\n\"; echo diagnostic >&2' {source}");
+        assert!(!execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap().passed_all());
+    }
+
+    #[test]
+    fn compile_only_does_not_pretend_to_match_stdout() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let mut opts = options("sh -c 'exit 0' {source}");
+        opts.mode = Mode::Compile;
+        assert!(execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap().passed_all());
+        assert!(!execute(dir.root(), &cases, &options("sh -c 'exit 0' {source}"), &AtomicI32::new(0))
+            .unwrap().passed_all());
+    }
+
+    #[test]
+    fn live_output_cap_terminates_producer() {
+        let argv = vec!["sh".into(), "-c".into(), "while :; do printf 1234567890; done".into()];
+        let out = bounded_run(&argv, Path::new("."), Duration::from_secs(1), 32, &AtomicI32::new(0)).unwrap();
+        assert_eq!(out.error, Some("output limit"));
+        assert!(out.truncated);
+        assert!(out.stdout.len() <= 32);
+    }
+
+    #[test]
+    fn deadline_kills_slow_child() {
+        let argv = vec!["sh".into(), "-c".into(), "sleep 3".into()];
+        let started = Instant::now();
+        let out = bounded_run(&argv, Path::new("."), Duration::from_millis(70), 64, &AtomicI32::new(0)).unwrap();
+        assert_eq!(out.error, Some("timeout"));
+        assert!(started.elapsed() < Duration::from_secs(2));
+    }
+
+    #[test]
+    fn explicit_cancellation_stops_running_child() {
+        let argv = vec!["sh".into(), "-c".into(), "sleep 3".into()];
+        let cancelled = AtomicI32::new(0);
+        thread::scope(|scope| {
+            scope.spawn(|| {
+                thread::sleep(Duration::from_millis(40));
+                cancelled.store(15, Ordering::SeqCst);
+            });
+            let out = bounded_run(&argv, Path::new("."), Duration::from_secs(2), 64, &cancelled).unwrap();
+            assert_eq!(out.error, Some("cancelled"));
+        });
+    }
+
+    #[test]
+    fn unselected_mutation_fails_global_run() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let path = dir.root().join("02-fixture/example.ores");
+        let command = format!(
+            "sh -c 'printf tampered > {}; printf \"PASS:1\\n\"' {{source}}",
+            path.display()
+        );
+        let report = execute(dir.root(), &cases, &options(&command), &AtomicI32::new(0)).unwrap();
+        assert!(!report.catalog_unchanged);
+        assert!(!report.passed_all());
+    }
+
+    #[test]
+    fn atomic_report_does_not_follow_final_symlink() {
+        let dir = Temp::new();
+        let protected = dir.root().join("protected");
+        fs::write(&protected, b"original").unwrap();
+        let link = dir.root().join("evidence.json");
+        std::os::unix::fs::symlink(&protected, &link).unwrap();
+        publish_report(&link, "{\"test\":true}\n").unwrap();
+        assert_eq!(fs::read(&protected).unwrap(), b"original");
+        assert_eq!(fs::read_to_string(link).unwrap(), "{\"test\":true}\n");
+    }
+}
