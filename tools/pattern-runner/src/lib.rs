@@ -631,8 +631,15 @@ impl Report {
             let _ = writeln!(output, "      \"output_truncated\": {},", result.output_truncated);
             let _ = writeln!(output, "      \"stdout_bytes\": {},", result.stdout.len());
             let _ = writeln!(output, "      \"stderr_bytes\": {},", result.stderr.len());
-            let _ = writeln!(output, "      \"stdout\": {},", json_quote(&String::from_utf8_lossy(&result.stdout)));
-            let _ = writeln!(output, "      \"stderr\": {},", json_quote(&String::from_utf8_lossy(&result.stderr)));
+            // Never persist raw subprocess output in portable JSON receipts:
+            // a compiler/runner may echo argv, credentials, environment,
+            // customer input or source bytes into stdout/stderr.
+            // Lengths and hashes preserve comparison handles without
+            // accidentally placing plaintext diagnostics in CI artifacts.
+            let _ = writeln!(output, "      \"stdout_sha256\": {},", json_quote(&sha256::hex(&result.stdout)));
+            let _ = writeln!(output, "      \"stderr_sha256\": {},", json_quote(&sha256::hex(&result.stderr)));
+            let _ = writeln!(output, "      \"stdout_redacted\": true,");
+            let _ = writeln!(output, "      \"stderr_redacted\": true,");
             match &result.error {
                 Some(error) => { let _ = writeln!(output, "      \"error\": {}", json_quote(error)); }
                 None => { let _ = writeln!(output, "      \"error\": null"); }
@@ -839,6 +846,24 @@ mod tests {
         assert_eq!(report.command_digest.len(), 64);
         assert!(json.contains("runner_command_sha256"));
         assert!(json.contains("caller-supplied"));
+    }
+
+    #[test]
+    fn raw_subprocess_credentials_never_enter_json_receipts() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let mut opts = options("sh -c 'printf SENSITIVE_STDOUT; printf SENSITIVE_STDERR >&2' {source}");
+        opts.mode = Mode::Compile;
+        let report = execute(dir.root(), &cases, &opts, &AtomicI32::new(0)).unwrap();
+        let json = report.to_json();
+        assert!(json.contains("\"stdout_sha256\""));
+        assert!(json.contains("\"stderr_sha256\""));
+        assert!(json.contains("\"stdout_redacted\": true"));
+        assert!(!json.contains("SENSITIVE_STDOUT"));
+        assert!(!json.contains("SENSITIVE_STDERR"));
+        assert_eq!(report.results[0].stdout, b"SENSITIVE_STDOUT");
+        assert_eq!(report.results[0].stderr, b"SENSITIVE_STDERR");
     }
 
     #[test]
