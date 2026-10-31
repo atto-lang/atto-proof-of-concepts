@@ -17,7 +17,10 @@ def check_run(args, result, fixtures=None):
     stdout = io.StringIO()
     with mock.patch.object(run_examples, "discover", return_value=FAKE if fixtures is None else fixtures):
         with mock.patch.object(sys, "argv", ["run_examples.py", *args]):
-            with mock.patch.object(run_examples.subprocess, "run", return_value=result) as runner:
+            fake = None if result is None else (
+                result.returncode, result.stdout.encode("utf-8"),
+                result.stderr.encode("utf-8"), False)
+            with mock.patch.object(run_examples, "bounded_run", return_value=fake) as runner:
                 with contextlib.redirect_stdout(stdout):
                     exit_code = run_examples.main()
     return exit_code, stdout.getvalue(), runner.call_count
@@ -113,6 +116,76 @@ class RunnerContractTests(unittest.TestCase):
             self.assertIn("caller-supplied", report["provenance"])
             self.assertEqual(len(report["results"][0]["source_sha256"]), 64)
             self.assertTrue(report["results"][0]["inputs_unchanged"])
+
+    def test_stderr_is_rejected_by_default(self):
+        noisy = subprocess.CompletedProcess([], 0, "PASS:1\n", "diagnostic")
+        self.assertEqual(check_run(["--runner-command", COMMAND], noisy)[0], 1)
+        self.assertEqual(check_run(["--runner-command", COMMAND, "--allow-stderr"], noisy)[0], 0)
+        self.assertEqual(check_run(["--runner-command", COMMAND, "--mode", "compile"], noisy)[0], 0)
+
+    def test_live_output_limit_failure_is_not_a_pass(self):
+        with mock.patch.object(run_examples, "discover", return_value=FAKE):
+            with mock.patch.object(sys, "argv", ["run_examples.py", "--runner-command", COMMAND]):
+                with mock.patch.object(run_examples, "bounded_run",
+                                       return_value=(0, b"PASS:1\n", b"", True)):
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(run_examples.main(), 1)
+        for value in ("0", "-1", "16777217"):
+            self.assertEqual(check_run(["--runner-command", COMMAND,
+                                        "--max-output-bytes", value], None)[0], 2)
+
+    def test_filtered_run_rejects_unselected_fixture_mutation(self):
+        import json
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            cases = []
+            for n in (1, 2):
+                d = root / f"{n:02d}-case"
+                d.mkdir()
+                source = d / "example.ores"
+                source.write_text("example", encoding="utf-8")
+                (d / "expected.stdout").write_text(f"PASS:{n}\n", encoding="utf-8")
+                cases.append((n, d, source, f"PASS:{n}\n"))
+            report = root / "evidence.json"
+            def mutate(_argv, _cwd, _timeout, _max_bytes):
+                cases[1][2].write_text("tampered", encoding="utf-8")
+                return (0, b"PASS:1\n", b"", False)
+            with mock.patch.object(run_examples, "discover", return_value=cases):
+                with mock.patch.object(run_examples, "bounded_run", side_effect=mutate) as runner:
+                    with mock.patch.object(sys, "argv", [
+                        "run_examples.py", "--runner-command", COMMAND,
+                        "--filter", "^01-", "--report", str(report)]):
+                        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                            self.assertEqual(run_examples.main(), 1)
+            self.assertEqual(runner.call_count, 1)
+            evidence = json.loads(report.read_text())
+            self.assertFalse(evidence["catalog_inputs_unchanged"])
+            self.assertFalse(evidence["complete_catalog"])
+            self.assertFalse(evidence["output_oracle_matched"])
+
+    def test_report_hardlink_alias_rejected_before_runner(self):
+        with tempfile.TemporaryDirectory() as folder:
+            report = Path(folder) / "report.json"
+            oracle = CASE / "expected.stdout"
+            try:
+                report.hardlink_to(oracle)
+            except OSError:
+                self.skipTest("cross-device hardlinks not supported")
+            code, _, calls = check_run(
+                ["--runner-command", COMMAND, "--report", str(report)],
+                subprocess.CompletedProcess([], 0, "PASS:1\n", ""))
+            self.assertEqual((code, calls), (2, 0))
+            self.assertEqual(report.read_text(), "PASS:1\n")
+
+    def test_pattern_directory_symlinks_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            target = root / "target"
+            target.mkdir()
+            (root / "01-linked").symlink_to(target, target_is_directory=True)
+            with mock.patch.object(run_examples, "PATTERNS", root):
+                with self.assertRaisesRegex(ValueError, "pattern directories must not be symlinks"):
+                    run_examples.discover()
 
     def test_list_does_not_run_compiler(self):
         code, output, calls = check_run(["--list"], None)
