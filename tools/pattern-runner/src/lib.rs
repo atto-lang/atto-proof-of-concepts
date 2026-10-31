@@ -388,6 +388,11 @@ pub fn bounded_run(
     };
     if error.is_some() {
         kill_group(child_pid);
+        // A failed or raced group signal must not leave the direct child
+        // running while wait() blocks indefinitely. kill() is idempotent
+        // for an already-dead child; detached descendants remain outside
+        // this harness's safety guarantees.
+        let _ = child.kill();
     }
     let final_status = match status {
         Some(status) => status,
@@ -777,6 +782,19 @@ mod tests {
         assert!(unchanged(&case.source, &case.source_fp));
         fs::write(&case.source, "changed").unwrap();
         assert!(!unchanged(&case.source, &case.source_fp));
+    }
+
+    #[test]
+    fn same_bytes_different_inode_is_not_original_fixture() {
+        let dir = Temp::new();
+        dir.setup_cases();
+        let cases = dir.cases();
+        let pinned = &cases[0].source_fp;
+        let source = &cases[0].source;
+        let clone = dir.root().join("replacement.ores");
+        fs::write(&clone, fs::read(source).unwrap()).unwrap();
+        fs::rename(&clone, source).unwrap();
+        assert!(!unchanged(source, pinned));
     }
 
     #[test]
