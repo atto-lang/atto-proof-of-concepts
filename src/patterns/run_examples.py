@@ -21,13 +21,21 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 PATTERNS = Path(__file__).resolve().parent
+# Reuse the bounded subprocess and fixture-integrity primitives from libraries.
+# These detect drift but do not sandbox malicious toolchains.
+sys.path.insert(0, str(ROOT / "src" / "libraries"))
+from check_prototypes import bounded_run, fingerprint, unchanged, publish_report
 
 
 def discover():
     result = []
     for directory in sorted(PATTERNS.iterdir()):
-        if not directory.is_dir() or re.match(r"^[0-9]{2}-", directory.name) is None:
+        if re.match(r"^[0-9]{2}-", directory.name) is None:
             continue
+        if directory.is_symlink():
+            raise ValueError(f"{directory.name}: pattern directories must not be symlinks")
+        if not directory.is_dir():
+            raise ValueError(f"{directory.name}: expected a pattern directory")
         number = int(directory.name[:2])
         source = directory / "example.ores"
         oracle = directory / "expected.stdout"
@@ -62,6 +70,10 @@ def main():
     ap.add_argument("--compiler-revision", default="unknown",
                     help="exact Java/LLVM commit SHA of the tested compiler")
     ap.add_argument("--timeout", type=float, default=40.0)
+    ap.add_argument("--max-output-bytes", type=int, default=65536,
+                    help="per-stream limit, 1..16777216 bytes")
+    ap.add_argument("--allow-stderr", action="store_true",
+                    help="allow guest stderr in run mode (default is fail closed)")
     ap.add_argument("--filter", help="regex against pattern folder name")
     ap.add_argument("--report", help="JSON report output path")
     ap.add_argument("--list", action="store_true", help="structural inventory only (no execution)")
@@ -96,7 +108,7 @@ def main():
     except ValueError as exc:
         print(f"Invalid runner command: {exc}", file=sys.stderr)
         return 2
-    if sum(token.count("{source}") for token in argv_template) != 1:
+    if not argv_template or sum(token.count("{source}") for token in argv_template) != 1:
         print("Runner command must contain {source} exactly once.", file=sys.stderr)
         return 2
     if args.require_revision and not re.fullmatch(r"[0-9a-fA-F]{40}", args.compiler_revision):
