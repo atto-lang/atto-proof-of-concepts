@@ -281,7 +281,10 @@ enum PipeEvent {
 }
 
 fn read_pipe(mut reader: impl Read + Send + 'static, stream: usize, tx: SyncSender<PipeEvent>) {
-    thread::spawn(move || {
+    // Deliberately detach reader threads: joining could hang if a malicious
+    // detached grandchild keeps an inherited pipe open after group teardown.
+    // Dropping the receiver at return wakes blocked channel senders.
+    let _ = thread::spawn(move || {
         let mut buffer = [0_u8; 4096];
         loop {
             match reader.read(&mut buffer) {
