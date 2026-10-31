@@ -389,12 +389,15 @@ pub fn bounded_run(
             }
         }
     };
+    // Always retire the entire process group, including after a zero-exit
+    // guest. A runner may fork a background grandchild that closes its pipe
+    // handles, allowing EOF and a false "clean shutdown" while it survives.
+    // This is best-effort process-group containment, NOT an OS sandbox:
+    // a malicious guest can still setsid()/detach outside the group.
+    kill_group(child_pid);
     if error.is_some() {
-        kill_group(child_pid);
         // A failed or raced group signal must not leave the direct child
-        // running while wait() blocks indefinitely. kill() is idempotent
-        // for an already-dead child; detached descendants remain outside
-        // this harness's safety guarantees.
+        // running while wait() blocks indefinitely.
         let _ = child.kill();
     }
     let final_status = match status {
@@ -884,6 +887,27 @@ mod tests {
         assert_eq!(out.error, Some("output limit"));
         assert!(out.truncated);
         assert!(out.stdout.len() <= 32);
+    }
+
+    #[test]
+    fn successful_leader_exit_does_not_leave_background_group_child() {
+        let dir = Temp::new();
+        let marker = dir.root().join("escaped-descendant");
+        // A background process closes the stdout/stderr pipes, so a naive
+        // runner sees clean EOF and a zero exit while the child still runs.
+        // The marker is written only if the process survives group retirement.
+        let script = format!(
+            "(sleep 0.35; printf leaked > {}) >/dev/null 2>&1 & printf 'PASS:1\\n'",
+            marker.display()
+        );
+        let argv = vec!["sh".into(), "-c".into(), script];
+        let result = bounded_run(
+            &argv, dir.root(), Duration::from_secs(2), 64, &AtomicI32::new(0)
+        ).unwrap();
+        assert_eq!(result.exit_code, Some(0));
+        assert_eq!(result.stdout, b"PASS:1\\n");
+        thread::sleep(Duration::from_millis(550));
+        assert!(!marker.exists(), "background process escaped after successful leader exit");
     }
 
     #[test]
