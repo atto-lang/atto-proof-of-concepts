@@ -5,8 +5,15 @@ import re
 import sys
 
 
+def _require_fixture(path: Path) -> None:
+    """Reject missing, directory, symlink and dangling-link fixture aliases."""
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f"missing, symlinked or non-regular catalog fixture: {path}")
+
+
 def validate_catalog(src: Path, expected_libraries: int = 60,
-                     expected_patterns: int = 90) -> tuple[int, int]:
+                     expected_patterns: int = 90,
+                     expected_library_probes: int = 32) -> tuple[int, int]:
     """Check exact inventory, directory/file type and linked README contracts."""
     libs_dir, patterns_dir = src / "libraries", src / "patterns"
     for directory in (libs_dir, patterns_dir):
@@ -40,6 +47,33 @@ def validate_catalog(src: Path, expected_libraries: int = 60,
         body = readme.read_text(encoding="utf-8")
         if "Status:" not in body or "##" not in body:
             raise ValueError(f"missing catalog status/heading: {readme}")
+    # Library briefs are allowed without a runnable example, but a partial
+    # example/oracle pair must never be silently excluded from qualification.
+    library_probes = 0
+    for directory in libs:
+        source = directory / "example.ores"
+        oracle = directory / "expected.stdout"
+        if any(path.exists() or path.is_symlink() for path in (source, oracle)):
+            _require_fixture(source)
+            _require_fixture(oracle)
+            if not source.read_text(encoding="utf-8").strip():
+                raise ValueError(f"empty library source: {source}")
+            if oracle.read_bytes() != f"PASS:{directory.name}\\n".encode("utf-8"):
+                raise ValueError(f"invalid library output oracle: {oracle}")
+            library_probes += 1
+    if library_probes != expected_library_probes:
+        raise ValueError(f"expected {expected_library_probes} library probes; found {library_probes}")
+    # Every numbered pattern is executable: directory counts alone are not a
+    # trustworthy catalog gate without a paired source and exact oracle.
+    for directory in patterns:
+        source = directory / "example.ores"
+        oracle = directory / "expected.stdout"
+        _require_fixture(source)
+        _require_fixture(oracle)
+        if not source.read_text(encoding="utf-8").strip():
+            raise ValueError(f"empty pattern source: {source}")
+        if oracle.read_bytes() != f"PASS:{int(directory.name[:2])}\\n".encode("utf-8"):
+            raise ValueError(f"invalid pattern output oracle: {oracle}")
     for relative in ("README.md", "libraries/README.md",
                      "patterns/README.md", "validation/README.md"):
         required = src / relative
