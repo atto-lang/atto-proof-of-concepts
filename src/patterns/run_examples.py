@@ -21,13 +21,21 @@ import time
 
 ROOT = Path(__file__).resolve().parents[2]
 PATTERNS = Path(__file__).resolve().parent
+# Reuse the bounded subprocess and fixture-integrity primitives from libraries.
+# These detect drift but do not sandbox malicious toolchains.
+sys.path.insert(0, str(ROOT / "src" / "libraries"))
+from check_prototypes import bounded_run, fingerprint, unchanged, publish_report
 
 
 def discover():
     result = []
     for directory in sorted(PATTERNS.iterdir()):
-        if not directory.is_dir() or re.match(r"^[0-9]{2}-", directory.name) is None:
+        if re.match(r"^[0-9]{2}-", directory.name) is None:
             continue
+        if directory.is_symlink():
+            raise ValueError(f"{directory.name}: pattern directories must not be symlinks")
+        if not directory.is_dir():
+            raise ValueError(f"{directory.name}: expected a pattern directory")
         number = int(directory.name[:2])
         source = directory / "example.ores"
         oracle = directory / "expected.stdout"
@@ -62,6 +70,10 @@ def main():
     ap.add_argument("--compiler-revision", default="unknown",
                     help="exact Java/LLVM commit SHA of the tested compiler")
     ap.add_argument("--timeout", type=float, default=40.0)
+    ap.add_argument("--max-output-bytes", type=int, default=65536,
+                    help="per-stream limit, 1..16777216 bytes")
+    ap.add_argument("--allow-stderr", action="store_true",
+                    help="allow guest stderr in run mode (default is fail closed)")
     ap.add_argument("--filter", help="regex against pattern folder name")
     ap.add_argument("--report", help="JSON report output path")
     ap.add_argument("--list", action="store_true", help="structural inventory only (no execution)")
@@ -96,7 +108,7 @@ def main():
     except ValueError as exc:
         print(f"Invalid runner command: {exc}", file=sys.stderr)
         return 2
-    if sum(token.count("{source}") for token in argv_template) != 1:
+    if not argv_template or sum(token.count("{source}") for token in argv_template) != 1:
         print("Runner command must contain {source} exactly once.", file=sys.stderr)
         return 2
     if args.require_revision and not re.fullmatch(r"[0-9a-fA-F]{40}", args.compiler_revision):
@@ -105,62 +117,107 @@ def main():
     if not math.isfinite(args.timeout) or args.timeout <= 0:
         print("--timeout must be a finite positive number", file=sys.stderr)
         return 2
+    if not (1 <= args.max_output_bytes <= 16 * 1024 * 1024):
+        print("--max-output-bytes must be 1..16777216", file=sys.stderr)
+        return 2
+    try:
+        # Report destination cannot alias any fixture, selected or otherwise.
+        if args.report:
+            destination = Path(args.report).resolve()
+            protected = [p for _, d, src, _ in fixtures
+                         for p in (src, d / "expected.stdout")]
+            if any(destination == p.resolve() or
+                   (destination.is_file() and destination.samefile(p))
+                   for p in protected):
+                raise ValueError("report destination aliases a source/oracle fixture")
+        # Pin ALL inputs before executing ANY toolchain command.
+        pinned = {d.name: (fingerprint(src), fingerprint(d / "expected.stdout"))
+                  for _, d, src, _ in fixtures}
+    except (ValueError, OSError) as exc:
+        print(f"INPUT ADMISSION FAILURE: {exc}", file=sys.stderr)
+        return 2
+
     results = []
     for number, directory, source, expected in selected:
-        # Evidence binds the tested fixture bytes; compiler labels are untrusted.
-        source_sha = hashlib.sha256(source.read_bytes()).hexdigest()
-        oracle_sha = hashlib.sha256((directory / "expected.stdout").read_bytes()).hexdigest()
-        argv = [token.replace("{source}", str(source.resolve())) for token in argv_template]
+        oracle = directory / "expected.stdout"
+        sh, eh = pinned[directory.name]
         started = time.monotonic()
-        try:
-            proc = subprocess.run(argv, cwd=ROOT, capture_output=True,
-                                  text=True, encoding="utf-8", errors="replace",
-                                  timeout=args.timeout, check=False)
-            inputs_unchanged = (
-                source.is_file() and (directory / "expected.stdout").is_file()
-                and hashlib.sha256(source.read_bytes()).hexdigest() == source_sha
-                and hashlib.sha256((directory / "expected.stdout").read_bytes()).hexdigest() == oracle_sha
-            )
-            ok = proc.returncode == 0 and inputs_unchanged and (args.mode == "compile" or proc.stdout == expected)
+        stable_before = unchanged(source, sh) and unchanged(oracle, eh)
+        if not stable_before:
             result = {
                 "pattern": directory.name, "backend": args.backend, "mode": args.mode,
-                "source_sha256": source_sha, "oracle_sha256": oracle_sha,
-                "inputs_unchanged": inputs_unchanged,
-                "success": ok, "exit_code": proc.returncode,
-                "stdout": proc.stdout, "stderr": proc.stderr,
-                "expected_stdout": expected,
-                "seconds": round(time.monotonic() - started, 3),
+                "source_sha256": sh[0], "oracle_sha256": eh[0],
+                "inputs_unchanged": False, "success": False,
+                "error": "source or oracle changed before invocation",
             }
-        except (subprocess.TimeoutExpired, OSError) as exc:
-            result = {
-                "pattern": directory.name, "backend": args.backend, "mode": args.mode,
-                "source_sha256": source_sha, "oracle_sha256": oracle_sha,
-                "success": False, "error": str(exc),
-                "seconds": round(time.monotonic() - started, 3),
-            }
+        else:
+            argv = [token.replace("{source}", str(source.resolve())) for token in argv_template]
+            try:
+                exit_code, stdout, stderr, oversized = bounded_run(
+                    argv, ROOT, args.timeout, args.max_output_bytes)
+                stable = unchanged(source, sh) and unchanged(oracle, eh)
+                stderr_ok = args.mode == "compile" or args.allow_stderr or not stderr
+                ok = (exit_code == 0 and stable and not oversized and stderr_ok
+                      and (args.mode == "compile" or stdout == expected.encode("utf-8")))
+                result = {
+                    "pattern": directory.name, "backend": args.backend, "mode": args.mode,
+                    "source_sha256": sh[0], "oracle_sha256": eh[0],
+                    "inputs_unchanged": stable, "success": ok, "exit_code": exit_code,
+                    "output_truncated": oversized,
+                    "stdout_bytes": len(stdout), "stderr_bytes": len(stderr),
+                    "stdout": stdout.decode("utf-8", errors="replace"),
+                    "stderr": stderr.decode("utf-8", errors="replace"),
+                    "expected_stdout": expected,
+                }
+            except (subprocess.TimeoutExpired, OSError) as exc:
+                result = {
+                    "pattern": directory.name, "backend": args.backend, "mode": args.mode,
+                    "source_sha256": sh[0], "oracle_sha256": eh[0],
+                    "inputs_unchanged": unchanged(source, sh) and unchanged(oracle, eh),
+                    "success": False, "error": str(exc),
+                }
+        result["seconds"] = round(time.monotonic() - started, 3)
         print(f'{"PASS" if result["success"] else "FAIL"} {directory.name}')
         results.append(result)
+
+    # Retroactive modifications to previously checked cases, or unselected
+    # fixtures, invalidate the entire run.
+    catalog_unchanged = True
+    for _, directory, source, _ in fixtures:
+        sh, eh = pinned[directory.name]
+        stable = unchanged(source, sh) and unchanged(directory / "expected.stdout", eh)
+        catalog_unchanged = catalog_unchanged and stable
+        if not stable:
+            for item in results:
+                if item["pattern"] == directory.name:
+                    item["inputs_unchanged"] = False
+                    item["success"] = False
+    if not catalog_unchanged:
+        print("FAIL CATALOG INPUTS MUTATED", file=sys.stderr)
     passes = sum(int(item["success"]) for item in results)
     report = {
         "backend": args.backend, "mode": args.mode,
         "compiler_revision": args.compiler_revision,
         "provenance": "caller-supplied labels; verify compiler revision independently",
-        "command": args.runner_command,
+        "runner_command_sha256": hashlib.sha256(args.runner_command.encode("utf-8")).hexdigest(),
         "revision_format_verified": args.require_revision,
         "selected": len(selected), "inventory_total": len(fixtures),
         "complete_catalog": len(selected) == len(fixtures),
+        "catalog_inputs_unchanged": catalog_unchanged,
+        "output_oracle_matched": args.mode == "run" and catalog_unchanged
+                                  and passes == len(selected),
+        "allow_stderr": args.allow_stderr, "max_output_bytes": args.max_output_bytes,
         "passed": passes, "failed": len(selected) - passes,
         "results": results,
     }
     if args.report:
         try:
-            Path(args.report).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+            publish_report(args.report, report)
         except OSError as exc:
-            print(f"Failed to write evidence report: {exc}", file=sys.stderr)
+            print(f"Failed to atomically publish evidence report: {exc}", file=sys.stderr)
             return 2
     print(f'Executed {len(selected)}; passed {passes}; failed {len(selected) - passes}')
-    return 0 if passes == len(selected) else 1
-
+    return 0 if catalog_unchanged and passes == len(selected) else 1
 
 if __name__ == "__main__":
     raise SystemExit(main())

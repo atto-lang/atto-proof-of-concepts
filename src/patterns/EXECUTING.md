@@ -23,6 +23,39 @@ JSON reports now bind each pattern and oracle to SHA-256 and fail if input files
 
 The command is an **example placeholder**. Replace it with a working Java or LLVM compile-and-execute entrypoint. Arguments are split without a shell. The runner fails when compilation/execution exits nonzero, times out, or produces output different from the oracle. A green structural workflow never proves an Oreslang program compiled.
 
+## Fail-closed harness hardening (2026-10-30 candidate)
+
+The pattern runner shares the **POSIX-only bounded process-group executor** and
+fixture fingerprint/atomic JSON receipt primitives with the library runner.
+It pins **all** pattern source/oracle file identities and SHA-256 digests before
+the first command (including unselected patterns), refuses symlinked numbered
+directories and fixture symlinks, rechecks each selected input before its
+invocation, and rejects retroactive/unselected changes at the end.
+
+Use --max-output-bytes 65536 (default, per stream; max 16 MiB) and a finite
+--timeout. Reaching the limit or timeout terminates the non-detached runner
+process group, not just the parent shell. Guest runtime stderr fails by default;
+--allow-stderr is an explicit waiver. Compile mode can emit bounded compiler
+diagnostics but proves exit status only.
+
+A JSON --report is written via a temporary file plus atomic rename, and
+cannot alias the source/oracle fixtures at admission. Evidence records a
+SHA-256 digest of the runner argv template instead of the unredacted
+command, so avoid supplying secrets on command lines altogether.
+catalog_inputs_unchanged, complete_catalog, output_oracle_matched,
+byte counts and truncation flags describe what was actually checked.
+
+**Limits:** this is not a toolchain sandbox, signature verification, LLVM
+execution, formal proof, isolation against intentionally detached children,
+or protection against a malicious process controlling the filesystem.
+Compiler identity and full guest execution require independently verified
+Git source/object and executable provenance. An incomplete/filtered, compiler
+only, or zero-step CI run is not a passing native Oreslang qualification.
+
+Run the contract regression suite after every harness change:
+- python3 -m unittest discover -s src/patterns -p test_run_examples.py -v
+- python3 src/patterns/run_examples.py --list
+
 ## Current status and limitations
 
 - The original 70 patterns at Java revision 43edad9 have a funded exact-source 70/70 Java check-and-run result [run #38341093687](https://github.com/agent-pontifex/agent-pontifex-daemon/actions/runs/38341093687) on the pinned historical PoC revision. LLVM execution is not yet verified.
