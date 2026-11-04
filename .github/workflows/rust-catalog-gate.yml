@@ -1,0 +1,41 @@
+name: Rust catalog structural gate (not native Oreslang)
+on:
+  pull_request:
+    paths:
+      - 'tools/catalog-gate/**'
+      - '.github/workflows/rust-catalog-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalog-rust-self-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify physical HEAD and committed tree before validation
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_HEAD" =~ ^[0-9a-f]{40}$ ]]
+          actual="$(git rev-parse --verify HEAD)"
+          test "$EXPECTED_HEAD" = "$actual"
+          test -z "$(git status --porcelain --untracked-files=all)"
+          tree="$(git rev-parse 'HEAD^{tree}')"
+          [[ "$tree" =~ ^[0-9a-f]{40}$ ]]
+          printf 'SOURCE_VERIFIED head=%s tree=%s\n' "$actual" "$tree"
+      - name: Rust format (structural tooling only)
+        run: cargo fmt --manifest-path tools/catalog-gate/Cargo.toml --all -- --check
+      - name: Rust tests (no Oreslang compiler)
+        run: cargo test --manifest-path tools/catalog-gate/Cargo.toml --offline --locked
+      - name: Validate committed full catalog (no guest execution)
+        run: cargo run --manifest-path tools/catalog-gate/Cargo.toml --offline --locked -- --root src
+      - name: Evidence scope boundary
+        run: echo 'STRUCTURAL_ONLY; no Oreslang compiler, guest, or native parity evidence'
