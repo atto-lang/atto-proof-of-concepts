@@ -52,7 +52,7 @@ fn read_fixture(path: &Path) -> io::Result<Vec<u8>> {
         return Err(invalid(format!("fixture replaced during open: {}", path.display())));
     }
     let mut data = Vec::new();
-    file.by_ref().take(MAX_FIXTURE_BYTES + 1).read_to_end(&mut data)?;
+    Read::by_ref(&mut file).take(MAX_FIXTURE_BYTES + 1).read_to_end(&mut data)?;
     if data.len() as u64 > MAX_FIXTURE_BYTES {
         return Err(invalid(format!("oversized fixture: {}", path.display())));
     }
@@ -249,6 +249,7 @@ pub fn parse_argv(input: &str) -> io::Result<Vec<String>> {
                 }
             }
             (None, c) => { token.push(c); active = true; }
+            (Some(_), _) => unreachable!("quote only holds ' or \""),
         }
     }
     if quote.is_some() {
