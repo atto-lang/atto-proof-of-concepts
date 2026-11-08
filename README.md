@@ -22,3 +22,15 @@ These examples are intended to demonstrate AttoLang concepts. Examples may depen
 - [AttoLang repositories](https://github.com/atto-lang)
 - [Canonical language specification](https://github.com/atto-lang/atto-spec)
 - [Backend conformance](https://github.com/atto-lang/atto-platform-conformance)
+
+## Repository ownership and contribution routing
+
+**Belongs here:** Explicitly experimental language/runtime ideas, spikes and throwaway feasibility examples with limitations.
+
+**Belongs elsewhere:** Normative accepted behavior in atto-spec; validated reusable code in library modules; stable introductory examples in atto-demo.
+
+**Security and portability boundary:** Mark proposals as unverified, keep network/filesystem capabilities opt-in and never reclassify source-free smoke tests as compiled guest execution.
+
+AttoLang is the public name; preserve existing Oreslang/.ores compatibility and use canonical .atto for new portable library source. This README defines scope, not feature readiness.
+
+**Acceptance:** name exact source SHA/tree, runtime/toolchain, positive and negative checks and execution receipt before claiming support. Host-only tests and empty CI steps do not prove guest execution.
