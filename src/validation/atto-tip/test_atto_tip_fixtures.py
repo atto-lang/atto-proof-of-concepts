@@ -21,7 +21,7 @@ class TipFixtureContract(unittest.TestCase):
                 self.assertFalse(file.is_symlink())
                 self.assertTrue(file.is_file())
                 payload = file.read_bytes()
-                preimage = f"blob {len(payload)}\\0".encode("ascii") + payload
+                preimage = f"blob {len(payload)}".encode("ascii") + bytes([0]) + payload
                 self.assertEqual(hashlib.sha1(preimage).hexdigest(), expected)
 
     def test_no_legacy_extension_or_extra_fixtures(self):
