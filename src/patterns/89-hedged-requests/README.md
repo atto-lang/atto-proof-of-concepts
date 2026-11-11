@@ -17,6 +17,6 @@ Only a result-selection model; no parallel I/O, cancellation of losing requests,
 
 ## Acceptance
 
-Use the [pattern runner](../EXECUTING.md) with a pinned real Oreslang guest runtime; require exit 0 and `PASS:89\n`. No sequential oracle establishes scheduler safety, durability or cross-backend parity.
+Use the [pattern runner](../EXECUTING.md) with a pinned real AttoLang guest runtime; require exit 0 and `PASS:89\n`. No sequential oracle establishes scheduler safety, durability or cross-backend parity.
 
-[Source](example.ores) · [Output oracle](expected.stdout)
+[Source](example.atto) · [Output oracle](expected.stdout)

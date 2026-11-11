@@ -18,6 +18,6 @@ Two-participant sequential model; no actor transport, epoch management, overflow
 
 ## Evidence / acceptance
 
-Run the source using the [pattern runner](../run_examples.py) with a real pinned Oreslang compiler and runtime, first on Java/GraalVM then on LLVM where supported. Require exact `PASS:80\n` and zero exit status; also test expected compiler rejections where ownership or concurrency applies. Passing this oracle alone does **not** establish full real-world safety.
+Run the source using the [pattern runner](../run_examples.py) with a real pinned AttoLang compiler and runtime, first on Java/GraalVM then on LLVM where supported. Require exact `PASS:80\n` and zero exit status; also test expected compiler rejections where ownership or concurrency applies. Passing this oracle alone does **not** establish full real-world safety.
 
-[Native `example.ores`](example.ores) · [`expected.stdout`](expected.stdout) · [runner instructions](../EXECUTING.md)
+[Native `example.atto`](example.atto) · [`expected.stdout`](expected.stdout) · [runner instructions](../EXECUTING.md)

@@ -17,6 +17,6 @@ No durable fsync, disk record framing, torn-write handling, crash replay or tran
 
 ## Acceptance
 
-Use the [pattern runner](../EXECUTING.md) with a pinned real Oreslang guest runtime; require exit 0 and `PASS:87\n`. No sequential oracle establishes scheduler safety, durability or cross-backend parity.
+Use the [pattern runner](../EXECUTING.md) with a pinned real AttoLang guest runtime; require exit 0 and `PASS:87\n`. No sequential oracle establishes scheduler safety, durability or cross-backend parity.
 
-[Source](example.ores) · [Output oracle](expected.stdout)
+[Source](example.atto) · [Output oracle](expected.stdout)
