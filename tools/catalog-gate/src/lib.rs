@@ -28,9 +28,8 @@ fn failure(message: impl Into<String>) -> io::Error {
 }
 
 fn regular_file(path: &Path) -> io::Result<()> {
-    let metadata = fs::symlink_metadata(path).map_err(|error| {
-        failure(format!("missing catalog file {}: {error}", path.display()))
-    })?;
+    let metadata = fs::symlink_metadata(path)
+        .map_err(|error| failure(format!("missing catalog file {}: {error}", path.display())))?;
     if !metadata.file_type().is_file() {
         return Err(failure(format!(
             "symlinked or non-regular catalog file: {}",
@@ -42,7 +41,10 @@ fn regular_file(path: &Path) -> io::Result<()> {
 
 fn real_directory(path: &Path) -> io::Result<()> {
     let metadata = fs::symlink_metadata(path).map_err(|error| {
-        failure(format!("missing catalog directory {}: {error}", path.display()))
+        failure(format!(
+            "missing catalog directory {}: {error}",
+            path.display()
+        ))
     })?;
     if !metadata.file_type().is_dir() {
         return Err(failure(format!(
@@ -101,9 +103,10 @@ fn catalog_directories(root: &Path, patterns: bool) -> io::Result<Vec<(String, P
     let mut found = Vec::new();
     for entry in fs::read_dir(root)? {
         let entry = entry?;
-        let name = entry.file_name().into_string().map_err(|_| {
-            failure(format!("non-UTF-8 catalog entry under {}", root.display()))
-        })?;
+        let name = entry
+            .file_name()
+            .into_string()
+            .map_err(|_| failure(format!("non-UTF-8 catalog entry under {}", root.display())))?;
         let selected = if patterns {
             pattern_number(&name).is_some()
         } else {
@@ -185,7 +188,10 @@ pub fn validate(root: &Path, expected: Expected) -> io::Result<Counts> {
             return Err(failure("legacy .ores source forbidden"));
         }
         nonempty_source(&directory.join("example.atto"))?;
-        exact_oracle(&directory.join("expected.stdout"), &format!("PASS:{number}\n"))?;
+        exact_oracle(
+            &directory.join("expected.stdout"),
+            &format!("PASS:{number}\n"),
+        )?;
     }
     for relative in [
         "README.md",
@@ -219,10 +225,8 @@ mod tests {
     impl Fixture {
         fn new() -> Self {
             let id = NEXT.fetch_add(1, Ordering::Relaxed);
-            let root = std::env::temp_dir().join(format!(
-                "oreslang-poc-catalog-{}-{id}",
-                std::process::id()
-            ));
+            let root = std::env::temp_dir()
+                .join(format!("oreslang-poc-catalog-{}-{id}", std::process::id()));
             fs::create_dir(&root).expect("fresh test directory");
             for area in ["libraries", "patterns", "validation"] {
                 fs::create_dir(root.join(area)).unwrap();
@@ -288,12 +292,42 @@ mod tests {
     }
 
     #[test]
+    fn legacy_ores_sources_rejected_even_with_valid_atto_files() {
+        for relative in [
+            "patterns/01-alpha/example.ores",
+            "libraries/oreslang-a/example.ores",
+        ] {
+            let fixture = Fixture::new();
+            fs::write(fixture.path(relative), "pub routine main(): void {}\n").unwrap();
+            let error = fixture.check().expect_err("legacy source should fail closed");
+            assert!(error.to_string().contains("legacy .ores"));
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn dangling_legacy_ores_symlink_rejected() {
+        use std::os::unix::fs::symlink;
+        let fixture = Fixture::new();
+        symlink(
+            fixture.path("absent-legacy-target"),
+            fixture.path("patterns/01-alpha/example.ores"),
+        )
+        .unwrap();
+        assert!(fixture.check().is_err());
+    }
+
+    #[test]
     fn wrong_oracle_rejected() {
         let fixture = Fixture::new();
         fs::write(fixture.path("patterns/02-beta/expected.stdout"), "PASS:1\n").unwrap();
         assert!(fixture.check().is_err());
         let fixture = Fixture::new();
-        fs::write(fixture.path("libraries/oreslang-b/expected.stdout"), "PASS:x\n").unwrap();
+        fs::write(
+            fixture.path("libraries/oreslang-b/expected.stdout"),
+            "PASS:x\n",
+        )
+        .unwrap();
         assert!(fixture.check().is_err());
     }
 
