@@ -30,7 +30,7 @@ def inventory(root=HERE):
             raise ValueError(f"{d.name}: symlink directories are not allowed")
         if not d.is_dir():
             continue
-        s, e = d / "example.ores", d / "expected.stdout"
+        s, e = d / "example.atto", d / "expected.stdout"
         if not s.exists() and not e.exists():
             continue
         if s.is_symlink() or e.is_symlink():

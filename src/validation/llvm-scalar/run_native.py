@@ -16,12 +16,12 @@ import tempfile
 
 HERE = Path(__file__).resolve().parent
 EXPECTED = {
-    "forward-call.ores": 42,
-    "arithmetic-precedence.ores": 42,
-    "nested-calls.ores": 42,
-    "unary-negative.ores": 42,
-    "module-scoped.ores": 42,
-    "call-chain.ores": 42,
+    "forward-call.atto": 42,
+    "arithmetic-precedence.atto": 42,
+    "nested-calls.atto": 42,
+    "unary-negative.atto": 42,
+    "module-scoped.atto": 42,
+    "call-chain.atto": 42,
 }
 
 

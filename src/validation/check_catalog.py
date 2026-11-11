@@ -15,6 +15,10 @@ def validate_catalog(src: Path, expected_libraries: int = 60,
                      expected_patterns: int = 90,
                      expected_library_probes: int = 32) -> tuple[int, int]:
     """Check exact inventory, directory/file type and linked README contracts."""
+    # Canonical AttoLang source files only; never silently execute legacy fixtures.
+    legacy = sorted(src.rglob("*.ores"))
+    if legacy:
+        raise ValueError(f"legacy .ores source forbidden: {legacy[0]}")
     libs_dir, patterns_dir = src / "libraries", src / "patterns"
     for directory in (libs_dir, patterns_dir):
         if directory.is_symlink() or not directory.is_dir():
@@ -51,7 +55,7 @@ def validate_catalog(src: Path, expected_libraries: int = 60,
     # example/oracle pair must never be silently excluded from qualification.
     library_probes = 0
     for directory in libs:
-        source = directory / "example.ores"
+        source = directory / "example.atto"
         oracle = directory / "expected.stdout"
         if any(path.exists() or path.is_symlink() for path in (source, oracle)):
             _require_fixture(source)
@@ -66,7 +70,7 @@ def validate_catalog(src: Path, expected_libraries: int = 60,
     # Every numbered pattern is executable: directory counts alone are not a
     # trustworthy catalog gate without a paired source and exact oracle.
     for directory in patterns:
-        source = directory / "example.ores"
+        source = directory / "example.atto"
         oracle = directory / "expected.stdout"
         _require_fixture(source)
         _require_fixture(oracle)

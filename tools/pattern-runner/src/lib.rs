@@ -137,7 +137,8 @@ pub fn discover(patterns: &Path, expected_count: usize) -> io::Result<Vec<Case>>
             .map_err(|_| invalid("non-UTF-8 pattern directory name"))?;
         let Some(number) = numbered(&name) else { continue };
         real_dir(&entry.path())?;
-        let source = entry.path().join("example.ores");
+        if entry.path().join("example.ores").exists() { return Err("legacy .ores source forbidden".into()); }
+        let source = entry.path().join("example.atto");
         let oracle = entry.path().join("expected.stdout");
         let source_fp = fingerprint(&source)?;
         let oracle_fp = fingerprint(&oracle)?;
@@ -753,7 +754,7 @@ mod tests {
                 let case = self.0.join(format!("{n:02}-fixture"));
                 fs::create_dir(&case).unwrap();
                 fs::write(
-                    case.join("example.ores"),
+                    case.join("example.atto"),
                     format!("pub routine main() {{ \"PASS:{n}\"; \"FAIL:{n}:x\"; }}"),
                 ).unwrap();
                 fs::write(case.join("expected.stdout"), format!("PASS:{n}\n")).unwrap();
@@ -796,8 +797,8 @@ mod tests {
         assert!(discover(dir.root(), 2).is_err());
         let dir = Temp::new();
         dir.setup_cases();
-        let source = dir.root().join("01-fixture/example.ores");
-        let real = dir.root().join("real.ores");
+        let source = dir.root().join("01-fixture/example.atto");
+        let real = dir.root().join("real.atto");
         fs::rename(&source, &real).unwrap();
         std::os::unix::fs::symlink(&real, &source).unwrap();
         assert!(discover(dir.root(), 2).is_err());
@@ -846,7 +847,7 @@ mod tests {
         let cases = dir.cases();
         let pinned = &cases[0].source_fp;
         let source = &cases[0].source;
-        let clone = dir.root().join("replacement.ores");
+        let clone = dir.root().join("replacement.atto");
         fs::write(&clone, fs::read(source).unwrap()).unwrap();
         fs::rename(&clone, source).unwrap();
         assert!(!unchanged(source, pinned));
@@ -1034,7 +1035,7 @@ mod tests {
         let dir = Temp::new();
         dir.setup_cases();
         let cases = dir.cases();
-        let path = dir.root().join("02-fixture/example.ores");
+        let path = dir.root().join("02-fixture/example.atto");
         let command = format!(
             "sh -c 'printf tampered > {}; printf \"PASS:1\\n\"' {{source}}",
             path.display()

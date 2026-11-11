@@ -16,13 +16,13 @@ def fixture(root: Path):
         d = root / "libraries" / name
         d.mkdir()
         (d / "README.md").write_text("## Status: planned\n", encoding="utf-8")
-        (d / "example.ores").write_text("pub routine main(): void {}\n", encoding="utf-8")
+        (d / "example.atto").write_text("pub routine main(): void {}\n", encoding="utf-8")
         (d / "expected.stdout").write_text(f"PASS:{name}\n", encoding="utf-8")
     for name in ("01-alpha", "02-beta"):
         d = root / "patterns" / name
         d.mkdir()
         (d / "README.md").write_text("## Status: prototype\n", encoding="utf-8")
-        (d / "example.ores").write_text("pub routine main(): void {}\n", encoding="utf-8")
+        (d / "example.atto").write_text("pub routine main(): void {}\n", encoding="utf-8")
         (d / "expected.stdout").write_text(f"PASS:{int(name[:2])}\n", encoding="utf-8")
 
 
@@ -32,6 +32,14 @@ class CatalogContractTests(unittest.TestCase):
             root = Path(directory)
             fixture(root)
             self.assertEqual(validate_catalog(root, 2, 2, 2), (2, 2))
+
+    def test_legacy_ores_rejected_even_with_canonical_source(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            fixture(root)
+            (root / "patterns" / "01-alpha" / "example.ores").write_text("legacy")
+            self.assertRaisesRegex(ValueError, "legacy \\.ores source forbidden",
+                                   validate_catalog, root, 2, 2, 2)
 
     def test_missing_and_extra_entries_fail(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -84,7 +92,7 @@ class CatalogContractTests(unittest.TestCase):
 
 
     def test_missing_pattern_source_or_oracle_fails(self):
-        for filename in ("example.ores", "expected.stdout"):
+        for filename in ("example.atto", "expected.stdout"):
             with self.subTest(filename=filename), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 fixture(root)
@@ -101,7 +109,7 @@ class CatalogContractTests(unittest.TestCase):
                                    validate_catalog, root, 2, 2, 2)
 
     def test_symlinked_pattern_source_or_oracle_fails(self):
-        for filename in ("example.ores", "expected.stdout"):
+        for filename in ("example.atto", "expected.stdout"):
             with self.subTest(filename=filename), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 fixture(root)
@@ -113,7 +121,7 @@ class CatalogContractTests(unittest.TestCase):
                                        validate_catalog, root, 2, 2, 2)
 
     def test_partial_library_probe_pair_fails(self):
-        for filename in ("example.ores", "expected.stdout"):
+        for filename in ("example.atto", "expected.stdout"):
             with self.subTest(filename=filename), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 fixture(root)
@@ -125,7 +133,7 @@ class CatalogContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             fixture(root)
-            for filename in ("example.ores", "expected.stdout"):
+            for filename in ("example.atto", "expected.stdout"):
                 (root / "libraries" / "oreslang-a" / filename).unlink()
             self.assertRaisesRegex(ValueError, "expected 2 library probes",
                                    validate_catalog, root, 2, 2, 2)
@@ -139,7 +147,7 @@ class CatalogContractTests(unittest.TestCase):
             self.assertRaisesRegex(ValueError, "invalid library output oracle",
                                    validate_catalog, root, 2, 2, 2)
             (lib / "expected.stdout").write_text("PASS:oreslang-a\n")
-            (lib / "example.ores").write_text("")
+            (lib / "example.atto").write_text("")
             self.assertRaisesRegex(ValueError, "empty library source",
                                    validate_catalog, root, 2, 2, 2)
 

@@ -92,10 +92,10 @@ def main() -> int:
         return 1
     failures = []
     for folder in folders:
-        source_path = folder / "example.ores"
+        source_path = folder / "example.atto"
         golden = folder / "expected.stdout"
         if not source_path.is_file() or not golden.is_file():
-            failures.append(f"{folder.name}: missing example.ores or expected.stdout")
+            failures.append(f"{folder.name}: missing example.atto or expected.stdout")
             continue
         number = int(folder.name[:2])
         body = source_path.read_text(encoding="utf-8")

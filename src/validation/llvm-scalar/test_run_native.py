@@ -20,7 +20,7 @@ class NativeDriverContractTests(unittest.TestCase):
     def check(self, responses, source_present=True, change_at=None, extra=()):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp)
-            source = path / "case.ores"
+            source = path / "case.atto"
             if source_present:
                 source.write_text("pub fnc main(): int { return 42; }")
             report = path / "result.json"
@@ -37,7 +37,7 @@ class NativeDriverContractTests(unittest.TestCase):
                     raise result
                 return result
             with mock.patch.object(run_native, "HERE", path), \
-                 mock.patch.object(run_native, "EXPECTED", {"case.ores": 42}), \
+                 mock.patch.object(run_native, "EXPECTED", {"case.atto": 42}), \
                  mock.patch.object(run_native, "run_command", side_effect=invoke), \
                  mock.patch.object(sys, "argv", argv), \
                  contextlib.redirect_stdout(io.StringIO()):
@@ -106,7 +106,7 @@ class NativeDriverContractTests(unittest.TestCase):
     def test_real_clang_on_synthetic_ir_not_oreslang(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp)
-            (path / "case.ores").write_text("pub fnc main(): int { return 42; }")
+            (path / "case.atto").write_text("pub fnc main(): int { return 42; }")
             fake = path / "fake-compiler"
             fake.write_text("#!/usr/bin/env python3\nprint('define i32 @main() { ret i32 42 }')\n")
             fake.chmod(0o755)
@@ -114,7 +114,7 @@ class NativeDriverContractTests(unittest.TestCase):
             argv = ["run_native.py", "--compiler", str(fake), "--clang",
                     shutil.which("clang"), "--compiler-revision", REV, "--report", str(report)]
             with mock.patch.object(run_native, "HERE", path), \
-                 mock.patch.object(run_native, "EXPECTED", {"case.ores": 42}), \
+                 mock.patch.object(run_native, "EXPECTED", {"case.atto": 42}), \
                  mock.patch.object(sys, "argv", argv), \
                  contextlib.redirect_stdout(io.StringIO()):
                 code = run_native.main()

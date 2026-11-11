@@ -10,7 +10,7 @@ from unittest import mock
 import run_examples
 
 CASE = run_examples.PATTERNS / "01-factory-method"
-FAKE = [(1, CASE, CASE / "example.ores", "PASS:1\n")]
+FAKE = [(1, CASE, CASE / "example.atto", "PASS:1\n")]
 COMMAND = "python3 fake.py {source}"
 
 def check_run(args, result, fixtures=None):
@@ -34,18 +34,18 @@ class RunnerContractTests(unittest.TestCase):
     def test_symlinked_source_or_oracle_is_rejected(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            target = root / "outside.ores"
+            target = root / "outside.atto"
             target.write_text('pub routine main(): void { return; }')
             case = root / "01-symlink"
             case.mkdir()
             oracle = case / "expected.stdout"
             oracle.write_text("PASS:1\\n")
-            (case / "example.ores").symlink_to(target)
+            (case / "example.atto").symlink_to(target)
             with mock.patch.object(run_examples, "PATTERNS", root):
                 with self.assertRaisesRegex(ValueError, "symlinks"):
                     run_examples.discover()
-            (case / "example.ores").unlink()
-            (case / "example.ores").write_text('pub routine main(): void { return; }')
+            (case / "example.atto").unlink()
+            (case / "example.atto").write_text('pub routine main(): void { return; }')
             oracle.unlink()
             oracle.symlink_to(target)
             with mock.patch.object(run_examples, "PATTERNS", root):
@@ -107,7 +107,7 @@ class RunnerContractTests(unittest.TestCase):
             code, _, calls = check_run(
                 ["--runner-command", COMMAND, "--filter", "^01-", "--report", str(report_path)], good,
                 fixtures=FAKE + [(2, CASE.with_name("02-abstract-factory"),
-                                  CASE.with_name("02-abstract-factory") / "example.ores", "PASS:2\n")])
+                                  CASE.with_name("02-abstract-factory") / "example.atto", "PASS:2\n")])
             self.assertEqual((code, calls), (0, 1))
             report = json.loads(report_path.read_text())
             self.assertEqual(report["inventory_total"], 2)
@@ -154,7 +154,7 @@ class RunnerContractTests(unittest.TestCase):
             for n in (1, 2):
                 d = root / f"{n:02d}-case"
                 d.mkdir()
-                source = d / "example.ores"
+                source = d / "example.atto"
                 source.write_text("example", encoding="utf-8")
                 (d / "expected.stdout").write_text(f"PASS:{n}\n", encoding="utf-8")
                 cases.append((n, d, source, f"PASS:{n}\n"))

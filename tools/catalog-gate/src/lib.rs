@@ -162,7 +162,8 @@ pub fn validate(root: &Path, expected: Expected) -> io::Result<Counts> {
     }
     let mut library_probes = 0;
     for (name, directory) in &libraries {
-        let source = directory.join("example.ores");
+        if directory.join("example.ores").exists() { return Err("legacy .ores source forbidden".into()); }
+        let source = directory.join("example.atto");
         let oracle = directory.join("expected.stdout");
         if fixture_exists(&source)? || fixture_exists(&oracle)? {
             nonempty_source(&source)?;
@@ -178,7 +179,7 @@ pub fn validate(root: &Path, expected: Expected) -> io::Result<Counts> {
     }
     for (name, directory) in &patterns {
         let number = pattern_number(name).expect("filtered pattern name");
-        nonempty_source(&directory.join("example.ores"))?;
+        nonempty_source(&directory.join("example.atto"))?;
         exact_oracle(&directory.join("expected.stdout"), &format!("PASS:{number}\n"))?;
     }
     for relative in [
@@ -227,14 +228,14 @@ mod tests {
                 let dir = root.join("libraries").join(name);
                 fs::create_dir(&dir).unwrap();
                 fs::write(dir.join("README.md"), "## Status: planned\n").unwrap();
-                fs::write(dir.join("example.ores"), "pub routine main(): void {}\n").unwrap();
+                fs::write(dir.join("example.atto"), "pub routine main(): void {}\n").unwrap();
                 fs::write(dir.join("expected.stdout"), format!("PASS:{name}\n")).unwrap();
             }
             for name in ["01-alpha", "02-beta"] {
                 let dir = root.join("patterns").join(name);
                 fs::create_dir(&dir).unwrap();
                 fs::write(dir.join("README.md"), "## Status: prototype\n").unwrap();
-                fs::write(dir.join("example.ores"), "pub routine main(): void {}\n").unwrap();
+                fs::write(dir.join("example.atto"), "pub routine main(): void {}\n").unwrap();
                 fs::write(
                     dir.join("expected.stdout"),
                     format!("PASS:{}\n", pattern_number(name).unwrap()),
@@ -274,7 +275,7 @@ mod tests {
 
     #[test]
     fn missing_pattern_fixture_rejected() {
-        for name in ["example.ores", "expected.stdout"] {
+        for name in ["example.atto", "expected.stdout"] {
             let fixture = Fixture::new();
             fs::remove_file(fixture.path(&format!("patterns/01-alpha/{name}"))).unwrap();
             assert!(fixture.check().is_err());
@@ -314,7 +315,7 @@ mod tests {
 
     #[test]
     fn incomplete_library_pair_rejected() {
-        for name in ["example.ores", "expected.stdout"] {
+        for name in ["example.atto", "expected.stdout"] {
             let fixture = Fixture::new();
             fs::remove_file(fixture.path(&format!("libraries/oreslang-a/{name}"))).unwrap();
             assert!(fixture.check().is_err());
@@ -324,7 +325,7 @@ mod tests {
     #[test]
     fn missing_library_probe_count_rejected() {
         let fixture = Fixture::new();
-        fs::remove_file(fixture.path("libraries/oreslang-a/example.ores")).unwrap();
+        fs::remove_file(fixture.path("libraries/oreslang-a/example.atto")).unwrap();
         fs::remove_file(fixture.path("libraries/oreslang-a/expected.stdout")).unwrap();
         assert!(fixture.check().is_err());
     }
@@ -332,7 +333,7 @@ mod tests {
     #[test]
     fn empty_source_rejected() {
         let fixture = Fixture::new();
-        fs::write(fixture.path("patterns/01-alpha/example.ores"), " \n").unwrap();
+        fs::write(fixture.path("patterns/01-alpha/example.atto"), " \n").unwrap();
         assert!(fixture.check().is_err());
     }
 
@@ -354,7 +355,7 @@ mod tests {
     #[test]
     fn symlinked_source_and_oracle_rejected() {
         use std::os::unix::fs::symlink;
-        for name in ["example.ores", "expected.stdout"] {
+        for name in ["example.atto", "expected.stdout"] {
             let fixture = Fixture::new();
             let path = fixture.path(&format!("patterns/01-alpha/{name}"));
             let other = fixture.path("original-file");

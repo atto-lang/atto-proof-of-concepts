@@ -26,7 +26,7 @@ def main() -> int:
     classpath = "java-source/target/classes:" + CP_PATH.read_text(encoding="utf-8").strip()
     results = []
     for name, expected in CASES:
-        source = HERE / "39-actor-model" / "runtime" / (name + ".ores")
+        source = HERE / "39-actor-model" / "runtime" / (name + ".atto")
         oracle = source.with_suffix(".stdout")
         if not source.is_file() or not oracle.is_file():
             print("Missing actor runtime source or oracle: " + name, file=sys.stderr)

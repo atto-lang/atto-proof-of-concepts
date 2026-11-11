@@ -37,12 +37,14 @@ def discover():
         if not directory.is_dir():
             raise ValueError(f"{directory.name}: expected a pattern directory")
         number = int(directory.name[:2])
-        source = directory / "example.ores"
+        source = directory / "example.atto"
+        if (directory / "example.ores").exists() or (directory / "example.ores").is_symlink():
+            raise ValueError(f"{directory.name}: legacy .ores source forbidden")
         oracle = directory / "expected.stdout"
         if source.is_symlink() or oracle.is_symlink():
             raise ValueError(f"{directory.name}: source and oracle must not be symlinks")
         if not source.is_file() or not oracle.is_file():
-            raise ValueError(f"{directory.name}: missing example.ores or expected.stdout")
+            raise ValueError(f"{directory.name}: missing example.atto or expected.stdout")
         expected = oracle.read_text(encoding="utf-8")
         if expected != f"PASS:{number}\n":
             raise ValueError(f"{directory.name}: invalid or empty expected.stdout")
