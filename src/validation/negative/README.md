@@ -15,3 +15,5 @@
 **LLVM-origin fixtures**, currently not verified with LLVM in this workspace: `native-reject-take-then-reuse.atto`, `class-double-borrow-reject.atto`, `source-actor-send-borrow-reject.atto` (originally from LLVM commit `40b4430c0bba01d4a1980270cb90457d910e4835`).
 
 Important: syntax rejection does not count as evidence of type/borrow safety, and semantic rejection must match the expected diagnostic, not an unrelated unsupported-feature error.
+
+> **Migration note (2026-11-10):** The current fixture links use `.atto`. The cited October Java negative-gate runs were executed on historical `.ores` paths, not on these renamed files against the current compiler. Re-run targeted rejection diagnostics before treating this branch as verified.
