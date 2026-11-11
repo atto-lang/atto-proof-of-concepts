@@ -139,7 +139,7 @@ pub fn discover(patterns: &Path, expected_count: usize) -> io::Result<Vec<Case>>
         real_dir(&entry.path())?;
         match fs::symlink_metadata(entry.path().join("example.ores")) {
             Ok(_) => return Err(invalid("legacy .ores source forbidden")),
-            Err(e) if e.kind() == io::ErrorKind::NotFound => {},
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {}
             Err(e) => return Err(e),
         }
         let source = entry.path().join("example.atto");
