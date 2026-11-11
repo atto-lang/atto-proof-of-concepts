@@ -162,7 +162,7 @@ pub fn validate(root: &Path, expected: Expected) -> io::Result<Counts> {
     }
     let mut library_probes = 0;
     for (name, directory) in &libraries {
-        if directory.join("example.ores").exists() { return Err(failure("legacy .ores source forbidden")); }
+        if fixture_exists(&directory.join("example.ores"))? { return Err(failure("legacy .ores source forbidden")); }
         let source = directory.join("example.atto");
         let oracle = directory.join("expected.stdout");
         if fixture_exists(&source)? || fixture_exists(&oracle)? {
@@ -179,6 +179,7 @@ pub fn validate(root: &Path, expected: Expected) -> io::Result<Counts> {
     }
     for (name, directory) in &patterns {
         let number = pattern_number(name).expect("filtered pattern name");
+        if fixture_exists(&directory.join("example.ores"))? { return Err(failure("legacy .ores source forbidden")); }
         nonempty_source(&directory.join("example.atto"))?;
         exact_oracle(&directory.join("expected.stdout"), &format!("PASS:{number}\n"))?;
     }

@@ -1,6 +1,6 @@
 # Asynchronous HTTP server: deterministic reference scenario
 
-**Status:** reference-oracle fixture only; no Oreslang compilation or integration execution claimed.
+**Status:** reference-oracle fixture only; no AttoLang compilation or integration execution claimed.
 
 ## Scope exercised
 
@@ -8,7 +8,7 @@ Request routing, cancellation, exactly-once response completion/resource release
 
 ## Test contract
 
-The [scenario.json](scenario.json) is an exact test vector. Run `python3 src/projects/check_scenarios.py` from the repository root. The Python checker evaluates the independent reference state machine and asserts exact expected outputs. This is **not** a native Oreslang result; it is an oracle for forthcoming `.ores` implementations.
+The [scenario.json](scenario.json) is an exact test vector. Run `python3 src/projects/check_scenarios.py` from the repository root. The Python checker evaluates the independent reference state machine and asserts exact expected outputs. This is **not** a native AttoLang result; it is an oracle for forthcoming `.atto` implementations.
 
 ## Invariants and negative cases
 

@@ -137,7 +137,11 @@ pub fn discover(patterns: &Path, expected_count: usize) -> io::Result<Vec<Case>>
             .map_err(|_| invalid("non-UTF-8 pattern directory name"))?;
         let Some(number) = numbered(&name) else { continue };
         real_dir(&entry.path())?;
-        if entry.path().join("example.ores").exists() { return Err(invalid("legacy .ores source forbidden")); }
+        match fs::symlink_metadata(entry.path().join("example.ores")) {
+            Ok(_) => return Err(invalid("legacy .ores source forbidden")),
+            Err(e) if e.kind() == io::ErrorKind::NotFound => {},
+            Err(e) => return Err(e),
+        }
         let source = entry.path().join("example.atto");
         let oracle = entry.path().join("expected.stdout");
         let source_fp = fingerprint(&source)?;

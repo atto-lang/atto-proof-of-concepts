@@ -33,6 +33,8 @@ jobs:
         run: python3 -m unittest discover -s src/validation -p 'test_java_guest_gate.py' -v
       - name: Exact Git subtree admission self-tests (local fixture only)
         run: python3 -m unittest discover -s src/validation -p 'test_verify_source_tree.py' -v
+      - name: Pinned AttoLang tip fixture source identities (not compilation)
+        run: python3 -m unittest discover -s src/validation/atto-tip -p 'test_atto_tip_fixtures.py' -v
       - name: Structural catalog counts
         run: python3 src/validation/check_catalog.py
       - name: Catalog integrity adversarial self-tests (Python only)

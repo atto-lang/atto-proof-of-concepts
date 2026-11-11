@@ -16,3 +16,5 @@ The original 70 have a historical pinned Java guest run. New patterns 71–90 no
 ## Current AttoLang extension policy
 
 All checked-in guest examples are `*.atto`; `.ores` is historical only. The Python/Rust catalog gates reject legacy source paths. No fresh compiler/guest result has been obtained for this migrated branch; see the root migration status before relying on earlier Java receipts.
+
+[Latest compiler-tip AttoLang `.atto` fixtures](validation/atto-tip/README.md) are source-identity probes, not runtime passes.
