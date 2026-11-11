@@ -29,7 +29,8 @@ fn usage() {
 }
 
 fn need_value(args: &mut impl Iterator<Item = String>, key: &str) -> Result<String, String> {
-    args.next().ok_or_else(|| format!("missing value for {key}"))
+    args.next()
+        .ok_or_else(|| format!("missing value for {key}"))
 }
 
 fn launch() -> Result<i32, String> {
@@ -49,7 +50,10 @@ fn launch() -> Result<i32, String> {
 
     while let Some(key) = args.next() {
         match key.as_str() {
-            "--help" | "-h" => { usage(); return Ok(0); }
+            "--help" | "-h" => {
+                usage();
+                return Ok(0);
+            }
             "--root" => root = PathBuf::from(need_value(&mut args, "--root")?),
             "--list" => list = true,
             "--runner-command" => runner_command = Some(need_value(&mut args, "--runner-command")?),
@@ -76,13 +80,15 @@ fn launch() -> Result<i32, String> {
             }
             "--max-output-bytes" => {
                 max_output = need_value(&mut args, "--max-output-bytes")?
-                    .parse().map_err(|_| "invalid --max-output-bytes")?;
+                    .parse()
+                    .map_err(|_| "invalid --max-output-bytes")?;
                 if !(1..=MAX_OUTPUT_BYTES).contains(&max_output) {
                     return Err("max output bytes must be 1..16777216".into());
                 }
             }
             "--filter" => return Err(
-                "regex --filter not supported; use literal --filter-prefix (not parity-complete)".into()
+                "regex --filter not supported; use literal --filter-prefix (not parity-complete)"
+                    .into(),
             ),
             _ => return Err(format!("unsupported argument: {key}")),
         }
@@ -91,9 +97,14 @@ fn launch() -> Result<i32, String> {
         .map_err(|error| format!("cannot open repository root: {error}"))?;
     let cases = discover(&root.join("src/patterns"), 90)
         .map_err(|error| format!("STRUCTURAL FAILURE: {error}"))?;
-    let selected = cases.iter().filter(|case| {
-        filter_prefix.as_ref().is_none_or(|p: &String| case.name.starts_with(p))
-    }).collect::<Vec<_>>();
+    let selected = cases
+        .iter()
+        .filter(|case| {
+            filter_prefix
+                .as_ref()
+                .is_none_or(|p: &String| case.name.starts_with(p))
+        })
+        .collect::<Vec<_>>();
     if selected.is_empty() {
         return Err("no examples match --filter-prefix".into());
     }
@@ -106,13 +117,13 @@ fn launch() -> Result<i32, String> {
         }
         println!(
             "Inventory: {} of {} examples. NO Oreslang compiler/runtime execution.",
-            selected.len(), cases.len()
+            selected.len(),
+            cases.len()
         );
         return Ok(0);
     }
-    let command_template = runner_command.ok_or(
-        "Missing --runner-command; use --list for structural inventory".to_owned()
-    )?;
+    let command_template = runner_command
+        .ok_or("Missing --runner-command; use --list for structural inventory".to_owned())?;
     if let Some(report) = &report {
         protect_report_path(report, &cases)
             .map_err(|error| format!("report alias admission failed: {error}"))?;
@@ -123,8 +134,15 @@ fn launch() -> Result<i32, String> {
         let _ = signal(15, mark_interrupted);
     }
     let options = Options {
-        backend, mode, revision, require_revision, command_template, timeout,
-        max_output, allow_stderr, filter_prefix,
+        backend,
+        mode,
+        revision,
+        require_revision,
+        command_template,
+        timeout,
+        max_output,
+        allow_stderr,
+        filter_prefix,
     };
     let evidence = execute(&root, &cases, &options, &INTERRUPTED)
         .map_err(|error| format!("execution admission failed: {error}"))?;
@@ -135,12 +153,18 @@ fn launch() -> Result<i32, String> {
             .map_err(|error| format!("cannot publish report: {error}"))?;
     }
     for result in &evidence.results {
-        println!("{} {}", if result.success { "PASS" } else { "FAIL" }, result.pattern);
+        println!(
+            "{} {}",
+            if result.success { "PASS" } else { "FAIL" },
+            result.pattern
+        );
     }
     println!(
         "Executed {}; passed {}; failed {}; catalog_inputs_unchanged={}; NO_COMPILER_ATTESTATION",
-        evidence.results.len(), evidence.passed(),
-        evidence.selected - evidence.passed(), evidence.catalog_unchanged
+        evidence.results.len(),
+        evidence.passed(),
+        evidence.selected - evidence.passed(),
+        evidence.catalog_unchanged
     );
     match INTERRUPTED.load(Ordering::SeqCst) {
         2 => Ok(130),
