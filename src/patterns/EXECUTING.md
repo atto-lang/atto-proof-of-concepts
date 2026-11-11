@@ -1,6 +1,6 @@
 # Executable pattern prototypes
 
-All 90 numbered folders now contain an independently executable-intent native Oreslang `example.ores` plus an `expected.stdout` oracle, and each README links those files. They exercise representative behaviors; the complex concurrency/ownership cases are **sequential reference models**, not safe complete production implementations or formal proofs.
+All 90 numbered folders now contain an independently executable-intent native Oreslang `example.atto` plus an `expected.stdout` oracle, and each README links those files. They exercise representative behaviors; the complex concurrency/ownership cases are **sequential reference models**, not safe complete production implementations or formal proofs.
 
 ## Structural check
 

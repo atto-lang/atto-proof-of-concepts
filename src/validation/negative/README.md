@@ -4,14 +4,14 @@
 
 | Java fixture | Required failure |
 |---|---|
-| `java-tip/mutability-readonly-collection.ores` | Mutation through read-only collection binding |
-| `java-tip/mutability-readonly-receiver.ores` | Field mutation through read-only implicit `self` |
-| `java-tip/use-after-move.ores` | Access after transfer of owned value |
-| `java-tip/conflicting-borrows.ores` | Mutable and shared loans overlap inside a call |
-| `java-tip/borrow-then-move-same-call.ores` | Shared call-argument loan conflicts with later move of same owner |
-| `java-tip/mutborrow-then-move-same-call.ores` | Exclusive call-argument loan conflicts with later move |
-| `java-tip/public-constructor-private-class.ores` | Public constructor declared in private class (parser rejection) |
+| `java-tip/mutability-readonly-collection.atto` | Mutation through read-only collection binding |
+| `java-tip/mutability-readonly-receiver.atto` | Field mutation through read-only implicit `self` |
+| `java-tip/use-after-move.atto` | Access after transfer of owned value |
+| `java-tip/conflicting-borrows.atto` | Mutable and shared loans overlap inside a call |
+| `java-tip/borrow-then-move-same-call.atto` | Shared call-argument loan conflicts with later move of same owner |
+| `java-tip/mutborrow-then-move-same-call.atto` | Exclusive call-argument loan conflicts with later move |
+| `java-tip/public-constructor-private-class.atto` | Public constructor declared in private class (parser rejection) |
 
-**LLVM-origin fixtures**, currently not verified with LLVM in this workspace: `native-reject-take-then-reuse.ores`, `class-double-borrow-reject.ores`, `source-actor-send-borrow-reject.ores` (originally from LLVM commit `40b4430c0bba01d4a1980270cb90457d910e4835`).
+**LLVM-origin fixtures**, currently not verified with LLVM in this workspace: `native-reject-take-then-reuse.atto`, `class-double-borrow-reject.atto`, `source-actor-send-borrow-reject.atto` (originally from LLVM commit `40b4430c0bba01d4a1980270cb90457d910e4835`).
 
 Important: syntax rejection does not count as evidence of type/borrow safety, and semantic rejection must match the expected diagnostic, not an unrelated unsupported-feature error.

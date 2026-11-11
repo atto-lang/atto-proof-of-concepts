@@ -12,7 +12,7 @@ cargo run --manifest-path tools/catalog-gate/Cargo.toml --offline --locked -- --
 ```
 
 The gate checks **catalog layout and static oracle bytes only**. It never
-compiles or executes `.ores` files and must not be represented as evidence of
+compiles or executes `.atto` files and must not be represented as evidence of
 Java/GraalVM, LLVM, isolation, channels, or concurrency semantics.
 
 This crate is intentionally separate from existing Python scripts while Rust
