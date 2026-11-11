@@ -23,8 +23,8 @@ All levels agree on order and removal makes the key unreachable.
 
 ## Deliverables
 
-An independently runnable native Oreslang implementation, executable positive/negative compiler fixtures, property-based operations, reproducible backend matrix and benchmark only after correctness.
+An independently runnable native AttoLang implementation, executable positive/negative compiler fixtures, property-based operations, reproducible backend matrix and benchmark only after correctness.
 
 ## Source placement
 
-Add Oreslang source (*.ores) and per-case fixtures in this directory. Do not treat this plan as a passing test.
+Add AttoLang source (*.atto) and per-case fixtures in this directory. Do not treat this plan as a passing test.
