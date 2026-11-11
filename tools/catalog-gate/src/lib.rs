@@ -299,7 +299,9 @@ mod tests {
         ] {
             let fixture = Fixture::new();
             fs::write(fixture.path(relative), "pub routine main(): void {}\n").unwrap();
-            let error = fixture.check().expect_err("legacy source should fail closed");
+            let error = fixture
+                .check()
+                .expect_err("legacy source should fail closed");
             assert!(error.to_string().contains("legacy .ores"));
         }
     }
