@@ -1,19 +1,35 @@
 // oreslang-deque: Wrap-around FIFO reference.
 // UNVERIFIED: narrow deterministic behavioral probe/reference model only.
 // Not a complete library, a borrow/GC proof, or a concurrency verification.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc probe(): int {
   val Array<int> buf=new Array<int>();
   for let i=0;i<4;i++ do buf.add(0);
   done
   let int head=0;
   let int len=0;
-  for let n=1;n<=3;n++ do buf.set((head+len)%4,n*10);len=len+1;
+  for let n=1;n<=3;n++ do buf.set(remainder_nonnegative(head+len, 4),n*10);len=len+1;
   done
-  head=(head+2)%4; len=len-2; buf.set((head+len)%4,40); len=len+1; buf.set((head+len)%4,50); len=len+1;
+  head=remainder_nonnegative(head+2, 4); len=len-2; buf.set(remainder_nonnegative(head+len, 4),40); len=len+1; buf.set(remainder_nonnegative(head+len, 4),50); len=len+1;
   if len!=3 then return 0; fi
   if buf.get(head)!=30 then return 0; fi
-  if buf.get((head+1)%4)!=40 then return 0; fi
-  if buf.get((head+2)%4)!=50 then return 0; fi
+  if buf.get(remainder_nonnegative(head+1, 4))!=40 then return 0; fi
+  if buf.get(remainder_nonnegative(head+2, 4))!=50 then return 0; fi
   return 1;
 }
 

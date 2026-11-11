@@ -1,5 +1,21 @@
 // Single-thread sequence-guarded ring buffer with backpressure and slot reuse.
 // This verifies the sequential state machine, NOT lock-free MPMC correctness.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 define class SequencedRing as
   val Array<int> sequences = new Array<int>();
   val Array<int> values = new Array<int>();
@@ -15,7 +31,7 @@ define class SequencedRing as
   }
 
   pub offer(mut self)(int value): bool {
-    val int index = self.producer % 3;
+    val int index = remainder_nonnegative(self.producer, 3);
     if self.sequences.get(index) != self.producer then
       return false;
     fi
@@ -26,7 +42,7 @@ define class SequencedRing as
   }
 
   pub take(mut self)(): int {
-    val int index = self.consumer % 3;
+    val int index = remainder_nonnegative(self.consumer, 3);
     if self.sequences.get(index) != self.consumer + 1 then
       return -1;
     fi

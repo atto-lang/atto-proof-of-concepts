@@ -2,12 +2,28 @@
 // Status: source prototype; not verified on Java or LLVM.
 // Boolean predicate composition with lexical closures.
 
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc satisfies(int value, Fnc<bool(int)> first, Fnc<bool(int)> second): bool {
   return And(first(value), second(value));
 }
 fnc specification_model(int value): bool {
   val Fnc<bool(int)> positive = |int n| -> { return n > 0; };
-  val Fnc<bool(int)> even = |int n| -> { return n % 2 == 0; };
+  val Fnc<bool(int)> even = |int n| -> { return remainder_nonnegative(n, 2) == 0; };
   return satisfies(value, positive, even);
 }
 

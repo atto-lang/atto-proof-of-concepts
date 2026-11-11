@@ -2,6 +2,22 @@
 // Prototype: compiler and runtime results have not been verified in this repo.
 // Reversible row mapping for constrained IDs and amounts.
 
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc encode(int id, int balance): int { return id * 1000 + balance; }
 // Reconstruct a non-negative packed ID with integer-only arithmetic. Until
 // the Java '/' type/runtime contract is fixed, '/' would return Double.
@@ -12,7 +28,7 @@ fnc quotient_nonnegative(int numerator, int divisor): int {
   return 1 + quotient_nonnegative(numerator - divisor, divisor);
 }
 fnc decode_id(int row): int { return quotient_nonnegative(row, 1000); }
-fnc decode_balance(int row): int { return row % 1000; }
+fnc decode_balance(int row): int { return remainder_nonnegative(row, 1000); }
 
 pub routine main(): void {
   if !(decode_id(encode(5, 42)) == 5) then

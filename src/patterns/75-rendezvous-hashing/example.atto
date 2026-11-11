@@ -1,8 +1,24 @@
 // 75 Rendezvous Hashing: deterministic maximum-score node selection.
 // This toy modulus is not a production hash or a distribution-quality proof.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc score(int key, int node): int {
   // Reduce untrusted key before multiplication to prevent overflow.
-  return (((key % 97) + node * 17) * 7) % 97;
+  return remainder_nonnegative((remainder_nonnegative(key, 97) + node * 17) * 7, 97);
 }
 
 fnc choose_node(int key, int nodes): int {
@@ -46,7 +62,7 @@ pub routine main(): void {
   if choose_node(-1, 2) != -1 then
     stdio.stdout.println("FAIL:75:6"); return;
   fi
-  if choose_node(2147483647, 3) != choose_node(2147483647 % 97, 3) then
+  if choose_node(2147483647, 3) != choose_node(remainder_nonnegative(2147483647, 97), 3) then
     stdio.stdout.println("FAIL:75:8"); return;
   fi
   if choose_node(5, 4) != -1 then

@@ -2,6 +2,22 @@
 // UNVERIFIED: narrow deterministic behavioral probe/reference model only.
 // Not a complete library, a borrow/GC proof, or a concurrency verification.
 // Bounded positive integer quotient: source '/' produces float, even for ints.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc quotient(int numerator, int denominator): int {
   let int remaining = numerator;
   let int result = 0;
@@ -16,7 +32,7 @@ fnc probe(): int {
   val Array<int> digits=new Array<int>();digits.add(4);digits.add(2);digits.add(7);
   let int key=427;
   let int divisor=100;
-  for let i=0;i<3;i++ do if digits.get(i)!=quotient(key, divisor)%10 then return 0;fi
+  for let i=0;i<3;i++ do if digits.get(i)!=remainder_nonnegative(quotient(key, divisor), 10) then return 0;fi
   divisor=quotient(divisor, 10);
   done
   return 1;

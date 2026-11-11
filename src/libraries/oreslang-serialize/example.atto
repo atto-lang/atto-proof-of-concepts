@@ -1,12 +1,28 @@
 // oreslang-serialize: Fixed-width integer record version round-trip.
 // UNVERIFIED: narrow deterministic behavioral probe/reference model only.
 // Not a complete library, a borrow/GC proof, or a concurrency verification.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc probe(): int {
   let int version=3;
   let int payload=417;
   let int raw=version*1000+payload;
-  if (raw - raw%1000)/1000!=version then return 0; fi
-  if raw%1000!=payload then return 0; fi
+  if raw - remainder_nonnegative(raw, 1000) != version * 1000 then return 0; fi
+  if remainder_nonnegative(raw, 1000)!=payload then return 0; fi
   return 1;
 }
 

@@ -1,5 +1,21 @@
 // 79 Feature Flags: deterministic sticky cohort with kill switch.
 // Toy hash; production rollout requires stable namespaced hashing and config.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc feature_enabled(int account, int percentage, bool master_switch): bool {
   if !master_switch then
     return false;
@@ -14,7 +30,7 @@ fnc feature_enabled(int account, int percentage, bool master_switch): bool {
     return false;
   fi
   // Normalize before multiplication for even the largest integer IDs.
-  val int bucket = ((account % 100) * 17 + 11) % 100;
+  val int bucket = remainder_nonnegative(remainder_nonnegative(account, 100) * 17 + 11, 100);
   return bucket < percentage;
 }
 

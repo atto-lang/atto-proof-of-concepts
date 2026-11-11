@@ -1,9 +1,25 @@
 // oreslang-scheduler: Round-robin distribution under twelve dispatches.
 // UNVERIFIED: narrow deterministic behavioral probe/reference model only.
 // Not a complete library, a borrow/GC proof, or a concurrency verification.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc probe(): int {
   val Array<int> served=new Array<int>();served.add(0);served.add(0);served.add(0);
-  for let turn=0;turn<12;turn++ do let int w=turn%3;served.set(w,served.get(w)+1);
+  for let turn=0;turn<12;turn++ do let int w=remainder_nonnegative(turn, 3);served.set(w,served.get(w)+1);
   done
   for let w=0;w<3;w++ do if served.get(w)!=4 then return 0;fi
   done

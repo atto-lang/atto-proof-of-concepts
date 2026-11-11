@@ -1,12 +1,28 @@
 // oreslang-hashmap: Open addressing with colliding integer keys.
 // UNVERIFIED: narrow deterministic behavioral probe/reference model only.
 // Not a complete library, a borrow/GC proof, or a concurrency verification.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc probe(): int {
   val Array<int> keys=new Array<int>();
   for let i=0;i<8;i++ do keys.add(-1);
   done
   for let i=0;i<3;i++ do let int key=1+i*8;
-  let int index=key%8;
+  let int index=remainder_nonnegative(key, 8);
   let bool inserted = false;
   for let probe = 0; probe < 8; probe++ do
     if !inserted then
@@ -14,7 +30,7 @@ fnc probe(): int {
         keys.set(index, key);
         inserted = true;
       else
-        index = (index + 1) % 8;
+        index = remainder_nonnegative(index + 1, 8);
       fi
     fi
   done

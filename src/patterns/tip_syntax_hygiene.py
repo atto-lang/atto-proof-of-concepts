@@ -15,17 +15,17 @@ def code_only(source: str) -> str:
     out = []
     i = 0
     depth = 0
-    quoted = False
+    quote = None
     while i < len(source):
         c = source[i]
         nxt = source[i + 1] if i + 1 < len(source) else ""
-        if quoted:
+        if quote is not None:
             if c == "\\" and nxt:
                 out.extend((" ", " "))
                 i += 2
                 continue
-            if c == '"':
-                quoted = False
+            if c == quote:
+                quote = None
             out.append("\n" if c == "\n" else " ")
             i += 1
             continue
@@ -56,14 +56,14 @@ def code_only(source: str) -> str:
             out.extend((" ", " "))
             i += 2
             continue
-        if c == '"':
-            quoted = True
+        if c in ('"', "'"):
+            quote = c
             out.append(" ")
             i += 1
             continue
         out.append(c)
         i += 1
-    if depth or quoted:
+    if depth or quote is not None:
         raise ValueError("unterminated block comment or string")
     return "".join(out)
 
@@ -75,6 +75,8 @@ def violations(source: str) -> list[str]:
         errors.append("C-style &&/|| used; use condition comma/pipe or And()/Or()")
     if re.search(r"^\s*(?:if|elseif|elif)\b[^\n]*;\s*do\b", stripped, re.M):
         errors.append("deprecated conditional '; do'; canonical spelling is 'then'")
+    if re.search(r"[%^]", stripped):
+        errors.append("removed % or ^ operator is forbidden in AttoLang")
     if re.search(r"\bisoactor\b", stripped):
         errors.append("legacy isoactor spelling; use canonical private 'actor'")
     if re.search(r"\basync\s+fnc\s+\w+_blocking\s*\(", stripped):

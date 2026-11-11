@@ -20,6 +20,13 @@ class SyntaxHygieneTests(unittest.TestCase):
         self.assertNotIn('&&', code_only(src))
         self.assertEqual(violations('stdio.println("&& ||");'), [])
 
+    def test_removed_modulo_and_caret_operators(self):
+        for src in ("return 9 % 2;", "return 2 ^ 3;", "return true ^^ false;"):
+            self.assertIn("removed", " ".join(violations(src)))
+        for src in ('// 9 % 2 and 2 ^^ 3', 'return "% ^ ^^";',
+                    "return '% ^ ^^';", "/* % ^ */ return 42;"):
+            self.assertEqual(violations(src), [])
+
     def test_deprecated_conditional(self):
         self.assertTrue(violations('if true; do return; fi'))
 

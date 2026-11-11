@@ -1,9 +1,25 @@
 // oreslang-iter: Deterministic filter-map-reduce oracle.
 // UNVERIFIED: narrow deterministic behavioral probe/reference model only.
 // Not a complete library, a borrow/GC proof, or a concurrency verification.
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc probe(): int {
   let int sum=0;
-  for let i=0;i<8;i++ do if i%2==0 then sum=sum+i*i;fi
+  for let i=0;i<8;i++ do if remainder_nonnegative(i, 2)==0 then sum=sum+i*i;fi
   done
   if sum!=56 then return 0; fi
   return 1;

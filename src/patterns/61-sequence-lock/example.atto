@@ -2,8 +2,24 @@
 // Status: source prototype; not verified on Java or LLVM.
 // Seqlock version check oracle; does not atomically read a real payload.
 
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
 fnc read_is_valid(int before, int after): bool {
-  return And(before == after, before % 2 == 0);
+  return And(before == after, remainder_nonnegative(before, 2) == 0);
 }
 
 pub routine main(): void {

@@ -2,7 +2,23 @@
 // Status: source prototype; not verified on Java or LLVM.
 // Deterministic worker assignment oracle; not actual thread-pool scheduling.
 
-fnc assign_worker(int task_id, int count): int { return task_id % count; }
+// Integer-only remainder for non-negative numerators (no removed % operator).
+// Doubling avoids floating-point conversion and scales to large integer IDs.
+fnc remainder_nonnegative(int numerator, int divisor): int {
+  if numerator < 0 then return -1; fi
+  if divisor <= 0 then return -1; fi
+  let int remaining = numerator;
+  while remaining >= divisor do
+    let int step = divisor;
+    while step <= remaining - step do
+      step = step + step;
+    done
+    remaining = remaining - step;
+  done
+  return remaining;
+}
+
+fnc assign_worker(int task_id, int count): int { return remainder_nonnegative(task_id, count); }
 fnc thread_pool_model(): int {
   return assign_worker(7, 3) + assign_worker(8, 3);
 }
