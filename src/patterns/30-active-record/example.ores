@@ -1,0 +1,27 @@
+// Pattern 30: active-record.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Entity owns save behavior; persisted snapshot not changed by unsaved mutation.
+
+define class Record as
+  let int amount = 0;
+  let int persisted = 0;
+  pub change(mut self)(int value): void { self.amount = value; return; }
+  pub save(mut self)(): void { self.persisted = self.amount; return; }
+  pub stored(): int { return self.persisted; }
+end
+fnc active_record(): int {
+  val Record r = new Record();
+  r.change(9);
+  r.save();
+  r.change(12);
+  return r.stored();
+}
+
+pub routine main(): void {
+  if !(active_record() == 9) then
+    stdio.stdout.println("FAIL:30:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:30");
+  return;
+}

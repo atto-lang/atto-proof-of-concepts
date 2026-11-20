@@ -1,0 +1,32 @@
+// Pattern 51: typestate.
+// Status: source prototype; not verified on Java or LLVM.
+// Separate Open/Closed types; full consuming move and compile-fail use-after-close proof required.
+
+define class OpenResource as
+  pub let int descriptor = 7;
+  pub read(): int { return self.descriptor; }
+end
+define class ClosedResource as
+  pub let bool closed = true;
+end
+fnc close_resource(OpenResource handle): ClosedResource {
+  return new ClosedResource();
+}
+fnc typestate_model(): int {
+  val OpenResource opened = new OpenResource();
+  val int read_value = opened.read();
+  val ClosedResource closed = close_resource(opened);
+  if closed.closed then
+    return read_value;
+  fi
+  return -1;
+}
+
+pub routine main(): void {
+  if !(typestate_model() == 7) then
+    stdio.stdout.println("FAIL:51:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:51");
+  return;
+}

@@ -1,0 +1,24 @@
+// Pattern 16: iterator.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Iterator traversal via indexed collection protocol; validate independent mutable iterators later.
+
+fnc sum_iterator(): int {
+  val Array<int> values = new Array<int>();
+  values.add(2);
+  values.add(4);
+  values.add(8);
+  let int total = 0;
+  for let i = 0; i < 3; i++ do
+    total = total + values.get(i);
+  done
+  return total;
+}
+
+pub routine main(): void {
+  if !(sum_iterator() == 14) then
+    stdio.stdout.println("FAIL:16:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:16");
+  return;
+}

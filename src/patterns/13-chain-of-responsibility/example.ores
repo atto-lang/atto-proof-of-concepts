@@ -1,0 +1,31 @@
+// Pattern 13: chain-of-responsibility.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Ordered handler delegation with explicit unhandled sentinel.
+
+fnc handle_small(int n): int {
+  if n < 5 then
+    return n + 100;
+  fi
+  return -1;
+}
+fnc handle_large(int n): int { return n + 200; }
+fnc dispatch(int n): int {
+  val int first = handle_small(n);
+  if first != -1 then
+    return first;
+  fi
+  return handle_large(n);
+}
+
+pub routine main(): void {
+  if !(dispatch(3) == 103) then
+    stdio.stdout.println("FAIL:13:1");
+    return;
+  fi
+  if !(dispatch(9) == 209) then
+    stdio.stdout.println("FAIL:13:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:13");
+  return;
+}

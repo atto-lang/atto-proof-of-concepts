@@ -1,0 +1,10 @@
+// Nested function composition yields exit status 42.
+fnc multiply(int n, int scale): int {
+  return n * scale;
+}
+fnc offset(int n): int {
+  return n - 1;
+}
+pub fnc main(): int {
+  return multiply(offset(22), 2);
+}

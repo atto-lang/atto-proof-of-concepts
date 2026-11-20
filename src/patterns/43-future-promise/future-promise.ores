@@ -1,0 +1,12 @@
+// Prototype only. Future with async/await, cancellation tests remain.
+define module FutureExample
+  pub async fnc produce(int input): int {
+    return input * 2;
+  }
+  pub async fnc main(): void {
+    val pending = produce(21);
+    val output = await pending;
+    stdio.println(output);
+    return;
+  }
+end

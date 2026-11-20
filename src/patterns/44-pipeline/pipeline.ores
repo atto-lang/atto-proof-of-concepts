@@ -1,0 +1,15 @@
+// Prototype only. Two-stage functional pipeline.
+fnc pipeline(int value, Fnc<int(int)> first, Fnc<int(int)> second): int {
+  return second(first(value));
+}
+
+pub routine main(): void {
+  val Fnc<int(int)> plus_one = |int n| -> {
+    return n + 1;
+  };
+  val Fnc<int(int)> times_two = |int n| -> {
+    return n * 2;
+  };
+  stdio.stdout.println(pipeline(3, plus_one, times_two));
+  return;
+}

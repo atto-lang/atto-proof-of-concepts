@@ -1,0 +1,44 @@
+// Flyweight: share/intern a style rather than create it on every glyph.
+// The pool's live entry count is a behavioral check; not a concurrency proof.
+define class StylePool as
+  val Array<int> keys = new Array<int>();
+  val Array<int> values = new Array<int>();
+  let int count = 0;
+
+  pub intern(mut self)(int key): int {
+    for let i = 0; i < self.count; i++ do
+      if self.keys.get(i) == key then
+        return self.values.get(i);
+      fi
+    done
+    val int style = key * 10;
+    self.keys.add(key);
+    self.values.add(style);
+    self.count = self.count + 1;
+    return style;
+  }
+  pub size(): int { return self.count; }
+end
+
+fnc flyweight_demo(): int {
+  val StylePool pool = new StylePool();
+  val int a = pool.intern(3);
+  val int b = pool.intern(3);
+  val int c = pool.intern(5);
+  if a != b then
+    return -1;
+  fi
+  if c != 50 then
+    return -1;
+  fi
+  return pool.size() * 100 + a;
+}
+
+pub routine main(): void {
+  if flyweight_demo() != 230 then
+    stdio.stdout.println("FAIL:11:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:11");
+  return;
+}

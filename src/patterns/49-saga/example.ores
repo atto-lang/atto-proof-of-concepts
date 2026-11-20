@@ -1,0 +1,24 @@
+// Pattern 49: saga.
+// Status: source prototype; not verified on Java or LLVM.
+// Compensating debit transaction; real durable retry/idempotency not represented.
+
+fnc compensate(int balance, int outgoing, bool secondary_failed): int {
+  val int after_debit = balance - outgoing;
+  if secondary_failed then
+    return after_debit + outgoing;
+  fi
+  return after_debit;
+}
+
+pub routine main(): void {
+  if !(compensate(100,20,true) == 100) then
+    stdio.stdout.println("FAIL:49:1");
+    return;
+  fi
+  if !(compensate(100,20,false) == 80) then
+    stdio.stdout.println("FAIL:49:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:49");
+  return;
+}

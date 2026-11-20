@@ -1,0 +1,20 @@
+// Pattern 55: region-based-memory-management.
+// Status: source prototype; not verified on Java or LLVM.
+// Region lifetime token oracle, not static escape prevention.
+
+fnc region_valid(int allocation_region, int current_region): bool {
+  return allocation_region == current_region;
+}
+
+pub routine main(): void {
+  if !(region_valid(2,2)) then
+    stdio.stdout.println("FAIL:55:1");
+    return;
+  fi
+  if !(!region_valid(2,3)) then
+    stdio.stdout.println("FAIL:55:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:55");
+  return;
+}

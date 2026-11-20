@@ -1,0 +1,16 @@
+# Six integrated validation projects
+
+1. [Graph editor with undo/redo](./graph-editor/)
+2. [Actor banking and supervision](./actor-banking/)
+3. [Self-hosted reference interpreter](./self-hosted-interpreter/)
+4. [Asynchronous HTTP server](./async-http-server/)
+5. [Crash-recoverable embedded key-value store](./embedded-kv-database/)
+6. [Actor scheduler and work-stealing engine](./actor-scheduler/)
+
+These combine libraries and design patterns to stress feature interactions. All are currently planned.
+
+## New deterministic scenarios
+
+All six projects now have a [SCENARIOS.md](actor-banking/SCENARIOS.md) style specification and a machine-readable `scenario.json` that can be checked by running `python3 src/projects/check_scenarios.py`. These are small **Python reference state machines**, not native Oreslang integration implementations, compiler evidence, or thread-safety proofs.
+
+An additional independent JavaScript state-machine checker is available via `node src/projects/check_scenarios.mjs`. Run both JS and Python oracles: agreement reduces correlated fixture mistakes, but neither is evidence of native Oreslang behavior.

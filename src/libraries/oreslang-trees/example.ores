@@ -1,0 +1,24 @@
+// oreslang-trees: Indexed binary-search tree lookup.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> key=new Array<int>();key.add(7);key.add(3);key.add(9);key.add(5);
+  val Array<int> left=new Array<int>();left.add(1);left.add(-1);left.add(-1);left.add(-1);
+  val Array<int> right=new Array<int>();right.add(2);right.add(3);right.add(-1);right.add(-1);
+  let int node=0;
+  let int target=5;
+  for let i=0;i<4;i++ do if key.get(node)==target then return 1;fi
+  if target<key.get(node) then node=left.get(node);else node=right.get(node);fi
+  if node==-1 then return 0;fi
+  done
+  return 0;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-trees:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-trees");
+  return;
+}

@@ -1,0 +1,25 @@
+// oreslang-arena: Generational handle invalidation reference.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  let int generation=5;
+  let int old_handle=5;
+  let bool occupied=true;
+  if !occupied then return 0; fi
+  if generation != old_handle then return 0; fi
+  occupied=false; generation=generation+1; occupied=true;
+  if old_handle==generation then return 0; fi
+  let int new_handle=generation;
+  if !occupied then return 0; fi
+  if new_handle != generation then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-arena:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-arena");
+  return;
+}

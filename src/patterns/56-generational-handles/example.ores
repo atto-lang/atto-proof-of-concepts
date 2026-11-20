@@ -1,0 +1,64 @@
+// Generational handle: a one-slot arena invalidates stale versions on reuse.
+// This is a concrete sequential reference implementation, not thread-safe.
+define class GenerationSlot as
+  let int generation = 1;
+  let int payload = 0;
+  let bool occupied = false;
+
+  pub insert(mut self)(int value): int {
+    if self.occupied then
+      return -1;
+    fi
+    self.occupied = true;
+    self.payload = value;
+    return self.generation;
+  }
+
+  pub lookup(int handle_generation): int {
+    if !self.occupied then
+      return -1;
+    fi
+    if self.generation != handle_generation then
+      return -1;
+    fi
+    return self.payload;
+  }
+
+  pub remove(mut self)(int handle_generation): bool {
+    if !self.occupied then
+      return false;
+    fi
+    if self.generation != handle_generation then
+      return false;
+    fi
+    self.occupied = false;
+    self.payload = 0;
+    self.generation = self.generation + 1;
+    return true;
+  }
+end
+
+fnc stale_handle_rejected(): bool {
+  val GenerationSlot slot = new GenerationSlot();
+  val int old_handle = slot.insert(42);
+  if slot.lookup(old_handle) != 42 then
+    return false;
+  fi
+  if !slot.remove(old_handle) then
+    return false;
+  fi
+  val int new_handle = slot.insert(99);
+  if new_handle == old_handle then
+    return false;
+  fi
+  return And(slot.lookup(old_handle) == -1, slot.lookup(new_handle) == 99);
+}
+
+pub routine main(): void {
+  if !stale_handle_rejected() then
+    stdio.stdout.println("FAIL:56:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:56");
+  return;
+}

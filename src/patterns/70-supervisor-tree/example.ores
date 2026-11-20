@@ -1,0 +1,33 @@
+// Pattern 70: supervisor-tree.
+// Status: source prototype; not verified on Java or LLVM.
+// Restart-policy planning oracle; actual supervisor CONTROL delivery/restart not exercised.
+
+fnc restart_strategy(int policy, int failed_child): int {
+  if policy == 1 then
+    return failed_child;
+  fi
+  if policy == 2 then
+    return 3;
+  fi
+  if policy == 3 then
+    return 3 - failed_child;
+  fi
+  return -1;
+}
+
+pub routine main(): void {
+  if !(restart_strategy(1,2) == 2) then
+    stdio.stdout.println("FAIL:70:1");
+    return;
+  fi
+  if !(restart_strategy(2,2) == 3) then
+    stdio.stdout.println("FAIL:70:2");
+    return;
+  fi
+  if !(restart_strategy(3,2) == 1) then
+    stdio.stdout.println("FAIL:70:3");
+    return;
+  fi
+  stdio.stdout.println("PASS:70");
+  return;
+}

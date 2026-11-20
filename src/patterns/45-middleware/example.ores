@@ -1,0 +1,27 @@
+// Pattern 45: middleware.
+// Status: source prototype; not verified on Java or LLVM.
+// Authorizing wrapper delegates to handler then transforms result.
+
+fnc middleware(int input, Fnc<int(int)> next): int {
+  if input < 0 then
+    return -1;
+  fi
+  return next(input) + 100;
+}
+fnc request(): int {
+  val Fnc<int(int)> handler = |int n| -> { return n * 2; };
+  return middleware(8, handler);
+}
+
+pub routine main(): void {
+  if !(request() == 116) then
+    stdio.stdout.println("FAIL:45:1");
+    return;
+  fi
+  if !(middleware(-1, |int n| -> { return n; }) == -1) then
+    stdio.stdout.println("FAIL:45:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:45");
+  return;
+}

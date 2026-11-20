@@ -1,0 +1,22 @@
+// 89: deterministic winner selection for primary/hedged requests.
+// Returns 1 primary, 2 hedge, -1 no success or invalid input.
+fnc choose_winner(int primary_end, bool primary_ok, int hedge_end, bool hedge_ok): int {
+  if primary_end < 0 then return -1; fi
+  if hedge_end < 0 then return -1; fi
+  if !primary_ok, !hedge_ok then return -1; fi
+  if primary_ok, !hedge_ok then return 1; fi
+  if !primary_ok, hedge_ok then return 2; fi
+  if primary_end <= hedge_end then return 1; fi
+  return 2;
+}
+pub routine main(): void {
+  if choose_winner(4, true, 8, true) != 1 then stdio.stdout.println("FAIL:89:1"); return; fi
+  if choose_winner(8, true, 4, true) != 2 then stdio.stdout.println("FAIL:89:2"); return; fi
+  if choose_winner(4, false, 8, true) != 2 then stdio.stdout.println("FAIL:89:3"); return; fi
+  if choose_winner(4, true, 8, false) != 1 then stdio.stdout.println("FAIL:89:4"); return; fi
+  if choose_winner(4, false, 8, false) != -1 then stdio.stdout.println("FAIL:89:5"); return; fi
+  if choose_winner(4, true, 4, true) != 1 then stdio.stdout.println("FAIL:89:6"); return; fi
+  if choose_winner(-1, true, 5, true) != -1 then stdio.stdout.println("FAIL:89:7"); return; fi
+  if choose_winner(4, true, -1, true) != -1 then stdio.stdout.println("FAIL:89:8"); return; fi
+  stdio.stdout.println("PASS:89"); return;
+}

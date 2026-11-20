@@ -1,0 +1,27 @@
+// Pattern 37: reactor.
+// Status: source prototype; not verified on Java or LLVM.
+// A readiness dispatch oracle, not a real OS reactor/epoll implementation.
+
+fnc on_ready(int readiness, borrow Fnc<int(int)> reader, borrow Fnc<int(int)> writer): int {
+  if readiness == 1 then
+    return reader(3);
+  fi
+  if readiness == 2 then
+    return writer(3);
+  fi
+  return -1;
+}
+fnc reactor_model(): int {
+  val Fnc<int(int)> read = |int fd| -> { return 10 + fd; };
+  val Fnc<int(int)> write = |int fd| -> { return 20 + fd; };
+  return on_ready(1, rt borrow read, rt borrow write) + on_ready(2, rt borrow read, rt borrow write);
+}
+
+pub routine main(): void {
+  if !(reactor_model() == 36) then
+    stdio.stdout.println("FAIL:37:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:37");
+  return;
+}

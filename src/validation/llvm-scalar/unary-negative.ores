@@ -1,0 +1,4 @@
+// Unary minus, addition, and nested grouping.
+pub fnc main(): int {
+  return 50 + (-8);
+}

@@ -1,0 +1,72 @@
+// Single-thread sequence-guarded ring buffer with backpressure and slot reuse.
+// This verifies the sequential state machine, NOT lock-free MPMC correctness.
+define class SequencedRing as
+  val Array<int> sequences = new Array<int>();
+  val Array<int> values = new Array<int>();
+  let int producer = 0;
+  let int consumer = 0;
+
+  pub initialize(mut self)(): void {
+    for let i = 0; i < 3; i++ do
+      self.sequences.add(i);
+      self.values.add(0);
+    done
+    return;
+  }
+
+  pub offer(mut self)(int value): bool {
+    val int index = self.producer % 3;
+    if self.sequences.get(index) != self.producer then
+      return false;
+    fi
+    self.values.set(index, value);
+    self.sequences.set(index, self.producer + 1);
+    self.producer = self.producer + 1;
+    return true;
+  }
+
+  pub take(mut self)(): int {
+    val int index = self.consumer % 3;
+    if self.sequences.get(index) != self.consumer + 1 then
+      return -1;
+    fi
+    val int result = self.values.get(index);
+    self.values.set(index, 0);
+    self.sequences.set(index, self.consumer + 3);
+    self.consumer = self.consumer + 1;
+    return result;
+  }
+end
+
+fnc ring_demo(): bool {
+  val SequencedRing ring = new SequencedRing();
+  ring.initialize();
+  if !ring.offer(10) then
+    return false;
+  fi
+  if !ring.offer(20) then
+    return false;
+  fi
+  if !ring.offer(30) then
+    return false;
+  fi
+  if ring.offer(40) then
+    return false;
+  fi
+  if ring.take() != 10 then
+    return false;
+  fi
+  if !ring.offer(40) then
+    return false;
+  fi
+  return And(ring.take() == 20, ring.take() == 30, ring.take() == 40, ring.take() == -1);
+}
+
+pub routine main(): void {
+  if !ring_demo() then
+    stdio.stdout.println("FAIL:63:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:63");
+  return;
+}

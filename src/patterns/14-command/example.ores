@@ -1,0 +1,19 @@
+// Pattern 14: command.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Executable command and explicit inverse, with closure-managed behavior.
+
+fnc execute(int value, Fnc<int(int)> action): int { return action(value); }
+fnc command_demo(): int {
+  val Fnc<int(int)> forward = |int x| -> { return x + 7; };
+  val Fnc<int(int)> undo = |int x| -> { return x - 7; };
+  return execute(execute(5, forward), undo);
+}
+
+pub routine main(): void {
+  if !(command_demo() == 5) then
+    stdio.stdout.println("FAIL:14:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:14");
+  return;
+}

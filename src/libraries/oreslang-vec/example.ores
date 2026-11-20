@@ -1,0 +1,20 @@
+// Library PoC. Runtime unverified.
+fnc vector_probe(): int {
+  val Array<int> values = new Array<int>();
+  for let i = 0; i < 12; i++ do
+    values.add(i * 3);
+  done
+  values.set(4, 99);
+  if values.get(0) != 0 then return 0; fi
+  if values.get(4) != 99 then return 0; fi
+  if values.get(11) != 33 then return 0; fi
+  return 1;
+}
+pub routine main(): void {
+  if vector_probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-vec:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-vec");
+  return;
+}

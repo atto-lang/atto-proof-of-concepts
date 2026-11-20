@@ -1,0 +1,49 @@
+// 81: pending request/reply correlation IDs, sequential state machine.
+define class PendingReplies as
+  val Array<int> ids = new Array<int>();
+  let int active = 0;
+  let int allocated = 0;
+  pub begin(mut self)(int id): bool {
+    if id < 0 then return false; fi
+    for let i = 0; i < self.active; i++ do
+      if self.ids.get(i) == id then return false; fi
+    done
+    if self.active >= 2 then return false; fi
+    if self.active < self.allocated then
+      self.ids.set(self.active, id);
+    else
+      self.ids.add(id);
+      self.allocated = self.allocated + 1;
+    fi
+    self.active = self.active + 1;
+    return true;
+  }
+  pub complete(mut self)(int id, int payload): int {
+    if payload < 0 then return -1; fi
+    for let i = 0; i < self.active; i++ do
+      if self.ids.get(i) == id then
+        self.ids.set(i, self.ids.get(self.active - 1));
+        self.active = self.active - 1;
+        return payload;
+      fi
+    done
+    return -1;
+  }
+  pub pending(): int { return self.active; }
+end
+pub routine main(): void {
+  val PendingReplies p = new PendingReplies();
+  if !p.begin(11) then stdio.stdout.println("FAIL:81:1"); return; fi
+  if !p.begin(12) then stdio.stdout.println("FAIL:81:2"); return; fi
+  if p.begin(11) then stdio.stdout.println("FAIL:81:3"); return; fi
+  if p.begin(13) then stdio.stdout.println("FAIL:81:4"); return; fi
+  if p.complete(12, 120) != 120 then stdio.stdout.println("FAIL:81:5"); return; fi
+  if !p.begin(13) then stdio.stdout.println("FAIL:81:6"); return; fi
+  if p.complete(12, 90) != -1 then stdio.stdout.println("FAIL:81:7"); return; fi
+  if p.complete(11, 110) != 110 then stdio.stdout.println("FAIL:81:8"); return; fi
+  if p.complete(13, -3) != -1 then stdio.stdout.println("FAIL:81:9"); return; fi
+  if p.complete(13, 130) != 130 then stdio.stdout.println("FAIL:81:10"); return; fi
+  if p.pending() != 0 then stdio.stdout.println("FAIL:81:11"); return; fi
+  stdio.stdout.println("PASS:81");
+  return;
+}

@@ -1,0 +1,20 @@
+// Pattern 58: epoch-based-reclamation.
+// Status: source prototype; not verified on Java or LLVM.
+// Epoch reclamation eligibility rule; real concurrent epoch publication is outstanding.
+
+fnc epoch_reclaimable(int retired_epoch, int oldest_reader_epoch): bool {
+  return retired_epoch < oldest_reader_epoch;
+}
+
+pub routine main(): void {
+  if !(epoch_reclaimable(3,4)) then
+    stdio.stdout.println("FAIL:58:1");
+    return;
+  fi
+  if !(!epoch_reclaimable(4,4)) then
+    stdio.stdout.println("FAIL:58:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:58");
+  return;
+}

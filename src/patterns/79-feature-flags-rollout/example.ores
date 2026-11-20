@@ -1,0 +1,51 @@
+// 79 Feature Flags: deterministic sticky cohort with kill switch.
+// Toy hash; production rollout requires stable namespaced hashing and config.
+fnc feature_enabled(int account, int percentage, bool master_switch): bool {
+  if !master_switch then
+    return false;
+  fi
+  if account < 0 then
+    return false;
+  fi
+  if percentage < 0 then
+    return false;
+  fi
+  if percentage > 100 then
+    return false;
+  fi
+  // Normalize before multiplication for even the largest integer IDs.
+  val int bucket = ((account % 100) * 17 + 11) % 100;
+  return bucket < percentage;
+}
+
+pub routine main(): void {
+  if feature_enabled(0, 0, true) then
+    stdio.stdout.println("FAIL:79:1"); return;
+  fi
+  if !feature_enabled(5, 100, true) then
+    stdio.stdout.println("FAIL:79:2"); return;
+  fi
+  if !feature_enabled(0, 50, true) then
+    stdio.stdout.println("FAIL:79:3"); return;
+  fi
+  if feature_enabled(5, 50, true) then
+    stdio.stdout.println("FAIL:79:4"); return;
+  fi
+  if feature_enabled(0, 100, false) then
+    stdio.stdout.println("FAIL:79:5"); return;
+  fi
+  if feature_enabled(0, 101, true) then
+    stdio.stdout.println("FAIL:79:6"); return;
+  fi
+  if feature_enabled(-1, 50, true) then
+    stdio.stdout.println("FAIL:79:7"); return;
+  fi
+  if feature_enabled(2147483647, 50, true) != feature_enabled(47, 50, true) then
+    stdio.stdout.println("FAIL:79:9"); return;
+  fi
+  if feature_enabled(0, 50, true) != feature_enabled(0, 50, true) then
+    stdio.stdout.println("FAIL:79:8"); return;
+  fi
+  stdio.stdout.println("PASS:79");
+  return;
+}

@@ -1,0 +1,17 @@
+// Pattern 9: decorator.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Nesting wraps the base operation with independently composed behavior.
+
+fnc base_price(): int { return 100; }
+fnc with_tax(int amount): int { return amount + 20; }
+fnc with_fee(int amount): int { return amount + 5; }
+fnc decorated(): int { return with_fee(with_tax(base_price())); }
+
+pub routine main(): void {
+  if !(decorated() == 125) then
+    stdio.stdout.println("FAIL:9:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:9");
+  return;
+}

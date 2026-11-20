@@ -1,0 +1,20 @@
+// Pattern 18: memento.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Immutable snapshot restored after a domain mutation.
+
+fnc restore_after_change(): int {
+  let int account = 20;
+  val int snapshot = account;
+  account = account + 15;
+  account = snapshot;
+  return account;
+}
+
+pub routine main(): void {
+  if !(restore_after_change() == 20) then
+    stdio.stdout.println("FAIL:18:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:18");
+  return;
+}

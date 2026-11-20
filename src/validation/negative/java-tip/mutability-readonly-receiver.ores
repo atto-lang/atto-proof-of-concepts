@@ -1,0 +1,13 @@
+// Expected Java-tip semantic rejection: cannot mutate field through read-only self.
+define class Counter as
+  let int count = 0;
+  pub increment(): void {
+    self.count = self.count + 1;
+    return;
+  }
+end
+pub routine main(): void {
+  val Counter counter = new Counter();
+  counter.increment();
+  return;
+}

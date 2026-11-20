@@ -1,0 +1,25 @@
+// Pattern 35: event-sourcing.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Reconstruct a balance deterministically from four immutable events.
+
+fnc replay(Array<int> events): int {
+  let int balance = 0;
+  for let i = 0; i < 4; i++ do
+    balance = balance + events.get(i);
+  done
+  return balance;
+}
+fnc event_sourcing(): int {
+  val Array<int> events = new Array<int>();
+  events.add(10); events.add(5); events.add(-3); events.add(2);
+  return replay(events);
+}
+
+pub routine main(): void {
+  if !(event_sourcing() == 14) then
+    stdio.stdout.println("FAIL:35:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:35");
+  return;
+}

@@ -1,0 +1,11 @@
+// Expected Java-tip semantic rejection: original is consumed into function call.
+fnc consume(Array<int> values): void {
+  return;
+}
+pub routine main(): void {
+  val Array<int> values = new Array<int>();
+  values.add(2);
+  consume(values);
+  values.add(3);
+  return;
+}

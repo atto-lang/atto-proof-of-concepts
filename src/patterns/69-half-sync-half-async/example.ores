@@ -1,0 +1,17 @@
+// Half-sync/half-async: this demo shows an explicitly async call.
+// A *blocking-suffixed* synchronous-looking API must implicitly suspend
+// its OresVM continuation. This demo does not claim to implement that yet.
+pub async fnc read_async(int resource): int {
+  return resource * 2;
+}
+
+pub async routine main(): void {
+  val pending = read_async(21);
+  val int result = await pending;
+  if result != 42 then
+    stdio.stdout.println("FAIL:69:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:69");
+  return;
+}
