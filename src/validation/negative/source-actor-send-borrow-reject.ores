@@ -1,0 +1,16 @@
+// Original fail-closed compiler fixture from oreslang-source.llvm main 40b4430c.
+// Negative: run as compile-fail with targeted diagnostics; never as a normal program.
+define actor Worker as {
+  let total: int = 0;
+  pub fnc on_message(int n): int {
+    total = total + n;
+    return total;
+  }
+}
+pub fnc main(): int {
+  const worker = spawn Worker();
+  const count: int = 2;
+  worker.send(rt borrow count);
+  stop worker;
+  return 43;
+}

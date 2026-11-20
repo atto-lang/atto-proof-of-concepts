@@ -1,0 +1,14 @@
+// Prototype only. Predicate interface through closures.
+fnc meets(int value, Fnc<bool(int)> predicate): bool {
+  return predicate(value);
+}
+
+pub routine main(): void {
+  val int threshold = 10;
+  val Fnc<bool(int)> above = |int x| -> {
+    return x > threshold;
+  };
+  stdio.println(meets(11, above));
+  stdio.println(meets(9, above));
+  return;
+}

@@ -1,0 +1,51 @@
+// Visitor: nodes delegate behavior to a dedicated visitor object.
+// Full hierarchy/double dispatch still requires backend conformance.
+define class NodeVisitor as
+  pub visit(int kind, int payload): int {
+    if kind == 1 then
+      return payload * payload;
+    fi
+    if kind == 2 then
+      return payload + 100;
+    fi
+    return -1;
+  }
+end
+
+define class VisitableNode as
+  let int kind = 0;
+  let int payload = 0;
+  constructor(int node_kind, int node_value) {
+    self.kind = node_kind;
+    self.payload = node_value;
+    return;
+  }
+  pub accept(borrow NodeVisitor visitor): int {
+    return visitor.visit(self.kind, self.payload);
+  }
+end
+
+fnc visit_all(): int {
+  let NodeVisitor v = new NodeVisitor();
+  let VisitableNode first = new VisitableNode(1, 4);
+  let VisitableNode second = new VisitableNode(2, 7);
+  return first.accept(rt borrow v) + second.accept(rt borrow v);
+}
+fnc unknown_node(): int {
+  let NodeVisitor v = new NodeVisitor();
+  let VisitableNode invalid = new VisitableNode(0, 2);
+  return invalid.accept(rt borrow v);
+}
+
+pub routine main(): void {
+  if visit_all() != 123 then
+    stdio.stdout.println("FAIL:23:1");
+    return;
+  fi
+  if unknown_node() != -1 then
+    stdio.stdout.println("FAIL:23:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:23");
+  return;
+}

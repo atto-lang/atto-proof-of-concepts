@@ -1,0 +1,6 @@
+// Expected Java-tip semantic rejection: cannot mutate collection through read-only owner.
+pub routine main(): void {
+  let Array<int> values = new Array<int>();
+  values.add(1);
+  return;
+}

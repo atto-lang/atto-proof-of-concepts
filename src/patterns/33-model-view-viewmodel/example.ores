@@ -1,0 +1,16 @@
+// Pattern 33: model-view-viewmodel.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Derived view model property; reactive subscriptions and disposal remain follow-up.
+
+fnc viewmodel_full_name_length(int first_length, int last_length): int {
+  return first_length + 1 + last_length;
+}
+
+pub routine main(): void {
+  if !(viewmodel_full_name_length(3, 4) == 8) then
+    stdio.stdout.println("FAIL:33:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:33");
+  return;
+}

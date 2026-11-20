@@ -1,0 +1,10 @@
+// Nested functions and typed parameters.
+fnc double_value(int n): int {
+  return n * 2;
+}
+fnc increase(int n): int {
+  return n + 1;
+}
+pub fnc main(): int {
+  return double_value(increase(20));
+}

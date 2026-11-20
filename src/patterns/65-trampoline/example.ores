@@ -1,0 +1,26 @@
+// Pattern 65: trampoline.
+// Status: source prototype; not verified on Java or LLVM.
+// Explicit loop avoids recursive call-stack growth; step-typed continuation can be added.
+
+fnc factorial_trampoline(int initial): int {
+  let int n = initial;
+  let int acc = 1;
+  for let step = 0; step < initial - 1; step++ do
+    acc = acc * n;
+    n = n - 1;
+  done
+  return acc;
+}
+
+pub routine main(): void {
+  if !(factorial_trampoline(5) == 120) then
+    stdio.stdout.println("FAIL:65:1");
+    return;
+  fi
+  if !(factorial_trampoline(1) == 1) then
+    stdio.stdout.println("FAIL:65:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:65");
+  return;
+}

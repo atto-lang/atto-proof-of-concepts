@@ -1,0 +1,35 @@
+// Pattern 5: singleton.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// OnceCell sequential model, NOT a process-global singleton or concurrent exactly-once proof.
+
+define class OnceCell as
+  let bool ready = false;
+  let int value = 0;
+  pub init(mut self)(int v): bool {
+    if self.ready then
+      return false;
+    fi
+    self.value = v;
+    self.ready = true;
+    return true;
+  }
+  pub get(): int { return self.value; }
+end
+fnc once_model(): int {
+  val OnceCell singleton = new OnceCell();
+  val bool first = singleton.init(42);
+  val bool second = singleton.init(99);
+  if first, !second then
+    return singleton.get();
+  fi
+  return -1;
+}
+
+pub routine main(): void {
+  if !(once_model() == 42) then
+    stdio.stdout.println("FAIL:5:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:5");
+  return;
+}

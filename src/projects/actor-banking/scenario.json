@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "project": "actor-banking",
+  "initial": {
+    "accounts": {
+      "alice": 100,
+      "bob": 50
+    }
+  },
+  "steps": [
+    {
+      "op": "transfer",
+      "id": "t1",
+      "from": "alice",
+      "to": "bob",
+      "amount": 30
+    },
+    {
+      "op": "transfer",
+      "id": "t1",
+      "from": "alice",
+      "to": "bob",
+      "amount": 30
+    },
+    {
+      "op": "transfer",
+      "id": "tX",
+      "from": "alice",
+      "to": "bob",
+      "amount": 500
+    },
+    {
+      "op": "transfer",
+      "id": "t2",
+      "from": "bob",
+      "to": "alice",
+      "amount": 10
+    }
+  ],
+  "expected": {
+    "accounts": {
+      "alice": 80,
+      "bob": 70
+    },
+    "accepted": [
+      "t1",
+      "t2"
+    ],
+    "duplicates": [
+      "t1"
+    ],
+    "rejected": [
+      "tX"
+    ],
+    "total": 150
+  }
+}

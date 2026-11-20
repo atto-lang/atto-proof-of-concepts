@@ -1,0 +1,25 @@
+// Pattern 47: retry-with-backoff.
+// Status: source prototype; not verified on Java or LLVM.
+// Bounded retries; actual timers, exponential delays and idempotency checks remain.
+
+fnc retry_until(int succeeds_on, int limit): int {
+  for let attempt = 1; attempt <= limit; attempt++ do
+    if attempt == succeeds_on then
+      return attempt;
+    fi
+  done
+  return -1;
+}
+
+pub routine main(): void {
+  if !(retry_until(3,5) == 3) then
+    stdio.stdout.println("FAIL:47:1");
+    return;
+  fi
+  if !(retry_until(7,5) == -1) then
+    stdio.stdout.println("FAIL:47:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:47");
+  return;
+}

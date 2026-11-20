@@ -1,0 +1,55 @@
+// 74 Fencing Tokens: sequential sequencer and fenced sink.
+// Real safety needs a linearizable issuer and enforced downstream token checks.
+define class FencedSink as
+  let int issued = 0;
+  let int applied = 0;
+  let int value = 0;
+
+  pub issue(mut self)(): int {
+    self.issued = self.issued + 1;
+    return self.issued;
+  }
+
+  pub apply(mut self)(int token, int next): bool {
+    if token <= self.applied then
+      return false;
+    fi
+    if token != self.issued then
+      return false;
+    fi
+    self.applied = token;
+    self.value = next;
+    return true;
+  }
+
+  pub read(): int {
+    return self.value;
+  }
+end
+
+pub routine main(): void {
+  val FencedSink sink = new FencedSink();
+  val int old_token = sink.issue();
+  val int new_token = sink.issue();
+  if sink.apply(old_token, 99) then
+    stdio.stdout.println("FAIL:74:1"); return;
+  fi
+  if sink.apply(new_token + 1, 99) then
+    stdio.stdout.println("FAIL:74:2"); return;
+  fi
+  if !sink.apply(new_token, 42) then
+    stdio.stdout.println("FAIL:74:3"); return;
+  fi
+  if sink.apply(new_token, 100) then
+    stdio.stdout.println("FAIL:74:4"); return;
+  fi
+  val int third = sink.issue();
+  if !sink.apply(third, 50) then
+    stdio.stdout.println("FAIL:74:5"); return;
+  fi
+  if sink.read() != 50 then
+    stdio.stdout.println("FAIL:74:6"); return;
+  fi
+  stdio.stdout.println("PASS:74");
+  return;
+}

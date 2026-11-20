@@ -1,0 +1,35 @@
+// 87: sequential in-memory WAL replay oracle (NOT durable).
+define class ReplayLog as
+  val Array<int> changes = new Array<int>();
+  let int used = 0;
+  pub append(mut self)(int delta): bool {
+    if self.used >= 3 then return false; fi
+    self.changes.add(delta);
+    self.used = self.used + 1;
+    return true;
+  }
+  pub replay_from(int applied, int checkpoint): int {
+    if applied < 0 then return -999; fi
+    if applied > self.used then return -999; fi
+    let int value = checkpoint;
+    for let i = applied; i < self.used; i++ do
+      value = value + self.changes.get(i);
+    done
+    return value;
+  }
+  pub count(): int { return self.used; }
+end
+pub routine main(): void {
+  val ReplayLog log = new ReplayLog();
+  if !log.append(3) then stdio.stdout.println("FAIL:87:1"); return; fi
+  if !log.append(-1) then stdio.stdout.println("FAIL:87:2"); return; fi
+  if !log.append(7) then stdio.stdout.println("FAIL:87:3"); return; fi
+  if log.append(12) then stdio.stdout.println("FAIL:87:4"); return; fi
+  if log.replay_from(0, 10) != 19 then stdio.stdout.println("FAIL:87:5"); return; fi
+  if log.replay_from(2, 12) != 19 then stdio.stdout.println("FAIL:87:6"); return; fi
+  if log.replay_from(3, 19) != 19 then stdio.stdout.println("FAIL:87:7"); return; fi
+  if log.replay_from(-1, 0) != -999 then stdio.stdout.println("FAIL:87:8"); return; fi
+  if log.replay_from(4, 0) != -999 then stdio.stdout.println("FAIL:87:9"); return; fi
+  if log.count() != 3 then stdio.stdout.println("FAIL:87:10"); return; fi
+  stdio.stdout.println("PASS:87"); return;
+}

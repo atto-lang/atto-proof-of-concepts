@@ -1,0 +1,82 @@
+// 76 Singleflight: sequential in-flight-key admission, not waiter fan-out.
+define class SingleFlight as
+  val Array<int> keys = new Array<int>();
+  let int active = 0;
+  let int slots = 0;
+
+  pub begin(mut self)(int key): bool {
+    if key < 0 then
+      return false;
+    fi
+    for let i = 0; i < self.active; i++ do
+      if self.keys.get(i) == key then
+        return false;
+      fi
+    done
+    if self.active >= 3 then
+      return false;
+    fi
+    if self.active < self.slots then
+      self.keys.set(self.active, key);
+    else
+      self.keys.add(key);
+      self.slots = self.slots + 1;
+    fi
+    self.active = self.active + 1;
+    return true;
+  }
+
+  pub finish(mut self)(int key): bool {
+    for let i = 0; i < self.active; i++ do
+      if self.keys.get(i) == key then
+        self.keys.set(i, self.keys.get(self.active - 1));
+        self.active = self.active - 1;
+        return true;
+      fi
+    done
+    return false;
+  }
+
+  pub count(): int {
+    return self.active;
+  }
+end
+
+pub routine main(): void {
+  val SingleFlight flight = new SingleFlight();
+  if !flight.begin(7) then
+    stdio.stdout.println("FAIL:76:1"); return;
+  fi
+  if flight.begin(7) then
+    stdio.stdout.println("FAIL:76:2"); return;
+  fi
+  if !flight.begin(8) then
+    stdio.stdout.println("FAIL:76:3"); return;
+  fi
+  if !flight.finish(7) then
+    stdio.stdout.println("FAIL:76:4"); return;
+  fi
+  if flight.finish(7) then
+    stdio.stdout.println("FAIL:76:5"); return;
+  fi
+  if !flight.begin(7) then
+    stdio.stdout.println("FAIL:76:6"); return;
+  fi
+  if !flight.begin(9) then
+    stdio.stdout.println("FAIL:76:7"); return;
+  fi
+  if flight.begin(10) then
+    stdio.stdout.println("FAIL:76:8"); return;
+  fi
+  if !flight.finish(8) then
+    stdio.stdout.println("FAIL:76:9"); return;
+  fi
+  if !flight.begin(10) then
+    stdio.stdout.println("FAIL:76:10"); return;
+  fi
+  if flight.count() != 3 then
+    stdio.stdout.println("FAIL:76:11"); return;
+  fi
+  stdio.stdout.println("PASS:76");
+  return;
+}

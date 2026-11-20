@@ -1,0 +1,40 @@
+// 84: two-replica G-counter CRDT sequential state machine.
+define class GCounter2 as
+  let int a = 0;
+  let int b = 0;
+  pub add(mut self)(int replica, int amount): bool {
+    if amount <= 0 then return false; fi
+    if replica == 1 then self.a = self.a + amount; return true; fi
+    if replica == 2 then self.b = self.b + amount; return true; fi
+    return false;
+  }
+  pub merge(mut self)(int other_a, int other_b): bool {
+    if other_a < 0 then return false; fi
+    if other_b < 0 then return false; fi
+    if other_a > self.a then self.a = other_a; fi
+    if other_b > self.b then self.b = other_b; fi
+    return true;
+  }
+  pub first(): int { return self.a; }
+  pub second(): int { return self.b; }
+  pub total(): int { return self.a + self.b; }
+end
+pub routine main(): void {
+  val GCounter2 left = new GCounter2();
+  val GCounter2 right = new GCounter2();
+  if !left.add(1, 2) then stdio.stdout.println("FAIL:84:1"); return; fi
+  if !right.add(2, 3) then stdio.stdout.println("FAIL:84:2"); return; fi
+  if !left.merge(right.first(), right.second()) then stdio.stdout.println("FAIL:84:3"); return; fi
+  if !right.merge(left.first(), left.second()) then stdio.stdout.println("FAIL:84:4"); return; fi
+  if left.total() != 5 then stdio.stdout.println("FAIL:84:5"); return; fi
+  if right.total() != 5 then stdio.stdout.println("FAIL:84:6"); return; fi
+  if !left.merge(right.first(), right.second()) then stdio.stdout.println("FAIL:84:7"); return; fi
+  if left.total() != 5 then stdio.stdout.println("FAIL:84:8"); return; fi
+  if !right.add(1, 1) then stdio.stdout.println("FAIL:84:9"); return; fi
+  if !left.merge(right.first(), right.second()) then stdio.stdout.println("FAIL:84:10"); return; fi
+  if left.total() != 6 then stdio.stdout.println("FAIL:84:11"); return; fi
+  if left.add(3, 10) then stdio.stdout.println("FAIL:84:12"); return; fi
+  if left.merge(-1, 100) then stdio.stdout.println("FAIL:84:13"); return; fi
+  if left.total() != 6 then stdio.stdout.println("FAIL:84:14"); return; fi
+  stdio.stdout.println("PASS:84"); return;
+}

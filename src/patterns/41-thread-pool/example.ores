@@ -1,0 +1,17 @@
+// Pattern 41: thread-pool.
+// Status: source prototype; not verified on Java or LLVM.
+// Deterministic worker assignment oracle; not actual thread-pool scheduling.
+
+fnc assign_worker(int task_id, int count): int { return task_id % count; }
+fnc thread_pool_model(): int {
+  return assign_worker(7, 3) + assign_worker(8, 3);
+}
+
+pub routine main(): void {
+  if !(thread_pool_model() == 3) then
+    stdio.stdout.println("FAIL:41:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:41");
+  return;
+}

@@ -1,0 +1,19 @@
+// Pattern 43: future-promise.
+// Status: source prototype; not verified on Java or LLVM.
+// Future model uses a real async function and await; main is emitted as async for this case.
+
+pub async fnc compute(int value): int { return value * 7; }
+pub async fnc future_check(): bool {
+  val pending = compute(6);
+  val actual = await pending;
+  return actual == 42;
+}
+
+pub async routine main(): void {
+  if !(await future_check()) then
+    stdio.stdout.println("FAIL:43:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:43");
+  return;
+}

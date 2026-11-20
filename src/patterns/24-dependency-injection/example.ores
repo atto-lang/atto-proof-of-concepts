@@ -1,0 +1,18 @@
+// Pattern 24: dependency-injection.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Dependency passed in explicitly as a callable.
+
+fnc service(int value, Fnc<int(int)> dependency): int { return dependency(value) + 1; }
+fnc injected(): int {
+  val Fnc<int(int)> database = |int id| -> { return id * 2; };
+  return service(5, database);
+}
+
+pub routine main(): void {
+  if !(injected() == 11) then
+    stdio.stdout.println("FAIL:24:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:24");
+  return;
+}

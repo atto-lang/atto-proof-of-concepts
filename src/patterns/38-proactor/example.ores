@@ -1,0 +1,23 @@
+// Pattern 38: proactor.
+// Status: source prototype; not verified on Java or LLVM.
+// Proactor completion-routing oracle; duplicate/cancel race requires runtime tests.
+
+fnc completion(int ticket, int completed_ticket, int result): int {
+  if ticket != completed_ticket then
+    return -1;
+  fi
+  return result;
+}
+
+pub routine main(): void {
+  if !(completion(9, 9, 42) == 42) then
+    stdio.stdout.println("FAIL:38:1");
+    return;
+  fi
+  if !(completion(9, 8, 42) == -1) then
+    stdio.stdout.println("FAIL:38:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:38");
+  return;
+}

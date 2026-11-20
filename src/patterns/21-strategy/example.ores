@@ -1,0 +1,19 @@
+// Pattern 21: strategy.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Runtime interchangeable closures.
+
+fnc compute(int n, Fnc<int(int)> strategy): int { return strategy(n); }
+fnc strategies(): int {
+  val Fnc<int(int)> square = |int n| -> { return n * n; };
+  val Fnc<int(int)> twice = |int n| -> { return n * 2; };
+  return compute(3, square) + compute(3, twice);
+}
+
+pub routine main(): void {
+  if !(strategies() == 15) then
+    stdio.stdout.println("FAIL:21:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:21");
+  return;
+}

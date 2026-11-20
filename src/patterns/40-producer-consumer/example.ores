@@ -1,0 +1,21 @@
+// Producer-consumer using the Oreslang Channel primitive.
+// Sequential smoke test only: concurrent handoff and backpressure tests pending.
+fnc producer_consumer(): int {
+  let Channel<int> channel = Channel.new<int>(3);
+  writech channel, 4;
+  writech channel, 5;
+  writech channel, 6;
+  val int first = readch channel;
+  val int second = readch channel;
+  val int third = readch channel;
+  return first + second + third;
+}
+
+pub routine main(): void {
+  if producer_consumer() != 15 then
+    stdio.stdout.println("FAIL:40:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:40");
+  return;
+}

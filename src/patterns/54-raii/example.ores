@@ -1,0 +1,29 @@
+// Pattern 54: raii.
+// Status: source prototype; not verified on Java or LLVM.
+// Exactly-once explicit close model, not compiler-guaranteed RAII/unwind.
+
+define class Lease as
+  let bool closed = false;
+  pub close(mut self)(): bool {
+    if self.closed then
+      return false;
+    fi
+    self.closed = true;
+    return true;
+  }
+end
+fnc lease_model(): bool {
+  val Lease lease = new Lease();
+  val bool first = lease.close();
+  val bool second = lease.close();
+  return And(first, !second);
+}
+
+pub routine main(): void {
+  if !(lease_model()) then
+    stdio.stdout.println("FAIL:54:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:54");
+  return;
+}

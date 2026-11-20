@@ -1,0 +1,23 @@
+// Pattern 17: mediator.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Mediator centralizes directed event routing and rejects self-routing.
+
+fnc route(int sender, int recipient, int message): int {
+  if sender == recipient then
+    return -1;
+  fi
+  return 100 * recipient + message;
+}
+
+pub routine main(): void {
+  if !(route(1, 2, 9) == 209) then
+    stdio.stdout.println("FAIL:17:1");
+    return;
+  fi
+  if !(route(1, 1, 9) == -1) then
+    stdio.stdout.println("FAIL:17:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:17");
+  return;
+}

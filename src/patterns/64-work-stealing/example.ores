@@ -1,0 +1,23 @@
+// Pattern 64: work-stealing.
+// Status: source prototype; not verified on Java or LLVM.
+// Sequential single-claim oracle, not atomically safe work stealing.
+
+fnc claim(int claimed_by, int contender): int {
+  if claimed_by != -1 then
+    return claimed_by;
+  fi
+  return contender;
+}
+fnc steal_model(): int {
+  val int first = claim(-1, 2);
+  return claim(first, 3);
+}
+
+pub routine main(): void {
+  if !(steal_model() == 2) then
+    stdio.stdout.println("FAIL:64:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:64");
+  return;
+}

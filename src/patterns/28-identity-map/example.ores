@@ -1,0 +1,26 @@
+// Pattern 28: identity-map.
+// Prototype: compiler and runtime results have not been verified in this repo.
+// Identity map lookup model; object reference identity semantics require separate test.
+
+fnc find_or_reuse(Array<int> ids, int wanted): int {
+  for let i = 0; i < 3; i++ do
+    if ids.get(i) == wanted then
+      return i;
+    fi
+  done
+  return -1;
+}
+fnc identity_map(): int {
+  val Array<int> ids = new Array<int>();
+  ids.add(2); ids.add(5); ids.add(8);
+  return find_or_reuse(ids, 5);
+}
+
+pub routine main(): void {
+  if !(identity_map() == 1) then
+    stdio.stdout.println("FAIL:28:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:28");
+  return;
+}

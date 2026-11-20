@@ -1,0 +1,25 @@
+// Pattern 60: read-copy-update.
+// Status: source prototype; not verified on Java or LLVM.
+// Immutable snapshot copy before publication; atomic RCU retirement not implemented.
+
+fnc update_copy(Array<int> source): int {
+  val Array<int> next_version = new Array<int>();
+  next_version.add(source.get(0));
+  next_version.add(source.get(1));
+  next_version.set(0, 99);
+  return source.get(0) * 100 + next_version.get(0);
+}
+fnc rcu_model(): int {
+  val Array<int> first = new Array<int>();
+  first.add(5); first.add(7);
+  return update_copy(first);
+}
+
+pub routine main(): void {
+  if !(rcu_model() == 599) then
+    stdio.stdout.println("FAIL:60:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:60");
+  return;
+}

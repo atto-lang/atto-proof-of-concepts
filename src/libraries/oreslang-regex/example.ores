@@ -1,0 +1,39 @@
+// oreslang-regex: DFA matching numeric token sequence 1 2* 3.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  val Array<int> input = new Array<int>();
+  input.add(1);
+  input.add(2);
+  input.add(2);
+  input.add(3);
+  let int state = 0;
+  for let i = 0; i < input.size; i++ do
+    let int x = input.get(i);
+    if state == 0 then
+      if x != 1 then return 0; fi
+      state = 1;
+    elif state == 1 then
+      if x == 2 then
+        state = 1;
+      elif x == 3 then
+        state = 2;
+      else
+        return 0;
+      fi
+    else
+      return 0;
+    fi
+  done
+  if state != 2 then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-regex:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-regex");
+  return;
+}

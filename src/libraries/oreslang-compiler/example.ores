@@ -1,0 +1,18 @@
+// oreslang-compiler: Constant folding correctness oracle.
+// UNVERIFIED: narrow deterministic behavioral probe/reference model only.
+// Not a complete library, a borrow/GC proof, or a concurrency verification.
+fnc probe(): int {
+  let int original=6*7+2;
+  let int folded=42+2;
+  if original!=folded then return 0; fi
+  return 1;
+}
+
+pub routine main(): void {
+  if probe() != 1 then
+    stdio.stdout.println("FAIL:oreslang-compiler:1");
+    return;
+  fi
+  stdio.stdout.println("PASS:oreslang-compiler");
+  return;
+}

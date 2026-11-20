@@ -1,0 +1,38 @@
+// 88: budget-based retry admission, independent of actual backoff timers.
+define class RetryBudget as
+  let int balance = 2;
+  pub spend(mut self)(int cost): bool {
+    if cost <= 0 then return false; fi
+    if cost > self.balance then return false; fi
+    self.balance = self.balance - cost;
+    return true;
+  }
+  pub replenish(mut self)(int credits): bool {
+    if credits <= 0 then return false; fi
+    if credits >= 2 then
+      self.balance = 2;
+      return true;
+    fi
+    if self.balance >= 1 then
+      self.balance = 2;
+    else
+      self.balance = self.balance + credits;
+    fi
+    return true;
+  }
+  pub available(): int { return self.balance; }
+end
+pub routine main(): void {
+  val RetryBudget budget = new RetryBudget();
+  if !budget.spend(1) then stdio.stdout.println("FAIL:88:1"); return; fi
+  if !budget.spend(1) then stdio.stdout.println("FAIL:88:2"); return; fi
+  if budget.spend(1) then stdio.stdout.println("FAIL:88:3"); return; fi
+  if budget.spend(0) then stdio.stdout.println("FAIL:88:4"); return; fi
+  if !budget.replenish(1) then stdio.stdout.println("FAIL:88:5"); return; fi
+  if !budget.spend(1) then stdio.stdout.println("FAIL:88:6"); return; fi
+  if budget.replenish(-1) then stdio.stdout.println("FAIL:88:7"); return; fi
+  if !budget.replenish(100) then stdio.stdout.println("FAIL:88:8"); return; fi
+  if budget.available() != 2 then stdio.stdout.println("FAIL:88:9"); return; fi
+  if budget.spend(3) then stdio.stdout.println("FAIL:88:10"); return; fi
+  stdio.stdout.println("PASS:88"); return;
+}

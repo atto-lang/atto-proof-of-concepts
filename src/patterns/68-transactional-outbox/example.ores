@@ -1,0 +1,26 @@
+// Pattern 68: transactional-outbox.
+// Status: source prototype; not verified on Java or LLVM.
+// Atomic state+outbox logical model; durable transactional IO is still required.
+
+fnc commit_outbox(bool commit, int balance, int delta): int {
+  let int outbox_count = 0;
+  let int next_balance = balance;
+  if commit then
+    next_balance = balance + delta;
+    outbox_count = outbox_count + 1;
+  fi
+  return next_balance * 10 + outbox_count;
+}
+
+pub routine main(): void {
+  if !(commit_outbox(true,10,2) == 121) then
+    stdio.stdout.println("FAIL:68:1");
+    return;
+  fi
+  if !(commit_outbox(false,10,2) == 100) then
+    stdio.stdout.println("FAIL:68:2");
+    return;
+  fi
+  stdio.stdout.println("PASS:68");
+  return;
+}
