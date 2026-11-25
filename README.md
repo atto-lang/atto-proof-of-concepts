@@ -1,18 +1,50 @@
-# Oreslang proof of concepts
+> **AI agent instructions (organization-wide):** Before working on code, issues, or pull requests, read and follow the [organization `AGENTS.md`](https://github.com/atto-lang/.github/blob/main/AGENTS.md), including its **merge-first stealth-development policy**. Honor any repository-local `AGENTS.md`, explicit holds, and GitHub-enforced rules.
 
-[Source catalog](src/README.md): 60 library briefs and **90 native Oreslang pattern examples (70 historically Java-guest-verified; 20 now also Java-guest-verified)** with individual output oracles. [Runner and evidence policy](src/patterns/EXECUTING.md). [Pinned Java runtime audit](src/patterns/COMPILER_TIP_AUDIT.md) records **70/70 real guest executions on the historical 70-example set**, which test sample outputs rather than the named patterns' full safety properties.
+# atto-proof-of-concepts
 
-Patterns 71–90 have [20/20 Java/GraalVM check-and-guest-run passes](https://github.com/scintilla-run-test/gleam-runner-conformance/actions/runs/38932192949), using pinned PoC source `5a72cb9fa6c16808396c4e922e7110fa016c570e` and Java runtime `230258a2f500e26547009f6a947a9f584522de32`. The historical 70/70 result is a separate run, not a combined same-revision 90/90 result. LLVM parity and distributed-safety proofs are still unverified. The GitHub Actions structural workflow checks file/catalog integrity only, **not** whether the Oreslang compiler or runtime can execute these programs.
+Experimental programs and proof-of-concept implementations for AttoLang.
 
-[Library experiments](src/libraries/EXPERIMENTS.md): 32 deterministic source/oracle probes, currently unverified by a compiler; these are not completed libraries or native safety proofs.
+## Naming migration and language authority
 
-## Repository ownership and migration (2026-11-08)
+This repository is maintained at [atto-lang/atto-proof-of-concepts](https://github.com/atto-lang/atto-proof-of-concepts); use `https://github.com/atto-lang/atto-proof-of-concepts.git` for Git remotes and canonical `.atto` source examples. The normative language contract is [atto-spec](https://github.com/atto-lang/atto-spec), with executable guest evidence tracked by [atto-platform-conformance](https://github.com/atto-lang/atto-platform-conformance). Follow current ownership, borrowing, effects, actor, and syntax rules there; do not infer implemented features from a README or unexecuted CI.
 
-AttoLang is the current public language name; `ores-truffle-oreslang/oreslang-proof-of-concepts` is still the historical Oreslang repository. Preserve working `.ores` source inputs, old package names and CLI paths until compiler-backed `.atto` compatibility is established per backend.
+## What this project explores
 
-- **Belongs here:** bounded prototypes and experimental designs with clearly stated limitations.
-- **Does not belong here:** promises that prototypes are product-ready.
-- **Organization boundary:** [atto-lang](https://github.com/atto-lang) should own language examples, compilers, tooling and libraries. [atto-co](https://github.com/atto-co) owns separately governed hosted deployment, production tenant infrastructure, identity, marketplace and billing. Existing same-purpose `atto-*` repositories do not establish a completed Git transfer or code parity.
-- **Proposed first transfer:** `atto-lang/oreslang-proof-of-concepts` under this original repository identity/name, not an unapproved source clone or a direct move to `atto-co`. Any later managed-product carve-out needs a new governance decision.
+Prototype language features, actor patterns, and end-to-end experiments.
 
-**Preflight and cutover:** coordinate with [issue #26](https://github.com/ores-truffle-oreslang/.github/issues/26), follow private [migration proposal #25](https://github.com/ores-truffle-oreslang/.github/pull/25), obtain source/target owner and independent security approval. Record repo numeric ID, exact HEAD SHA/tree, branch/ruleset protection, original and new access, open PRs, packages, releases, Actions billing/runners, secrets, webhooks, GitHub Apps, Pages, dependency URLs and rollback plan. Do not mirror private code without authorization. After actual GitHub ownership transfer, verify unchanged ID/tree/history, restore security and run exact-head CI before consumer/CLI/import edits. `steps=[]` or `steps=null` is `NOT_EXECUTED`; host/reference checks are not proof that guest AttoLang ran.
+## How to use these examples
+
+1. Check the repository contents for `.atto` examples and target-specific project manifests.
+2. Use the compiler/backend indicated by each example's actual files and scripts.
+3. Run checked-in tests or example commands only where documented and verified.
+4. Record compiler revision, expected output, and actual result when reporting an issue.
+
+## Portability and status
+
+These examples are intended to demonstrate AttoLang concepts. Examples may depend on unfinished language features or particular backends; their presence is not evidence that every listed feature executes on all targets. Unsupported features should be marked in the individual example's documentation.
+
+## Links
+
+- [AttoLang repositories](https://github.com/atto-lang)
+- [Canonical language specification](https://github.com/atto-lang/atto-spec)
+- [Backend conformance](https://github.com/atto-lang/atto-platform-conformance)
+
+## Repository ownership and contribution routing
+
+**Belongs here:** Explicitly experimental language/runtime ideas, spikes and throwaway feasibility examples with limitations.
+
+**Belongs elsewhere:** Normative accepted behavior in atto-spec; validated reusable code in library modules; stable introductory examples in atto-demo.
+
+**Security and portability boundary:** Mark proposals as unverified, keep network/filesystem capabilities opt-in and never reclassify source-free smoke tests as compiled guest execution.
+
+AttoLang is the canonical project name; new source, examples and documentation use `.atto` and the `atto-lang` repository organization. This README defines scope, not feature readiness.
+
+**Acceptance:** name exact source SHA/tree, runtime/toolchain, positive and negative checks and execution receipt before claiming support. Host-only tests and empty CI steps do not prove guest execution.
+
+## Legacy provenance and transfer verification
+
+The historical predecessor was `ores-truffle-oreslang/oreslang-proof-of-concepts`. This repository is maintained in `atto-lang`; matching names or imported history do not establish a preserved numeric repository ID or code parity. Preserve working legacy `.ores` inputs and historical package/CLI aliases until compiler-backed replacements and consumers are verified. New source follows canonical `.atto` contracts.
+
+Bounded experimental prototypes belong here; product-readiness promises do not. [atto-lang](https://github.com/atto-lang) maintains language, portable libraries and tooling; [atto-co](https://github.com/atto-co) separately governs commercial deployment, tenant infrastructure, identity, marketplace and billing. Any further original-ID transfer or commercial carve-out requires separate owner authorization and independent security review. This document authorizes no transfer or private-source mirror.
+
+Before an authorized transfer, coordinate in [migration issue #26](https://github.com/ores-truffle-oreslang/.github/issues/26) and review the authorized runbook. Record source/target administrators, numeric ID, exact SHA/tree, history, visibility, access, rulesets, open PRs/issues, releases, packages, consumers, CI/billing/runners, secrets, deploy keys, apps, webhooks, Pages and rollback ownership. Verify unchanged ID/history/tree and restored controls afterward; execute exact-head tests before changing consumers. Zero-step jobs are NOT_EXECUTED; host-only and source-free checks do not certify compiled guest execution or production capabilities.
