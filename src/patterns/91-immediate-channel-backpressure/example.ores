@@ -1,0 +1,51 @@
+// 91 Immediate channel backpressure: every try writech probe is waiter-free.
+// Targets the typed TryWriteResult<T> surface from spec chapter 27.
+// This source is a compiler target, NOT a verified native guest execution.
+pub routine main(): void {
+  val Channel<int> channel = Channel.new<int>(1);
+  val first = try writech channel, 11;
+  match first over
+    on Accepted -> {}
+    on Full(original) -> { stdio.stdout.println("FAIL:91:1"); return; }
+    on Closed(original) -> { stdio.stdout.println("FAIL:91:2"); return; }
+  end
+
+  val blocked = try writech channel, 22;
+  match blocked over
+    on Accepted -> { stdio.stdout.println("FAIL:91:3"); return; }
+    on Closed(original) -> { stdio.stdout.println("FAIL:91:4"); return; }
+    on Full(original) -> {
+      if original != 22 then
+        stdio.stdout.println("FAIL:91:5"); return;
+      fi
+      val int first_read = readch channel;
+      if first_read != 11 then
+        stdio.stdout.println("FAIL:91:6"); return;
+      fi
+      val retried = try writech channel, rt take original;
+      match retried over
+        on Accepted -> {}
+        on Full(again) -> { stdio.stdout.println("FAIL:91:7"); return; }
+        on Closed(again) -> { stdio.stdout.println("FAIL:91:8"); return; }
+      end
+    }
+  end
+
+  val int second_read = readch channel;
+  if second_read != 22 then
+    stdio.stdout.println("FAIL:91:9"); return;
+  fi
+  channel.close();
+  val after_close = try writech channel, 33;
+  match after_close over
+    on Accepted -> { stdio.stdout.println("FAIL:91:10"); return; }
+    on Full(original) -> { stdio.stdout.println("FAIL:91:11"); return; }
+    on Closed(original) -> {
+      if original != 33 then
+        stdio.stdout.println("FAIL:91:12"); return;
+      fi
+    }
+  end
+  stdio.stdout.println("PASS:91");
+  return;
+}
