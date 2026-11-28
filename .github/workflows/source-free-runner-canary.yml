@@ -1,0 +1,25 @@
+# Temporary, source-free infrastructure diagnostic. Never claims compilation.
+name: Source-free CI runner admission canary
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/source-free-runner-canary.yml'
+  workflow_dispatch:
+permissions: {}
+jobs:
+  admission-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Runner admission and nonzero-step proof (NO checkout)
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          test -n "$RUN_ID"
+          test -n "$RUN_ATTEMPT"
+          printf 'SOURCE_FREE_RUNNER_ADMITTED event=%s run_id=%s attempt=%s\n' "$EVENT_NAME" "$RUN_ID" "$RUN_ATTEMPT"
+          printf 'No checkout, no credentials, no private source, no compiler execution.\n'
